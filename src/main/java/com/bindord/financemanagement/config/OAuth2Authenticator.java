@@ -10,9 +10,9 @@ import java.util.concurrent.CompletableFuture;
 
 public class OAuth2Authenticator {
 
-    private static final String CLIENT_ID = "e729a32b-1783-4866-9b42-93bb7043d97b";
-    private static final String CLIENT_SECRET = ".lH8Q~tgnuT2gg-MJTk8DFYiDT1qNfiaGP53VcVh";
-    private static final String TENANT_ID = "c0b8ff38-2c8e-4c6e-bbbe-1daa8a20687a"; // Use "common" for personal accounts, or your tenant ID.
+    private static final String CLIENT_ID = "b33f4746-8cfc-41d4-a6bc-b13c92980040";
+    private static final String CLIENT_SECRET = "i628Q~eqz-bQK9hqsEgluPbOoUEzMBGLEI1gXdgs";
+    private static final String TENANT_ID = "2cf07475-10d6-48c7-b182-49c455f586d6"; // Use "common" for personal accounts, or your tenant ID.
     private static final String AUTHORITY = "https://login.microsoftonline.com/" + TENANT_ID;
 
     public static String getAccessToken() throws Exception {
@@ -25,7 +25,7 @@ public class OAuth2Authenticator {
 
         // Request token for IMAP access
         ClientCredentialParameters parameters = ClientCredentialParameters.builder(
-                        Collections.singleton("https://outlook.office365.com/.default"))
+                        Collections.singleton("https://graph.microsoft.com/.default"))
                 .build();
 
         CompletableFuture<IAuthenticationResult> future = app.acquireToken(parameters);
