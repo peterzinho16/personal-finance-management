@@ -1,4 +1,4 @@
-package com.bindord.financemanagement.model;
+package com.bindord.financemanagement.model.source;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

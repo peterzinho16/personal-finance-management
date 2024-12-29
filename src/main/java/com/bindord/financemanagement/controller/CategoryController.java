@@ -1,6 +1,6 @@
 package com.bindord.financemanagement.controller;
 
-import com.bindord.financemanagement.model.Category;
+import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.repository.CategoryRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
