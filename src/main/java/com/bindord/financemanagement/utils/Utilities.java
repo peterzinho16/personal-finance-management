@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.utils;
 
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
+import com.bindord.financemanagement.model.source.MessageDto;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,6 +11,9 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Slf4j
 public class Utilities {
@@ -68,10 +72,33 @@ public class Utilities {
 
   public static boolean validateIfExistsValidSession(HttpSession session) {
     MicrosoftAccessToken obj = (MicrosoftAccessToken) session.getAttribute(SESSION_TOKEN);
+    if(obj == null) {
+      log.info("AccessToken is null");
+    } else {
+      log.info("Created at: {}", obj.getCreatedAt().toString());
+    }
     return obj != null && obj.getExpiresAt().isAfter(LocalDateTime.now());
   }
 
   public static void storeSessionToken(HttpSession session, MicrosoftAccessToken accessToken) {
     session.setAttribute(SESSION_TOKEN, accessToken);
+  }
+
+  public static MicrosoftAccessToken retrieveSessionToken(HttpSession session) {
+    if(validateIfExistsValidSession(session)) {
+      return (MicrosoftAccessToken) session.getAttribute(SESSION_TOKEN);
+    }
+    return null;
+  }
+
+  public static List<MessageDto> getFilteredMessages(List<MessageDto> originalList, Set<String> exclusions) {
+    List<MessageDto> postFilterMessages = originalList.stream().filter(
+        msg -> exclusions
+            .stream()
+            .noneMatch(
+                ex -> msg.getSubject().toLowerCase().contains(ex)
+            )
+    ).toList();
+    return postFilterMessages;
   }
 }

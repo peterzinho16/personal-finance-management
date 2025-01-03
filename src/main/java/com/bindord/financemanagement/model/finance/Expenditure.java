@@ -52,14 +52,19 @@ public class Expenditure {
     @Column(nullable = false)
     private String description;
 
+    @NotBlank
+    @Size(max = 1000)
+    @Column(nullable = true)
+    private String payee;
+
     @Column
     private Boolean recurrent = false;
 
     @NotNull
-    @Column(name = "transaction_date", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime transactionDate;
 
-    @Column(name = "currency")
+    @Column
     @Enumerated(EnumType.STRING)
     private Currency currency;
 
@@ -72,10 +77,10 @@ public class Expenditure {
     private Boolean shared = false;
 
     @PositiveOrZero
-    @Column(name = "shared_amount")
+    @Column
     private Double sharedAmount;
 
-    @Column(name = "single_payment")
+    @Column
     private Boolean singlePayment = true;
 
     @Min(1)
@@ -87,15 +92,15 @@ public class Expenditure {
     private Boolean lent = false;
 
     @Size(max = 255)
-    @Column(name = "lent_to")
+    @Column
     private String lentTo;
 
-    @Column(name = "loan_state")
+    @Column
     @Enumerated(EnumType.STRING)
     private LoanState loanState;
 
     @PositiveOrZero
-    @Column(name = "loan_amount")
+    @Column
     private Double loanAmount;
 
     public enum LoanState {

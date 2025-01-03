@@ -5,13 +5,18 @@ import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
 import com.bindord.financemanagement.model.finance.SubCategory;
+import com.bindord.financemanagement.model.source.MailExclusionRule;
+import com.bindord.financemanagement.model.source.MailMessage;
 import com.bindord.financemanagement.model.source.MailMessagesResponse;
 import com.bindord.financemanagement.model.source.MessageDto;
 import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
+import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
+import com.bindord.financemanagement.repository.MailMessageRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.repository.external.MicrosoftGraphClient;
 import com.bindord.financemanagement.utils.Constants;
+import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -26,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.InputStream;
@@ -51,6 +57,8 @@ public class IngestToDatabaseController {
   private final SubCategoryRepository subCategoryRepository;
   private final CategoryRepository categoryRepository;
   private final MicrosoftGraphClient microsoftGraphClient;
+  private final MailMessageRepository mailMessageRepository;
+  private final MailExclusionRuleRepository mailExclusionRuleRepository;
 
   @Transactional
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -115,23 +123,33 @@ public class IngestToDatabaseController {
 
   @Transactional
   @GetMapping(value = "/full", produces = MediaType.APPLICATION_JSON_VALUE)
-  public String ingestToDatabaseWithAllMessages(HttpSession session) throws Exception {
+  public String ingestToDatabaseWithAllMessages(HttpSession session, @RequestParam(required = false) String withValidation) throws Exception {
     int batchSize = 100;
     int currentSkip = 0;
     MicrosoftAccessToken token = (MicrosoftAccessToken) session.getAttribute(Utilities.SESSION_TOKEN);
     MailMessagesResponse mailMessagesResponse = microsoftGraphClient.getMessages(Constants.INBOX_FOLDER_ID, Constants.NOTIF_COMPRAS_SUB_FOLDER_ID, batchSize, currentSkip, token.getAccessToken());
 
+    Category category = categoryRepository.findByName(Constants.DEFAULT_EXPENDITURE_CATEGORY);
+    SubCategory subCategory = subCategoryRepository.findByCategoryIdAndName(category.getId(), Constants.DEFAULT_EXPENDITURE_CATEGORY);
+
+    List<MailExclusionRule> exclusionsList = mailExclusionRuleRepository.findAll();
+    Set<String> exclusions = exclusionsList
+        .stream()
+        .map(MailExclusionRule::getKeyword)
+        .collect(Collectors.toSet());
+
+
     while (Objects.nonNull(mailMessagesResponse.getOdataNextLink())) {
       List<Expenditure> expenditures = new ArrayList<>();
+      List<MailMessage> mailMessages = new ArrayList<>();
       log.info("Current skip: {}", currentSkip);
-      List<MessageDto> messages = mailMessagesResponse.getValue();
-      Category category = categoryRepository.findByName(Constants.DEFAULT_EXPENDITURE_CATEGORY);
-      SubCategory subCategory = subCategoryRepository.findByCategoryIdAndName(category.getId(), Constants.DEFAULT_EXPENDITURE_CATEGORY);
+      List<MessageDto> beforeFilterMessages = mailMessagesResponse.getValue();
+      var postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages, exclusions);
       Set<String> referenceIds = new HashSet<>();
-      for (MessageDto msg : messages) {
+      for (MessageDto msg : postFilterMessages) {
         var transactionDate = convertDatetimeToUTCMinusFive(msg.getCreatedDateTime());
         var referenceId = Utilities.generateSha256FromMailContent(transactionDate, msg.getId());
-        var bodyTextContet = convertHTMLTextToPlainText(msg.getBody());
+        var bodyTextContent = convertHTMLTextToPlainText(msg.getBody());
         referenceIds.add(referenceId);
         Expenditure expenditure = Expenditure.builder()
             .referenceId(referenceId)
@@ -139,10 +157,11 @@ public class IngestToDatabaseController {
             .transactionDate(
                 convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())
             )
-            .currency(MailRegex.extractExpenditureCurrency(bodyTextContet))
+            .payee(ExpenditureExtractorUtil.extractThePayeeTrim(msg.getSubject(), bodyTextContent))
+            .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
             .amount(
                 extractExpenditureAmount(
-                    bodyTextContet
+                    bodyTextContent
                 )
             )
             .shared(false)
@@ -157,14 +176,38 @@ public class IngestToDatabaseController {
             .build();
         expenditures.add(expenditure);
 
+        MailMessage mailMessage = MailMessage.builder()
+            .id(msg.getId())
+            .createdDateTime(
+                convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())
+            )
+            .subject(msg.getSubject())
+            .bodyPreview(msg.getBodyPreview())
+            .bodyHtml(msg.getBody().getContent())
+            .bodyTextContent(bodyTextContent)
+            .fromEmail(msg.getFrom().getEmailAddress().getName())
+            .webLink(msg.getWebLink())
+            .referenceId(referenceId)
+            .build();
+        mailMessages.add(mailMessage);
+
       }
-      Set<String> expendituresQueries = expenditureRepository.findByReferenceIdIn(referenceIds);
-      if (!expendituresQueries.isEmpty()) {
-        log.info("Some or all records were stored before, in total: " + expendituresQueries.size());
-        expenditures = expenditures.stream().filter(expend ->
-                !expendituresQueries.contains(expend.getReferenceId()))
-            .collect(Collectors.toList());
+      if (withValidation != null) {
+        Set<String> expendituresQueries = expenditureRepository.findByReferenceIdIn(referenceIds);
+        if (!expendituresQueries.isEmpty()) {
+          log.info("Some records were stored before, in total: " + expendituresQueries.size());
+          expenditures = expenditures.stream().filter(expend ->
+                  !expendituresQueries.contains(expend.getReferenceId()))
+              .collect(Collectors.toList());
+          expenditureRepository.saveAll(expenditures);
+          mailMessageRepository.saveAll(mailMessages);
+        } else {
+          expenditureRepository.saveAll(expenditures);
+          mailMessageRepository.saveAll(mailMessages);
+        }
+      } else {
         expenditureRepository.saveAll(expenditures);
+        mailMessageRepository.saveAll(mailMessages);
       }
 
       if (expenditures.isEmpty()) {
@@ -172,7 +215,6 @@ public class IngestToDatabaseController {
       }
       currentSkip += batchSize;
       mailMessagesResponse = microsoftGraphClient.getMessages(Constants.INBOX_FOLDER_ID, Constants.NOTIF_COMPRAS_SUB_FOLDER_ID, batchSize, currentSkip, token.getAccessToken());
-
     }
     return "Process has finished";
   }

@@ -47,7 +47,8 @@ public class WelcomeController {
              <body>
                 <div style="text-align: center"><a href="#">There is a session already</a></div>
                 <div style="text-align: center"><a href="/eureka/finance-app/api-graph/get-messages">😁 Go direct messages</a></div>
-                <div style="text-align: center"><a href="/eureka/finance-app/automatic-ingest/full">😎 Go full ingest</a></div>
+                <div style="text-align: center"><a href="/eureka/finance-app/automatic-ingest/full">😎 Go full ingest</a></div><br>
+                <div style="text-align: center"><a href="/eureka/finance-app/expenditure/sync">📨 Expenditures sync</a></div>
              </body>
           </html>
           """;

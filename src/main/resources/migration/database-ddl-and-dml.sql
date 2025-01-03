@@ -51,7 +51,9 @@ create table public.expenditures
     loan_state       text
         constraint expenditures_loan_state_check
             check (loan_state = ANY (ARRAY['pending'::text, 'paid'::text])),
-    loan_amount      double precision
+    loan_amount      double precision,
+    reference_id     text             not null
+        unique
 );
 
 alter table public.expenditures
@@ -256,4 +258,16 @@ CREATE TABLE microsoft_access_tokens
     access_token   TEXT         NOT NULL,
     created_at     timestamp without time zone NOT NULL,
     expires_at     timestamp without time zone NOT NULL
+);
+
+create table mail_message
+(
+    id text primary key,
+    createdDateTime timestamp        not null,
+    subject      text             not null,
+    bodyHTML text not null,
+    bodyTextContent text not null,
+    webLink text not null,
+    fromEmail text not null,
+    reference_id text not null unique
 );

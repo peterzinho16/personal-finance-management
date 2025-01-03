@@ -71,7 +71,7 @@ public class MicrosoftApiGraphController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     MicrosoftAccessToken token = (MicrosoftAccessToken) session.getAttribute(Utilities.SESSION_TOKEN);
-    MailMessagesResponse response = microsoftGraphClient.getMessages(Constants.INBOX_FOLDER_ID, Constants.NOTIF_COMPRAS_SUB_FOLDER_ID, 100, 350, token.getAccessToken());
+    MailMessagesResponse response = microsoftGraphClient.getMessages(Constants.INBOX_FOLDER_ID, Constants.NOTIF_COMPRAS_SUB_FOLDER_ID, 10, 35, token.getAccessToken());
     log.info("Records: {}", Objects.requireNonNull(response).getValue().size());
     return ResponseEntity.ok(response);
   }

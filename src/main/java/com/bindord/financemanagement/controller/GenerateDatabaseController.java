@@ -39,7 +39,7 @@ public class GenerateDatabaseController {
   private final ExpenditureRepository expenditureRepository;
   private final SubCategoryRepository subCategoryRepository;
   private final CategoryRepository categoryRepository;
-  private final String INPUT_NOT_FOULD = "Not found";
+  private final String INPUT_NOT_FOUND = "Not found";
 
   @Transactional
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -61,7 +61,7 @@ public class GenerateDatabaseController {
       if (subjectLwc.contains(EntitiesKeyword.YAPE.name().toLowerCase())) {
         var bodyParts = bodyTextContet.split("Nombre del Beneficiario");
         if (bodyParts.length < 2) {
-          contactsOrBusinesses.add(INPUT_NOT_FOULD);
+          contactsOrBusinesses.add(INPUT_NOT_FOUND);
           continue;
         }
         String secondPart = bodyParts[1];
@@ -69,7 +69,7 @@ public class GenerateDatabaseController {
         var lastSplit = secondPart.split("Nº");
 
         if (lastSplit.length < 2) {
-          contactsOrBusinesses.add(INPUT_NOT_FOULD);
+          contactsOrBusinesses.add(INPUT_NOT_FOUND);
           continue;
         }
         contactsOrBusinesses.add(msg.getSubject() + " | " + lastSplit[0]);
@@ -83,7 +83,7 @@ public class GenerateDatabaseController {
             .orElse(0);
 
         if (indexEmpresa == 0) {
-          contactsOrBusinesses.add(INPUT_NOT_FOULD + " | " + msg.getSubject());
+          contactsOrBusinesses.add(INPUT_NOT_FOUND + " | " + msg.getSubject());
           continue;
         }
 
@@ -93,7 +93,7 @@ public class GenerateDatabaseController {
             .orElse(0);
 
         if (indexNumero == 0) {
-          contactsOrBusinesses.add(INPUT_NOT_FOULD + " | " + msg.getSubject());
+          contactsOrBusinesses.add(INPUT_NOT_FOUND + " | " + msg.getSubject());
           continue;
         }
         String contactOrBusiness = Arrays.stream(bodyParts, indexEmpresa + 1, indexNumero)
@@ -110,7 +110,7 @@ public class GenerateDatabaseController {
             .orElse(0);
 
         if (indexEmpresa == 0) {
-          contactsOrBusinesses.add(INPUT_NOT_FOULD + " | " + msg.getSubject());
+          contactsOrBusinesses.add(INPUT_NOT_FOUND + " | " + msg.getSubject());
           continue;
         }
 
@@ -120,7 +120,7 @@ public class GenerateDatabaseController {
             .orElse(0);
 
         if (indexNumero == 0) {
-          contactsOrBusinesses.add(INPUT_NOT_FOULD + " | " + msg.getSubject());
+          contactsOrBusinesses.add(INPUT_NOT_FOUND + " | " + msg.getSubject());
           continue;
         }
 
@@ -132,7 +132,7 @@ public class GenerateDatabaseController {
     }
     return contactsOrBusinesses
         .stream()
-        .filter(str -> !str.toLowerCase().contains(INPUT_NOT_FOULD.toLowerCase()))
+        .filter(str -> !str.toLowerCase().contains(INPUT_NOT_FOUND.toLowerCase()))
         .collect(Collectors.toList());
   }
 

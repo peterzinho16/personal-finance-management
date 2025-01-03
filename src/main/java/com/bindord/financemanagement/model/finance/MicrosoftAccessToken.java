@@ -27,27 +27,26 @@ public class MicrosoftAccessToken {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "token_id")
   private Integer tokenId;
 
-  @Column(name = "token_type", nullable = false)
+  @Column(nullable = false)
   private String tokenType;
 
   @Column(name = "scopes", length = 1000)
   private String scope;
 
-  @Column(name = "expires_in")
+  @Column
   private Integer expiresIn;
 
-  @Column(name = "ext_expires_in")
+  @Column
   private Integer extExpiresIn;
 
-  @Column(name = "access_token", nullable = false, columnDefinition = "TEXT")
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String accessToken;
 
-  @Column(name = "created_at", nullable = false)
+  @Column(nullable = false)
   private LocalDateTime createdAt;
 
-  @Column(name = "expires_at", nullable = false)
+  @Column(nullable = false)
   private LocalDateTime expiresAt;
 }

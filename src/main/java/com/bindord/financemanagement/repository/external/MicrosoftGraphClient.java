@@ -16,8 +16,18 @@ public interface MicrosoftGraphClient {
   MailMessagesResponse getMessages(
       @PathVariable("folderId") String folderId,
       @PathVariable("childFolderId") String childFolderId,
-      @RequestParam("top") int top,
-      @RequestParam("skip") int skip,
+      @RequestParam("$top") int top,
+      @RequestParam("$skip") int skip,
+      @RequestHeader("Authorization") String token
+  );
+
+  @GetMapping(value = "/me/mailFolders/{folderId}/childFolders/{childFolderId}/messages")
+  @Headers("Authorization: Bearer {token}")
+  MailMessagesResponse findByCreatedDateTimeGreaterThan(
+      @PathVariable("folderId") String folderId,
+      @PathVariable("childFolderId") String childFolderId,
+      @RequestParam("$top") int top,
+      @RequestParam("$filter") String filter,
       @RequestHeader("Authorization") String token
   );
 }
