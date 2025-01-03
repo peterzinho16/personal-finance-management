@@ -101,4 +101,8 @@ public class Utilities {
     ).toList();
     return postFilterMessages;
   }
+
+  public enum EntitiesKeyword {
+    YAPE, BCP, DINERS
+  }
 }

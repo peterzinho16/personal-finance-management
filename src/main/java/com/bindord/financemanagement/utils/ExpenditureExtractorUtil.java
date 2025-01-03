@@ -1,6 +1,8 @@
 package com.bindord.financemanagement.utils;
 
-import com.bindord.financemanagement.controller.GenerateDatabaseController;
+import com.bindord.financemanagement.HTMLTextExtractor;
+import com.bindord.financemanagement.model.source.MessageDto;
+import com.bindord.financemanagement.utils.Utilities.EntitiesKeyword;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -15,7 +17,7 @@ public class ExpenditureExtractorUtil {
   private static String extractThePayee(String subject, String bodyTextContent) {
     var subjectLwc = subject.toLowerCase();
 
-    if (subjectLwc.contains(GenerateDatabaseController.EntitiesKeyword.YAPE.name().toLowerCase())) {
+    if (subjectLwc.contains(EntitiesKeyword.YAPE.name().toLowerCase())) {
       var bodyParts = bodyTextContent.split("Nombre del Beneficiario");
       if (bodyParts.length < 2) {
         return INPUT_NOT_FOUND;
@@ -29,7 +31,7 @@ public class ExpenditureExtractorUtil {
       }
       return lastSplit[0];
     }
-    if (subjectLwc.contains(GenerateDatabaseController.EntitiesKeyword.BCP.name().toLowerCase())) {
+    if (subjectLwc.contains(EntitiesKeyword.BCP.name().toLowerCase())) {
       var bodyParts = bodyTextContent.split("\\s+");
       int indexEmpresa = IntStream.range(0, bodyParts.length)
           .filter(i -> bodyParts[i].contains("Empresa"))
@@ -52,7 +54,7 @@ public class ExpenditureExtractorUtil {
           .collect(Collectors.joining(" "));
     }
 
-    if (subjectLwc.contains(GenerateDatabaseController.EntitiesKeyword.DINERS.name().toLowerCase())) {
+    if (subjectLwc.contains(EntitiesKeyword.DINERS.name().toLowerCase())) {
 
       var bodyParts = bodyTextContent.split("\\s+");
       int indexEmpresa = IntStream.range(0, bodyParts.length)
@@ -82,5 +84,9 @@ public class ExpenditureExtractorUtil {
   public static String extractThePayeeTrim(String subject, String bodyTextContent) {
     var result = extractThePayee(subject, bodyTextContent);
     return result != null ? result.trim() : null;
+  }
+
+  public static String convertHTMLTextToPlainText(MessageDto.Body body) {
+    return HTMLTextExtractor.extractTextJsoup(body.getContent());
   }
 }

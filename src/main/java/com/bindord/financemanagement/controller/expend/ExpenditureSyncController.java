@@ -1,4 +1,4 @@
-package com.bindord.financemanagement.controller;
+package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;

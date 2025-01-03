@@ -1,4 +1,4 @@
-package com.bindord.financemanagement.controller;
+package com.bindord.financemanagement.controller.master;
 
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
