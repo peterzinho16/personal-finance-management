@@ -1,8 +1,8 @@
 package com.bindord.financemanagement.svc;
 
-import com.bindord.financemanagement.HTMLTextExtractor;
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.finance.PayeeCategorization;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.MailExclusionRule;
 import com.bindord.financemanagement.model.source.MailMessage;
@@ -13,6 +13,7 @@ import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
 import com.bindord.financemanagement.repository.MailMessageRepository;
 import com.bindord.financemanagement.repository.ParameterRepository;
+import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.utils.Constants;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
@@ -23,9 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,6 +51,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final CategoryRepository categoryRepository;
   private final SubCategoryRepository subCategoryRepository;
   private final MailMessageRepository mailMessageRepository;
+  private final PayeeCategorizationRepository payeeCategorizationRepository;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -77,23 +81,31 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
       return;
     }
 
-    List<MessageDto> postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages, exclusions);
+    List<MessageDto> postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages,
+        exclusions);
 
 
     //Preparation
     Category category = categoryRepository.findByName(Constants.DEFAULT_EXPENDITURE_CATEGORY);
-    SubCategory subCategory = subCategoryRepository.findByCategoryIdAndName(category.getId(), Constants.DEFAULT_EXPENDITURE_CATEGORY);
+    SubCategory subCategory = subCategoryRepository.findByCategoryIdAndName(category.getId(),
+        Constants.DEFAULT_EXPENDITURE_CATEGORY);
     List<Expenditure> expenditures = new ArrayList<>();
     List<MailMessage> mailMessages = new ArrayList<>();
 
     // Parse the string to OffsetDateTime
-    OffsetDateTime lastRecordDateTime = OffsetDateTime.parse(postFilterMessages.getLast().getCreatedDateTime());
+    OffsetDateTime lastRecordDateTime =
+        OffsetDateTime.parse(postFilterMessages.getLast().getCreatedDateTime());
     // Subtract 5 hours
     OffsetDateTime updatedLastRecordDateTime = lastRecordDateTime.minusHours(5);
     String lastMessageDateTime = updatedLastRecordDateTime.toString();
 
     for (MessageDto msg : postFilterMessages) {
-      buildingEntities(msg, subCategory, expenditures, mailMessages);
+      String payee = buildingEntities(msg, subCategory, expenditures, mailMessages);
+      PayeeCategorization payeeCategorization = payeeCategorizationRepository.findByPayee(payee);
+      if (Objects.isNull(payeeCategorization)) {
+        payeeCategorizationRepository.insertPayeeCategorizationAndDoNothingOnConflict(payee,
+            LocalDateTime.now(), subCategory.getId());
+      }
     }
     expenditureRepository.saveAll(expenditures);
     mailMessageRepository.saveAll(mailMessages);
@@ -101,10 +113,12 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     parameterRepository.save(parameter);
   }
 
-  private void buildingEntities(MessageDto msg, SubCategory subCategory, List<Expenditure> expenditures, List<MailMessage> mailMessages) throws NoSuchAlgorithmException {
+  private String buildingEntities(MessageDto msg, SubCategory subCategory,
+                                  List<Expenditure> expenditures,
+                                  List<MailMessage> mailMessages) throws NoSuchAlgorithmException {
     var transactionDate = convertDatetimeToUTCMinusFive(msg.getCreatedDateTime());
     var referenceId = Utilities.generateSha256FromMailContent(transactionDate, msg.getId());
-    var bodyTextContent = convertHTMLTextToPlainText(msg.getBody());
+    var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.getBody());
     var subject = msg.getSubject();
     Expenditure expenditure = Expenditure.builder()
         .referenceId(referenceId)
@@ -145,9 +159,6 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .referenceId(referenceId)
         .build();
     mailMessages.add(mailMessage);
-  }
-
-  private String convertHTMLTextToPlainText(MessageDto.Body body) {
-    return HTMLTextExtractor.extractTextJsoup(body.getContent());
+    return expenditure.getPayee();
   }
 }

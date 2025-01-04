@@ -24,7 +24,8 @@ public class ExpenditureExtractorUtil {
       }
       String secondPart = bodyParts[1];
 
-      var lastSplit = secondPart.split("Nº");
+      var preSplit = secondPart.split("Nº");
+      var lastSplit = preSplit.length < 2 ? secondPart.split("N°") : preSplit;
 
       if (lastSplit.length < 2) {
         return INPUT_NOT_FOUND;

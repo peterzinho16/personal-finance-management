@@ -27,15 +27,13 @@ public class ExpenditureSyncController {
   @GetMapping
   public void executeSync(HttpSession session) throws Exception {
 
-    MicrosoftAccessToken appData = appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
+    MicrosoftAccessToken appData =
+        appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
     if (Objects.nonNull(appData)) {
       storeSessionToken(session, appData);
     }
     if (validateIfExistsValidSession(session)) {
-      expenditureSyncService.executeSynchronization(
-          retrieveSessionToken(session)
-              .getAccessToken()
-      );
+      expenditureSyncService.executeSynchronization(retrieveSessionToken(session).getAccessToken());
     }
   }
 }

@@ -7,14 +7,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.context.ServletContextAware;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.VersionResourceResolver;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class WebMvcConfiguration implements WebMvcConfigurer, ServletContextAware {
@@ -30,6 +34,21 @@ public class WebMvcConfiguration implements WebMvcConfigurer, ServletContextAwar
 
   public WebMvcConfiguration() {
 
+  }
+
+  /**
+   * @param registry
+   */
+  @Override
+  public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    WebMvcConfigurer.super.addResourceHandlers(registry);
+    registry.addResourceHandler(
+            "/img/**","/fonts/**")
+        .addResourceLocations(
+            "classpath:/static/fonts/",
+            "classpath:/static/img/")
+        .setCacheControl(CacheControl.maxAge(7, TimeUnit.DAYS)).resourceChain(true)
+        .addResolver(new VersionResourceResolver().addContentVersionStrategy("/**"));
   }
 
   @Override

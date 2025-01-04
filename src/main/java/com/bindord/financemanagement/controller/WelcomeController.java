@@ -2,7 +2,6 @@ package com.bindord.financemanagement.controller;
 
 import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
-import com.bindord.financemanagement.utils.Utilities;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
@@ -36,7 +35,8 @@ public class WelcomeController {
    */
   @GetMapping(produces = MediaType.TEXT_HTML_VALUE)
   public String welcomeInitPage(HttpSession session) {
-    MicrosoftAccessToken appData = appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
+    MicrosoftAccessToken appData =
+        appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
     if (Objects.nonNull(appData)) {
       storeSessionToken(session, appData);
     }
@@ -47,7 +47,8 @@ public class WelcomeController {
              <body>
                 <div style="text-align: center"><a href="#">There is a session already</a></div>
                 <div style="text-align: center"><a href="/eureka/finance-app/automatic-ingest/full">😎 Go full ingest</a></div><br>
-                <div style="text-align: center"><a href="/eureka/finance-app/expenditure/sync">📨 Expenditures sync</a></div>
+                <div style="text-align: center"><a href="/eureka/finance-app/expenditure/sync">📨 Expenditures sync</a></div><br>
+                <div style="text-align: center"><a href="/admin">👨‍💼 Go to Admin Page</a></div>
              </body>
           </html>
           """;
