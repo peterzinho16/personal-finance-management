@@ -1,7 +1,9 @@
 package com.bindord.financemanagement.controller.master;
 
 import com.bindord.financemanagement.model.finance.PayeeCategorization;
+import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
+import com.bindord.financemanagement.repository.SubCategoryRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,11 +24,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class PayeeCategorizationController {
 
   private final PayeeCategorizationRepository payeeCategorizationRepository;
+  private final SubCategoryRepository subCategoryRepository;
 
   @GetMapping
   public Page<PayeeCategorization> findAllWithPageable(
-      Pageable pageable, @RequestParam(required = false) Integer totalEvents) {
-    return payeeCategorizationRepository.findAllWithSubCategory(totalEvents, pageable);
+      Pageable pageable,
+      @RequestParam(required = false) Integer totalEvents,
+      @RequestParam(required = false) String subCategoryName) {
+    Integer subCatId;
+    if (subCategoryName == null) {
+      subCatId = null;
+    } else {
+      SubCategory subCategory = subCategoryRepository.findByName(subCategoryName);
+      subCatId = subCategory.getId();
+    }
+    return payeeCategorizationRepository.findAllWithSubCategory(totalEvents, subCatId, pageable);
   }
 
   @GetMapping("/{id}")

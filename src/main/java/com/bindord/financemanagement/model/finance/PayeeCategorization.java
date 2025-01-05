@@ -47,6 +47,9 @@ public class PayeeCategorization {
   @Column(nullable = false, name = "creation_date")
   private LocalDateTime creationDate;
 
+  @Column(name = "modified_at")
+  private LocalDateTime modifiedAt;
+
   @Column(nullable = false)
   private Integer totalEvents;
 

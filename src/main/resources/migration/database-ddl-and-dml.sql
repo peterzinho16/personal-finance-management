@@ -78,6 +78,8 @@ VALUES ('Movilidad'),
        ('Viaje'),
        ('Salud'),
        ('Hogar'),
+       ('Tecnologia'),
+       ('Compras'),
        ('Por definir');
 
 -- Then, insert subcategories with references to their parent categories
@@ -247,6 +249,56 @@ SELECT 'General', id
 FROM categories
 WHERE name IN ('Movilidad', 'Vestimenta', 'Alimentacion', 'Salidas', 'Obsequios', 'Servicio', 'Educacion', 'Viaje', 'Salud', 'Hogar');
 
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Transporte publico', id
+FROM categories
+WHERE name IN ('Movilidad', 'Viaje');
+
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Laptop', id
+FROM categories
+WHERE name IN ('Tecnologia');
+
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Smartphone', id
+FROM categories
+WHERE name IN ('Tecnologia');
+
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Tablet', id
+FROM categories
+WHERE name IN ('Tecnologia');
+
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'General', id
+FROM categories
+WHERE name IN ('Tecnologia');
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Mercado', id
+FROM categories
+WHERE name IN ('Compras');
+
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Supermercado', id
+FROM categories
+WHERE name IN ('Compras');
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Aseo hogar', id
+FROM categories
+WHERE name IN ('Compras');
+
+
+INSERT INTO sub_categories (name, category_id)
+SELECT 'Tienda de conveniencia', id
+FROM categories
+WHERE name IN ('Compras');
 
 -- Validation
 select c.name, sc.name

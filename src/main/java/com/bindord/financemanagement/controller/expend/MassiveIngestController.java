@@ -15,6 +15,7 @@ import com.bindord.financemanagement.repository.MailMessageRepository;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.repository.external.MicrosoftGraphClient;
+import com.bindord.financemanagement.svc.PayeeCategorizationService;
 import com.bindord.financemanagement.utils.Constants;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
@@ -30,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +55,7 @@ public class MassiveIngestController {
   private final MailMessageRepository mailMessageRepository;
   private final MailExclusionRuleRepository mailExclusionRuleRepository;
   private final PayeeCategorizationRepository payeeCategorizationRepository;
+  private final PayeeCategorizationService payeeCategorizationService;
 
   @Transactional
   @GetMapping(value = "/full", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -78,8 +79,9 @@ public class MassiveIngestController {
         .map(MailExclusionRule::getKeyword)
         .collect(Collectors.toSet());
 
-
-    while (Objects.nonNull(mailMessagesResponse.getOdataNextLink())) {
+    int counter = 0;
+    while (Objects.nonNull(mailMessagesResponse.getOdataNextLink()) && counter != 2) {
+      counter++;
       List<Expenditure> expenditures = new ArrayList<>();
       List<MailMessage> mailMessages = new ArrayList<>();
       log.info("Current skip: {}", currentSkip);
@@ -133,16 +135,7 @@ public class MassiveIngestController {
         mailMessages.add(mailMessage);
 
         if (payee != null) {
-          var lwrPayee = payee.toLowerCase();
-          var payeeExists =
-              payeeCategorizationRepository.existsByLowerPayee(lwrPayee);
-          if (payeeExists == null) {
-            payeeCategorizationRepository.insertPayeeCategorizationAndDoNothingOnConflict(payee,
-                LocalDateTime.now(),
-                subCategory.getId());
-          } else {
-            payeeCategorizationRepository.updateEventsByLowerPayee(lwrPayee);
-          }
+          payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
         }
       }
       if (withValidation != null) {

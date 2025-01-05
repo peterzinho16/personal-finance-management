@@ -2,7 +2,6 @@ package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
-import com.bindord.financemanagement.model.finance.PayeeCategorization;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.MailExclusionRule;
 import com.bindord.financemanagement.model.source.MailMessage;
@@ -13,7 +12,6 @@ import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
 import com.bindord.financemanagement.repository.MailMessageRepository;
 import com.bindord.financemanagement.repository.ParameterRepository;
-import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.utils.Constants;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
@@ -24,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +48,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final CategoryRepository categoryRepository;
   private final SubCategoryRepository subCategoryRepository;
   private final MailMessageRepository mailMessageRepository;
-  private final PayeeCategorizationRepository payeeCategorizationRepository;
+  private final PayeeCategorizationService payeeCategorizationService;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -101,11 +98,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
     for (MessageDto msg : postFilterMessages) {
       String payee = buildingEntities(msg, subCategory, expenditures, mailMessages);
-      PayeeCategorization payeeCategorization = payeeCategorizationRepository.findByPayee(payee);
-      if (Objects.isNull(payeeCategorization)) {
-        payeeCategorizationRepository.insertPayeeCategorizationAndDoNothingOnConflict(payee,
-            LocalDateTime.now(), subCategory.getId());
-      }
+      payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
     }
     expenditureRepository.saveAll(expenditures);
     mailMessageRepository.saveAll(mailMessages);
@@ -120,13 +113,20 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     var referenceId = Utilities.generateSha256FromMailContent(transactionDate, msg.getId());
     var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.getBody());
     var subject = msg.getSubject();
+    var payee = ExpenditureExtractorUtil.extractThePayeeTrim(subject, bodyTextContent);
+
+    Integer subCategoryId = payeeCategorizationService.obtainSubCategoryByPayee(payee);
+    if (Objects.nonNull(subCategoryId)) {
+      subCategory.setId(subCategoryId);
+    }
+
     Expenditure expenditure = Expenditure.builder()
         .referenceId(referenceId)
         .description(subject)
         .transactionDate(
             convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())
         )
-        .payee(ExpenditureExtractorUtil.extractThePayeeTrim(subject, bodyTextContent))
+        .payee(payee)
         .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
         .amount(
             extractExpenditureAmount(
