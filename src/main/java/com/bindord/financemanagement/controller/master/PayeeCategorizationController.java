@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -22,8 +23,9 @@ public class PayeeCategorizationController {
   private final PayeeCategorizationRepository payeeCategorizationRepository;
 
   @GetMapping
-  public Page<PayeeCategorization> findAllWithPageable(Pageable pageable) {
-    return payeeCategorizationRepository.findAllWithSubCategory(pageable);
+  public Page<PayeeCategorization> findAllWithPageable(
+      Pageable pageable, @RequestParam(required = false) Integer totalEvents) {
+    return payeeCategorizationRepository.findAllWithSubCategory(totalEvents, pageable);
   }
 
   @GetMapping("/{id}")

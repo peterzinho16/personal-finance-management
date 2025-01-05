@@ -133,11 +133,17 @@ public class MassiveIngestController {
         mailMessages.add(mailMessage);
 
         if (payee != null) {
-          payeeCategorizationRepository.insertPayeeCategorizationAndDoNothingOnConflict(payee,
-              LocalDateTime.now(),
-              subCategory.getId());
+          var lwrPayee = payee.toLowerCase();
+          var payeeExists =
+              payeeCategorizationRepository.existsByLowerPayee(lwrPayee);
+          if (payeeExists == null) {
+            payeeCategorizationRepository.insertPayeeCategorizationAndDoNothingOnConflict(payee,
+                LocalDateTime.now(),
+                subCategory.getId());
+          } else {
+            payeeCategorizationRepository.updateEventsByLowerPayee(lwrPayee);
+          }
         }
-
       }
       if (withValidation != null) {
         Set<String> expendituresQueries = expenditureRepository.findByReferenceIdIn(referenceIds);

@@ -17,8 +17,8 @@ public interface PayeeCategorizationRepository extends JpaRepository<PayeeCatego
 
   @Transactional
   @Modifying
-  @Query(value = "INSERT INTO payee_categorizations (payee, creation_date, sub_category_id) " +
-      "VALUES (:payee, :creationDate, :subCategoryId) ON CONFLICT DO NOTHING", nativeQuery = true)
+  @Query(value = "INSERT INTO payee_categorizations (payee, creation_date, sub_category_id, total_events) " +
+      "VALUES (:payee, :creationDate, :subCategoryId, 1) ON CONFLICT DO NOTHING", nativeQuery = true)
   void insertPayeeCategorizationAndDoNothingOnConflict(@Param("payee") String payee,
                                                        @Param("creationDate") LocalDateTime creationDate,
                                                        @Param("subCategoryId") Integer subCategoryId);
@@ -28,6 +28,18 @@ public interface PayeeCategorizationRepository extends JpaRepository<PayeeCatego
   @Query(value = "SELECT PC from PayeeCategorization PC JOIN FETCH PC.subCategory SC JOIN FETCH SC.category WHERE PC.payeeId = ?1")
   PayeeCategorization findByIdWithSubCategory(Integer id);
 
-  @Query(value = "SELECT PC from PayeeCategorization PC JOIN FETCH PC.subCategory SC JOIN FETCH SC.category")
-  Page<PayeeCategorization> findAllWithSubCategory(Pageable pageable);
+  @Query(value = "SELECT PC from PayeeCategorization PC " +
+      "JOIN FETCH PC.subCategory SC " +
+      "JOIN FETCH SC.category " +
+      "WHERE (:totalEvents IS NULL OR PC.totalEvents >= :totalEvents)")
+  Page<PayeeCategorization> findAllWithSubCategory(@Param("totalEvents") Integer totalEvents, Pageable pageable);
+
+
+  @Query(value = "SELECT 1 FROM payee_categorizations WHERE lower_payee = :lowerPayee", nativeQuery = true)
+  Integer existsByLowerPayee(String lowerPayee);
+
+  @Transactional
+  @Modifying
+  @Query(value = "UPDATE payee_categorizations SET total_events = total_events + 1  WHERE lower_payee = :lowerPayee", nativeQuery = true)
+  void updateEventsByLowerPayee(@Param("lowerPayee") String lowerPayee);
 }

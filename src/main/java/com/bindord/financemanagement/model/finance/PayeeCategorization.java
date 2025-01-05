@@ -37,12 +37,18 @@ public class PayeeCategorization {
   @Column(name = "payee_id")
   private Integer payeeId;
 
-  @Column(nullable = false, name = "payee", unique = true)
+  @Column(nullable = false, name = "payee")
   private String payee;
+
+  @Column(nullable = false, unique = true, updatable = false)
+  private String lowerPayee;
 
   @NotNull
   @Column(nullable = false, name = "creation_date")
   private LocalDateTime creationDate;
+
+  @Column(nullable = false)
+  private Integer totalEvents;
 
   @JsonManagedReference
   @ManyToOne(fetch = FetchType.LAZY)
