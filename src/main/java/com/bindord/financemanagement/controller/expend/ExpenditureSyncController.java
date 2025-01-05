@@ -25,7 +25,7 @@ public class ExpenditureSyncController {
   private final ExpenditureSyncService expenditureSyncService;
 
   @GetMapping
-  public void executeSync(HttpSession session) throws Exception {
+  public String executeSync(HttpSession session) throws Exception {
 
     MicrosoftAccessToken appData =
         appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
@@ -33,7 +33,8 @@ public class ExpenditureSyncController {
       storeSessionToken(session, appData);
     }
     if (validateIfExistsValidSession(session)) {
-      expenditureSyncService.executeSynchronization(retrieveSessionToken(session).getAccessToken());
+      return expenditureSyncService.executeSynchronization(retrieveSessionToken(session).getAccessToken());
     }
+    return "No valid session to proceed";
   }
 }

@@ -12,13 +12,11 @@ import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
 import com.bindord.financemanagement.repository.MailMessageRepository;
-import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.repository.external.MicrosoftGraphClient;
+import com.bindord.financemanagement.svc.ExpenditureSyncServiceImpl;
 import com.bindord.financemanagement.svc.PayeeCategorizationService;
 import com.bindord.financemanagement.utils.Constants;
-import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
-import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -38,9 +36,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.bindord.financemanagement.utils.MailRegex.extractExpenditureAmount;
-import static com.bindord.financemanagement.utils.Utilities.convertDatetimeToUTCMinusFive;
-
 @Slf4j
 @Controller
 @RestController
@@ -54,8 +49,8 @@ public class MassiveIngestController {
   private final MicrosoftGraphClient microsoftGraphClient;
   private final MailMessageRepository mailMessageRepository;
   private final MailExclusionRuleRepository mailExclusionRuleRepository;
-  private final PayeeCategorizationRepository payeeCategorizationRepository;
   private final PayeeCategorizationService payeeCategorizationService;
+  private final ExpenditureSyncServiceImpl expenditureSyncServiceImpl;
 
   @Transactional
   @GetMapping(value = "/full", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -79,9 +74,9 @@ public class MassiveIngestController {
         .map(MailExclusionRule::getKeyword)
         .collect(Collectors.toSet());
 
-    int counter = 0;
-    while (Objects.nonNull(mailMessagesResponse.getOdataNextLink()) && counter != 2) {
-      counter++;
+    //int counter = 0;
+    while (Objects.nonNull(mailMessagesResponse.getOdataNextLink()) /*&& counter != 2*/) {
+      //counter++;
       List<Expenditure> expenditures = new ArrayList<>();
       List<MailMessage> mailMessages = new ArrayList<>();
       log.info("Current skip: {}", currentSkip);
@@ -89,72 +84,22 @@ public class MassiveIngestController {
       var postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages, exclusions);
       Set<String> referenceIds = new HashSet<>();
       for (MessageDto msg : postFilterMessages) {
-        var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.getBody());
-        var payee = ExpenditureExtractorUtil.extractThePayeeTrim(msg.getSubject(), bodyTextContent);
-        var transactionDate = convertDatetimeToUTCMinusFive(msg.getCreatedDateTime());
-        var referenceId = Utilities.generateSha256FromMailContent(transactionDate, msg.getId());
-        referenceIds.add(referenceId);
-        Expenditure expenditure = Expenditure.builder()
-            .referenceId(referenceId)
-            .description(msg.getSubject())
-            .transactionDate(
-                convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())
-            )
-            .payee(payee)
-            .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
-            .amount(
-                extractExpenditureAmount(
-                    bodyTextContent
-                )
-            )
-            .shared(false)
-            .sharedAmount(null)
-            .singlePayment(true)
-            .installments((short) 1)
-            .lentTo(null)
-            .loanState(null)
-            .loanAmount(null)
-            .recurrent(false)
-            .subCategory(subCategory)
-            .build();
-        expenditures.add(expenditure);
+        String payee = expenditureSyncServiceImpl.buildEntitiesAndGetPayee(msg, subCategory,
+            expenditures, mailMessages);
 
-        MailMessage mailMessage = MailMessage.builder()
-            .id(msg.getId())
-            .createdDateTime(
-                convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())
-            )
-            .subject(msg.getSubject())
-            .bodyPreview(msg.getBodyPreview())
-            .bodyHtml(msg.getBody().getContent())
-            .bodyTextContent(bodyTextContent)
-            .fromEmail(msg.getFrom().getEmailAddress().getName())
-            .webLink(msg.getWebLink())
-            .referenceId(referenceId)
-            .build();
-        mailMessages.add(mailMessage);
-
-        if (payee != null) {
-          payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
-        }
+        payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
       }
       if (withValidation != null) {
         Set<String> expendituresQueries = expenditureRepository.findByReferenceIdIn(referenceIds);
         if (!expendituresQueries.isEmpty()) {
-          log.info("Some records were stored before, in total: " + expendituresQueries.size());
+          log.info("Some records were stored before, in total: {}", expendituresQueries.size());
           expenditures = expenditures.stream().filter(expend ->
                   !expendituresQueries.contains(expend.getReferenceId()))
               .collect(Collectors.toList());
-          expenditureRepository.saveAll(expenditures);
-          mailMessageRepository.saveAll(mailMessages);
-        } else {
-          expenditureRepository.saveAll(expenditures);
-          mailMessageRepository.saveAll(mailMessages);
         }
-      } else {
-        expenditureRepository.saveAll(expenditures);
-        mailMessageRepository.saveAll(mailMessages);
       }
+      expenditureRepository.saveAll(expenditures);
+      mailMessageRepository.saveAll(mailMessages);
 
       if (expenditures.isEmpty()) {
         log.info("No new records to save.");

@@ -38,7 +38,6 @@ import static com.bindord.financemanagement.utils.Utilities.convertDatetimeToUTC
 public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
   private static final String LAST_SYNC_DATE = "LAST_SYNC_DATE";
-  private final String INPUT_NOT_FOUND = "Not found";
 
 
   private final MailExclusionRuleRepository mailExclusionRuleRepository;
@@ -56,7 +55,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
    * @param accessToken token associated to Microsoft Graph API
    */
   @Override
-  public void executeSynchronization(String accessToken) throws Exception {
+  public String executeSynchronization(String accessToken) throws Exception {
 
     List<MailExclusionRule> exclusionsList = mailExclusionRuleRepository.findAll();
     Set<String> exclusions = exclusionsList
@@ -74,8 +73,9 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         );
 
     if (beforeFilterMessages.isEmpty()) {
-      log.info("There is no record to register");
-      return;
+      var msg = "There is no record to register";
+      log.info(msg);
+      return msg;
     }
 
     List<MessageDto> postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages,
@@ -97,30 +97,52 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     String lastMessageDateTime = updatedLastRecordDateTime.toString();
 
     for (MessageDto msg : postFilterMessages) {
-      String payee = buildingEntities(msg, subCategory, expenditures, mailMessages);
+      String payee = buildEntitiesAndGetPayee(msg, subCategory, expenditures, mailMessages);
+
       payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
     }
     expenditureRepository.saveAll(expenditures);
     mailMessageRepository.saveAll(mailMessages);
     parameter.setValue(lastMessageDateTime);
     parameterRepository.save(parameter);
+    return "The sync was successful";
   }
 
-  private String buildingEntities(MessageDto msg, SubCategory subCategory,
-                                  List<Expenditure> expenditures,
-                                  List<MailMessage> mailMessages) throws NoSuchAlgorithmException {
+  /**
+   * Build entities Expenditure and MailMessage
+   *
+   * @param msg          the msg
+   * @param subCategory  the sub category
+   * @param expenditures the expenditures
+   * @param mailMessages the mail messages
+   * @return payee from the mail message
+   * @throws NoSuchAlgorithmException the no such algorithm exception
+   */
+  public String buildEntitiesAndGetPayee(MessageDto msg, SubCategory subCategory,
+                                         List<Expenditure> expenditures,
+                                         List<MailMessage> mailMessages) throws NoSuchAlgorithmException {
     var transactionDate = convertDatetimeToUTCMinusFive(msg.getCreatedDateTime());
     var referenceId = Utilities.generateSha256FromMailContent(transactionDate, msg.getId());
     var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.getBody());
     var subject = msg.getSubject();
     var payee = ExpenditureExtractorUtil.extractThePayeeTrim(subject, bodyTextContent);
-
-    Integer subCategoryId = payeeCategorizationService.obtainSubCategoryByPayee(payee);
-    if (Objects.nonNull(subCategoryId)) {
-      subCategory.setId(subCategoryId);
+    if (payee != null) {
+      Integer subCategoryId = payeeCategorizationService.obtainSubCategoryByPayee(payee);
+      if (Objects.nonNull(subCategoryId)) {
+        subCategory = subCategoryRepository.findById(subCategoryId).orElse(subCategory);
+      }
     }
+    Expenditure expenditure = expenditureMapper(msg, subCategory, referenceId, subject, payee,
+        bodyTextContent);
+    expenditures.add(expenditure);
+    mailMessages.add(mailMessageMapper(msg, referenceId, bodyTextContent));
+    return expenditure.getPayee();
+  }
 
-    Expenditure expenditure = Expenditure.builder()
+  public static Expenditure expenditureMapper(MessageDto msg, SubCategory subCategory,
+                                              String referenceId, String subject, String payee,
+                                              String bodyTextContent) {
+    return Expenditure.builder()
         .referenceId(referenceId)
         .description(subject)
         .transactionDate(
@@ -143,9 +165,12 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .recurrent(false)
         .subCategory(subCategory)
         .build();
-    expenditures.add(expenditure);
+  }
 
-    MailMessage mailMessage = MailMessage.builder()
+  public static MailMessage mailMessageMapper(MessageDto msg, String referenceId,
+                                              String bodyTextContent) {
+
+    return MailMessage.builder()
         .id(msg.getId())
         .createdDateTime(
             convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())
@@ -158,7 +183,5 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .webLink(msg.getWebLink())
         .referenceId(referenceId)
         .build();
-    mailMessages.add(mailMessage);
-    return expenditure.getPayee();
   }
 }
