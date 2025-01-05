@@ -42,4 +42,9 @@ public interface PayeeCategorizationRepository extends JpaRepository<PayeeCatego
   @Modifying
   @Query(value = "UPDATE payee_categorizations SET total_events = total_events + 1  WHERE lower_payee = :lowerPayee", nativeQuery = true)
   void updateEventsByLowerPayee(@Param("lowerPayee") String lowerPayee);
+
+  @Transactional
+  @Modifying
+  @Query(value = "UPDATE payee_categorizations SET sub_category_id = :subCategoryId WHERE payee_id = :payeeId", nativeQuery = true)
+  void updateSubCategoryByPayeeId(@Param("subCategoryId") Integer subCategoryId, @Param("payeeId") Integer payeeId);
 }

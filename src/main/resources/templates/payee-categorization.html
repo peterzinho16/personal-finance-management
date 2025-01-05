@@ -56,12 +56,16 @@
     <div class="container mt-4">
         <h2>Payee List</h2>
         <div class="mb-3">
-            <label for="totalEventsSelect" class="form-label">Total Events</label>
+            <label for="totalEventsSelect" class="form-label">Total eventos mayores que: (<b>⚠️Todos</b> es igual a obviar esta condicion):</label>
             <select class="form-select" id="totalEventsSelect">
                 <option value="0">Todos</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
-                <option value="3">3</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
             </select>
         </div>
         <table id="payee-table" class="table table-striped">
@@ -72,6 +76,7 @@
                 <th>Creation Date</th>
                 <th>Category</th>
                 <th>SubCategory</th>
+                <th>Total Events</th>
                 <th>Options</th>
             </tr>
             </thead>
@@ -86,6 +91,7 @@
         <h5>Edit Payee Categorization</h5>
         <button type="button" class="btn-close" id="closeSlideForm" aria-label="Close"></button>
         <form id="edit-form">
+            <input type="hidden" id="entity-id">
             <div class="mb-3">
                 <label for="edit-payee" class="form-label">Payee</label>
                 <input type="text" class="form-control" id="edit-payee">
@@ -134,20 +140,20 @@
                 // Generate HTML for categories and subcategories
                 for (const [categoryName, subCategories] of Object.entries(categories)) {
                     const categoryDiv = $(`
-                        <div class="category col-12 mb-4">
-                            <h5>${categoryName}</h5>
-                            <div class="row">
-                                ${subCategories.map(subCategory => `
-                                    <div class="col-4">
-                                        <input class="form-check-input" type="radio" name="subCategory" id="subCategory-${subCategory.id}" value="${subCategory.id}">
-                                        <label class="form-check-label" for="subCategory-${subCategory.id}">
-                                            ${subCategory.name}
-                                        </label>
-                                    </div>
-                                `).join('')}
-                            </div>
+                    <div class="category col-12 mb-4">
+                        <h5>${categoryName}</h5>
+                        <div class="row">
+                            ${subCategories.map(subCategory => `
+                                <div class="col-6">
+                                    <input class="form-check-input" type="radio" name="subCategory" id="subCategory-${subCategory.id}" value="${subCategory.id}">
+                                    <label class="form-check-label" for="subCategory-${subCategory.id}">
+                                        ${subCategory.name}
+                                    </label>
+                                </div>
+                            `).join('')}
                         </div>
-                    `);
+                    </div>
+                `);
                     categoryContainer.append(categoryDiv);
                 }
             },
@@ -163,9 +169,14 @@
             ajax: function (data, callback) {
                 const page = data.start / data.length;
                 const size = data.length;
+                const totalEvents = $("#totalEventsSelect").val();
+                let url = `${apiEndpoint}?page=${page}&size=${size}`;
+                if (totalEvents !== "0") {
+                    url += `&totalEvents=${totalEvents}`;
+                }
 
                 $.ajax({
-                    url: `${apiEndpoint}?page=${page}&size=${size}`,
+                    url: url,
                     success: function (response) {
                         const rows = response.content.map(payee => [
                             payee.payeeId,
@@ -173,8 +184,9 @@
                             new Date(payee.creationDate).toLocaleString(),
                             payee.subCategory.category.name,
                             payee.subCategory.name,
+                            payee.totalEvents,
                             `<button class="btn btn-sm btn-warning me-2" onclick="editPayee(${payee.payeeId})">Edit</button>
-                             <button class="btn btn-sm btn-danger">Delete</button>`
+                         <button class="btn btn-sm btn-danger">Delete</button>`
                         ]);
 
                         callback({
@@ -192,6 +204,7 @@
                 {title: "Creation Date"},
                 {title: "Category"},
                 {title: "SubCategory"},
+                {title: "Total Events"},
                 {title: "Options", orderable: false}
             ],
             pageLength: 10,
@@ -199,13 +212,18 @@
             responsive: true,
         });
 
-        // Edit Payee function
+        // Event listener for totalEventsSelect
+        $("#totalEventsSelect").on("change", function () {
+            table.ajax.reload();
+        });
+
         // Edit Payee function
         window.editPayee = async function (id) {
             try {
                 const response = await fetch(`${apiEndpoint}/${id}`);
                 const payee = await response.json();
 
+                $("#entity-id").val(payee.payeeId);
                 $("#edit-payee").val(payee.payee);
                 $("#edit-creationDate").val(new Date(payee.creationDate).toISOString().slice(0, 16));
                 $(`#subCategory-${payee.subCategory.id}`).prop('checked', true);
@@ -216,19 +234,6 @@
                 console.error("Error fetching payee details:", error);
             }
         };
-
-        // Close slide form
-        $("#closeSlideForm").on("click", function () {
-            $("#slideForm").removeClass("active");
-        });
-
-        // Save changes
-        $("#save-changes").on("click", function () {
-            const entityId = $("#entity-id").val();
-            const subCategoryId = $("input[name='subCategory']:checked").val();
-            console.log(`Entity ID: ${entityId}, New SubCategory ID: ${subCategoryId}`);
-            // Implement the logic to update the subcategory of the entity
-        });
 
         // Close slide form and hide save changes button
         $("#closeSlideForm").on("click", function () {
@@ -242,6 +247,26 @@
                 $("#slideForm").removeClass("active");
                 $("#save-changes").addClass("hidden");
             }
+        });
+
+        // Save changes
+        $("#save-changes").on("click", function () {
+            const entityId = $("#entity-id").val();
+            const subCategoryId = $("input[name='subCategory']:checked").val();
+
+            $.ajax({
+                url: `${apiEndpoint}/${entityId}/${subCategoryId}`,
+                method: 'PUT',
+                success: function (response) {
+                    console.log("Update successful:", response);
+                    $("#slideForm").removeClass("active");
+                    $("#save-changes").addClass("hidden");
+                    table.ajax.reload();
+                },
+                error: function (error) {
+                    console.error("Error updating subcategory:", error);
+                }
+            });
         });
     });
 </script>

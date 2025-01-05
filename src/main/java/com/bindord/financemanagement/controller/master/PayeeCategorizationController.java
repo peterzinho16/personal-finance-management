@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,5 +32,13 @@ public class PayeeCategorizationController {
   @GetMapping("/{id}")
   public PayeeCategorization findAllWithPageable(@PathVariable Integer id) {
     return payeeCategorizationRepository.findByIdWithSubCategory(id);
+  }
+
+  @PutMapping("/{id}/{subCategoryId}")
+  public PayeeCategorization updateSubCategoryById(@PathVariable Integer id,
+                                                   @PathVariable Integer subCategoryId) throws Exception {
+    payeeCategorizationRepository.updateSubCategoryByPayeeId(subCategoryId, id);
+    return payeeCategorizationRepository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
+        " exists"));
   }
 }

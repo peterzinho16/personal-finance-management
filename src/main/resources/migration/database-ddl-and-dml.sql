@@ -242,6 +242,12 @@ SELECT 'Por definir', id
 FROM categories
 WHERE name = 'Por definir';
 
+INSERT INTO sub_categories (name, category_id)
+SELECT 'General', id
+FROM categories
+WHERE name IN ('Movilidad', 'Vestimenta', 'Alimentacion', 'Salidas', 'Obsequios', 'Servicio', 'Educacion', 'Viaje', 'Salud', 'Hogar');
+
+
 -- Validation
 select c.name, sc.name
 from sub_categories sc
