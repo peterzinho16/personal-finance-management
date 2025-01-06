@@ -42,6 +42,40 @@ body {
     margin: 0;
 }
 
+
+.slide-form {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 50%;
+    height: 100%;
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+    transition: right 0.3s ease-in-out;
+    z-index: 1050;
+    overflow-y: auto;
+}
+
+.slide-form.active {
+    right: 0;
+}
+
+.fixed-save-button {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1100;
+}
+
+.hidden {
+    display: none;
+}
+
+.highlight {
+    background-color: yellow !important;
+    transition: background-color 0.5s ease;
+}
+
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);

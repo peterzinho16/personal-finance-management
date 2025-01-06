@@ -38,6 +38,7 @@ import java.time.LocalDateTime;
 @Builder
 @EqualsAndHashCode(of = "id")
 public class Expenditure {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

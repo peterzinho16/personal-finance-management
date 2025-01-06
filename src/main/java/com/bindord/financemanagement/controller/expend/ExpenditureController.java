@@ -1,7 +1,11 @@
 package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.finance.PayeeCategorization;
+import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
+import com.bindord.financemanagement.repository.SubCategoryRepository;
+import com.bindord.financemanagement.svc.ExpenditureService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,7 +13,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,15 +27,25 @@ import java.util.List;
 public class ExpenditureController {
 
   private final ExpenditureRepository repository;
+  private final SubCategoryRepository subCategoryRepository;
+  private final ExpenditureService expenditureService;
 
   @GetMapping
-  Page<Expenditure> findAll(Pageable pageable) {
-    return repository.findAll(pageable);
+  Page<Expenditure> findAll(Pageable pageable,
+                            @RequestParam(required = false) String subCategoryName) {
+    Integer subCatId;
+    if (subCategoryName == null) {
+      subCatId = null;
+    } else {
+      SubCategory subCategory = subCategoryRepository.findByName(subCategoryName);
+      subCatId = subCategory.getId();
+    }
+    return repository.findAllWithSubCategory(subCatId, pageable);
   }
 
   @GetMapping("/{id}")
-  Expenditure findById(@PathVariable Integer id) throws Exception {
-    return repository.findById(id).orElseThrow(() -> new Exception("Not found entity"));
+  Expenditure findByIdWithPageable(@PathVariable Integer id) throws Exception {
+    return repository.findByIdWithSubCategory(id);
   }
 
   @PostMapping
@@ -37,8 +53,10 @@ public class ExpenditureController {
     return repository.save(expenditure);
   }
 
-  @PostMapping("/persist/batch")
-  List<Expenditure> save(List<Expenditure> expenditures) {
-    return repository.saveAll(expenditures);
+  @PutMapping("/{id}/{subCategoryId}")
+  public Expenditure updateSubCategoryById(@PathVariable Integer id,
+                                           @PathVariable Integer subCategoryId,
+                                           @RequestParam(required = false) String payee) throws Exception {
+    return expenditureService.updateSubCategoryById(subCategoryId, id, payee);
   }
 }

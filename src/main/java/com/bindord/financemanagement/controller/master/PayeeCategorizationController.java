@@ -42,7 +42,7 @@ public class PayeeCategorizationController {
   }
 
   @GetMapping("/{id}")
-  public PayeeCategorization findAllWithPageable(@PathVariable Integer id) {
+  public PayeeCategorization findByIdWithPageable(@PathVariable Integer id) {
     return payeeCategorizationRepository.findByIdWithSubCategory(id);
   }
 

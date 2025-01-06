@@ -2,7 +2,6 @@ package com.bindord.financemanagement.repository;
 
 import com.bindord.financemanagement.model.finance.PayeeCategorization;
 import jakarta.transaction.Transactional;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Repository
@@ -30,6 +28,10 @@ public interface PayeeCategorizationRepository extends JpaRepository<PayeeCatego
   @Query(nativeQuery = true, value = "SELECT sub_category_id FROM payee_categorizations " +
       "WHERE lower_payee = :lowerPayee")
   Integer findSubCategoryIdByLowerPayee(@Param("lowerPayee") String lowerPayee);
+
+  @Query(nativeQuery = true, value = "SELECT payee_id FROM payee_categorizations " +
+      "WHERE lower_payee = :lowerPayee")
+  Integer findIdByLowerPayee(@Param("lowerPayee") String lowerPayee);
 
   @Query(value = "SELECT PC from PayeeCategorization PC JOIN FETCH PC.subCategory SC JOIN FETCH " +
       "SC.category WHERE PC.payeeId = ?1")
