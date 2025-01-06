@@ -5,9 +5,9 @@ SELECT
     TO_CHAR(ex.transaction_date, 'dd/MM/yyyy') AS  Fecha ,
     NULL AS  Mes_Anio ,
     ex.amount AS  Monto ,
-    'NO' AS  Gasto_compartido ,
-    NULL AS  Monto_shared ,
-    NULL AS  Monto_shared_dividido ,
+    case when ex.shared then 'SI' else 'NO' end AS  Gasto_compartido ,
+    null AS  Monto_shared ,
+    null AS  Monto_shared_dividido ,
     NULL AS  Prestamo ,
     NULL AS  Monto_Prestamo ,
     NULL AS  Prestado_a ,
@@ -21,3 +21,6 @@ FROM expenditures ex
 WHERE transaction_date >= '2024-12-31'
 ORDER BY ex.transaction_date ASC;
 
+
+select distinct name
+from sub_categories order by 1 asc;

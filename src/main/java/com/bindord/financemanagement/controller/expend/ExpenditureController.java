@@ -1,7 +1,6 @@
 package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.model.finance.Expenditure;
-import com.bindord.financemanagement.model.finance.PayeeCategorization;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
@@ -17,8 +16,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @Controller
 @RestController
@@ -58,5 +55,10 @@ public class ExpenditureController {
                                            @PathVariable Integer subCategoryId,
                                            @RequestParam(required = false) String payee) throws Exception {
     return expenditureService.updateSubCategoryById(subCategoryId, id, payee);
+  }
+
+  @PutMapping("/{id}/update/shared")
+  public Expenditure updateSharedStateById(@PathVariable Integer id) throws Exception {
+    return expenditureService.updateSharedById(id);
   }
 }

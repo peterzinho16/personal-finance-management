@@ -9,24 +9,23 @@
     <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/styles.css" rel="stylesheet">
-
 </head>
 
 <body>
-<div class="sidebar" id="sidebar">
+<div class="sidebar compressed" id="sidebar">
     <h2 class="text-center text-white"><a href="/admin">Admin Panel</a></h2>
-    <a href="/admin">Admin</a>
-    <a href="/payee-categorization">Payee Categorizations</a>
-    <a href="/">Init flow</a>
+    <a href="/admin"><i class="bi bi-house-door"></i><span>Admin</span></a>
+    <a href="/payee-categorization"><i class="bi bi-list"></i><span>Payee Categorizations</span></a>
+    <a href="/"><i class="bi bi-play-circle"></i><span>Init flow</span></a>
 </div>
 
-<div class="content">
+<div class="content compressed">
     <div class="header d-flex justify-content-between align-items-center">
         <h1>Expenditures</h1>
-        <button class="btn btn-outline-light d-md-none" id="toggle-sidebar">☰</button>
+        <button class="btn btn-outline-light" id="toggle-sidebar">☰</button>
     </div>
 
-    <div class="container mt-4">
+    <div class="container">
         <h2>Expenditure List</h2>
         <div class="row">
             <div class="col-md-3">
@@ -39,21 +38,25 @@
                 </div>
             </div>
         </div>
-        <table id="expenditure-table" class="table table-striped">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Description</th>
-                <th>Payee</th>
-                <th>Amount</th>
-                <th>Transaction Date</th>
-                <th>Category</th>
-                <th>SubCategory</th>
-                <th>Options</th>
-            </tr>
-            </thead>
-            <tbody id="expenditure-table-body"></tbody>
-        </table>
+        <div class="table-responsive">
+            <table id="expenditure-table" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Payee</th>
+                    <th>Amount</th>
+                    <th>Transaction Date</th>
+                    <th>Category</th>
+                    <th>SubCategory</th>
+                    <th>Shared Amount</th>
+                    <th>Shared</th>
+                    <th>Options</th>
+                </tr>
+                </thead>
+                <tbody id="expenditure-table-body"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -84,8 +87,7 @@
                 <label for="edit-subCategory" class="form-label">SubCategory</label>
                 <div id="category-container" class="row"></div>
             </div>
-            <button type="button" class="btn btn-primary fixed-save-button hidden" id="save-changes">Save changes
-            </button>
+            <button type="button" class="btn btn-primary fixed-save-button hidden" id="save-changes">Save changes</button>
         </form>
     </div>
 </div>
@@ -102,8 +104,8 @@
 
         // Toggle sidebar
         $("#toggle-sidebar").on("click", function () {
-            $("#sidebar").toggleClass("hidden");
-            $("#content").toggleClass("expanded");
+            $("#sidebar").toggleClass("expanded");
+            $(".content").toggleClass("expanded");
         });
 
         // Fetch subcategories and populate the category container
@@ -172,6 +174,8 @@
                             new Date(exp.transactionDate).toLocaleString(),
                             exp.subCategory.category.name,
                             exp.subCategory.name,
+                            exp.sharedAmount ? exp.sharedAmount : 'N/A',
+                            `<input type="checkbox" class="form-check-input" ${exp.shared ? 'checked' : ''} onchange="toggleShared(${exp.id}, this.checked)">`,
                             `<button class="btn btn-sm btn-warning me-2" onclick="editExpenditure(${exp.id})">Edit</button>
                                  <button class="btn btn-sm btn-danger">Delete</button>
                                  <a href="#" class="btn btn-sm btn-info me-2" onclick="goToLink('${exp.referenceId.replace(/'/g, "\\'")}')">Link</a>`
@@ -194,6 +198,8 @@
                 {title: "Transaction Date"},
                 {title: "Category"},
                 {title: "SubCategory"},
+                {title: "Shared Amount"},
+                {title: "Shared"},
                 {title: "Options", orderable: false}
             ],
             pageLength: 20,
@@ -285,6 +291,22 @@
                 }
             });
         });
+
+        // Toggle shared status
+        window.toggleShared = function (id, shared) {
+            $.ajax({
+                url: `${apiEndpoint}/${id}/update/shared`,
+                method: 'PUT',
+                contentType: 'application/json',
+                success: function (response) {
+                    console.log("Shared status updated:", response);
+                    table.ajax.reload();
+                },
+                error: function (error) {
+                    console.error("Error updating shared status:", error);
+                }
+            });
+        };
 
     });
 

@@ -7,8 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -39,5 +37,21 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     expenditureRepository.updateSubCategoryByPayeeId(subCategoryId, id);
     return expenditureRepository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
         " exists"));
+  }
+
+  /**
+   * @param id
+   * @return
+   * @throws Exception
+   */
+  @Override
+  public Expenditure updateSharedById(Integer id) throws Exception {
+    var expenditure = expenditureRepository.findById(id).orElseThrow(() -> new Exception("Id " +
+        "doesn't" +
+        " exists"));
+    var sharedState = !expenditure.getShared();
+    expenditure.setShared(sharedState);
+    expenditure.setSharedAmount(sharedState ? expenditure.getAmount() / 2 : null);
+    return expenditureRepository.save(expenditure);
   }
 }
