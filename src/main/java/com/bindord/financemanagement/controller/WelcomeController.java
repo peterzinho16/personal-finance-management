@@ -57,7 +57,8 @@ public class WelcomeController {
         <html>
            <head></head>
            <body>
-              <div style="text-align: center"><a href="/eureka/finance-app/api-graph/start-flow">Init Flow</a></div>
+              <div style="text-align: center"><a href="/eureka/finance-app/api-graph/start-flow">Init Flow</a></div><br>
+              <div style="text-align: center"><a href="/admin">👨‍💼 Go to Admin Page</a></div>
            </body>
         </html>
         """;

@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,13 +43,18 @@ public class ExpenditureController {
   }
 
   @GetMapping("/{id}")
-  Expenditure findByIdWithPageable(@PathVariable Integer id) throws Exception {
+  Expenditure findByIdWithPageable(@PathVariable Integer id) {
     return repository.findByIdWithSubCategory(id);
   }
 
   @PostMapping
   Expenditure save(Expenditure expenditure) {
     return repository.save(expenditure);
+  }
+
+  @PutMapping("/{id}")
+  Expenditure update(@RequestBody ExpenditureUpdateDto expenditure, @PathVariable Integer id) throws Exception {
+    return expenditureService.updateById(expenditure, id);
   }
 
   @PutMapping("/{id}/{subCategoryId}")

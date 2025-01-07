@@ -10,10 +10,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface ExpenditureRepository extends JpaRepository<Expenditure, Integer> {
+
+  @Query(value = "SELECT EX FROM Expenditure EX JOIN FETCH EX.subCategory SC WHERE EX.id = ?1")
+  Optional<Expenditure> findById(Integer id);
 
   @Query(value = "SELECT E.referenceId FROM Expenditure E WHERE E.referenceId IN (?1)")
   Set<String> findByReferenceIdIn(Set<String> refIds);

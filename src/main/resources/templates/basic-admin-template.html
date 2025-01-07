@@ -10,25 +10,34 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/styles.css" rel="stylesheet">
 </head>
+<style>
+    /* Limit the width of the Description column */
+    #expenditure-table th:nth-child(2),
+    #expenditure-table td:nth-child(2) {
+        max-width: 200px;  /* Adjust the width as needed */
+        overflow: hidden;  /* Hide overflowing content */
+        text-overflow: ellipsis;  /* Display '...' for overflowing content */
+        white-space: nowrap;  /* Prevent text from wrapping */
+    }
+</style>
 
 <body>
 <div class="sidebar compressed" id="sidebar">
-    <h2 class="text-center text-white"><a href="/admin">Admin Panel</a></h2>
-    <a href="/admin"><i class="bi bi-house-door"></i><span>Admin</span></a>
+    <h2 class="text-center text-white"><a href="/admin">🏦</a></h2>
+    <a href="/admin"><i class="bi bi-house-door"></i><span>Expenditures</span></a>
     <a href="/payee-categorization"><i class="bi bi-list"></i><span>Payee Categorizations</span></a>
     <a href="/"><i class="bi bi-play-circle"></i><span>Init flow</span></a>
 </div>
 
-<div class="content compressed">
+<div class="content compressed" style="margin-top: -20px !important;">
     <div class="header d-flex justify-content-between align-items-center">
         <h1>Expenditures</h1>
         <button class="btn btn-outline-light" id="toggle-sidebar">☰</button>
     </div>
 
-    <div class="container">
-        <h2>Expenditure List</h2>
+    <div class="container-fluid">
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-3 pt-2">
                 <div class="mb-3">
                     <label for="subCategorySelect" class="form-label">Sub categoria:</label>
                     <select class="form-select" id="subCategorySelect">
@@ -43,20 +52,33 @@
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Description</th>
+                    <th title="Subject from mail">Description</th>
                     <th>Payee</th>
                     <th>Amount</th>
-                    <th>Transaction Date</th>
+                    <th title="Transaction Date">T. Date</th>
                     <th>Category</th>
-                    <th>SubCategory</th>
-                    <th>Shared Amount</th>
-                    <th>Shared</th>
-                    <th>Options</th>
+                    <th title="Sub Category">Sub Category</th>
+                    <th title="Shared Amount">S. Amount</th>
+                    <th title="Indicate if the expense is shared">Shared</th>
+                    <th title="Indicate if the expense was made for another person">Lent</th>
+                    <th title="Indicate for who was the loan">Lent To</th>
+                    <th>Options Menu</th>
                 </tr>
                 </thead>
                 <tbody id="expenditure-table-body"></tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="errorToastTitle"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastBody"></div>
     </div>
 </div>
 
@@ -67,27 +89,48 @@
         <button type="button" class="btn-close" id="closeSlideForm" aria-label="Close"></button>
         <form id="edit-form">
             <input type="hidden" id="entity-id">
-            <div class="mb-3">
-                <label for="edit-description" class="form-label">Description</label>
-                <input type="text" class="form-control" id="edit-description">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="edit-description" class="form-label">Description</label>
+                    <input type="text" class="form-control" id="edit-description">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="edit-payee" class="form-label">Payee (Read only)</label>
+                    <input readonly="readonly" type="text" class="form-control" id="edit-payee">
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="edit-payee" class="form-label">Payee (Read only)</label>
-                <input readonly="readonly" type="text" class="form-control" id="edit-payee">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="edit-amount" class="form-label">Amount</label>
+                    <input type="number" step="0.01" class="form-control" id="edit-amount">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="edit-transactionDate" class="form-label">Transaction Date</label>
+                    <input type="datetime-local" class="form-control" id="edit-transactionDate">
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="edit-amount" class="form-label">Amount</label>
-                <input type="number" step="0.01" class="form-control" id="edit-amount">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="lentCheckbox" class="form-label">Lent</label>
+                    <label class="switch">
+                        <input type="checkbox" id="lentCheckbox" name="lent" value="false">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="col-md-6 mb-3" id="lentToContainer" style="display: none;">
+                    <label for="lentToInput" class="form-label">Lent to <span class="badge bg-primary">(Default value: Amor)</span></label>
+                    <input type="text" id="lentToInput" name="lentTo" class="form-control" maxlength="36">
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="edit-transactionDate" class="form-label">Transaction Date</label>
-                <input type="datetime-local" class="form-control" id="edit-transactionDate">
+            <hr>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="edit-subCategory" class="form-label">SubCategory</label>
+                    <div id="category-container" class="row"></div>
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="edit-subCategory" class="form-label">SubCategory</label>
-                <div id="category-container" class="row"></div>
-            </div>
-            <button type="button" class="btn btn-primary fixed-save-button hidden" id="save-changes">Save changes</button>
+            <button type="button" class="btn btn-primary fixed-save-button hidden" id="save-changes">Save changes
+            </button>
         </form>
     </div>
 </div>
@@ -97,10 +140,37 @@
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script>
+
+    // Initialize Bootstrap tooltips with custom delay
+    document.addEventListener('DOMContentLoaded', function () {
+        const tooltipTriggerList = document.querySelectorAll('thead > tr > th[title]');
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl, {
+                delay: {"show": 100, "hide": 100}
+            });
+        });
+        const arrayAelement = document.querySelectorAll('table > a');
+        arrayAelement.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl, {
+                delay: {"show": 100, "hide": 100}
+            });
+        });
+    });
     $(document).ready(function () {
         const apiEndpoint = "http://localhost:8080/eureka/finance-app/expenditure";
         const apiEndpointMailMessage = "http://localhost:8080/eureka/finance-app/mail-message";
         const subCategoryEndpoint = "http://localhost:8080/eureka/finance-app/sub-category";
+
+        // Show/hide lentTo input based on lent checkbox
+        $("#lentCheckbox").on("change", function () {
+            if ($(this).is(":checked")) {
+                $("#lentToContainer").show();
+                $("#lentToInput").val('Amor');
+            } else {
+                $("#lentToContainer").hide();
+                $("#lentToInput").val('');
+            }
+        });
 
         // Toggle sidebar
         $("#toggle-sidebar").on("click", function () {
@@ -147,6 +217,7 @@
             },
             error: function (error) {
                 console.error("Error fetching subcategories:", error);
+                showErrorToast(error.status, error.responseJSON.message);
             }
         });
 
@@ -170,15 +241,23 @@
                             exp.id,
                             exp.description,
                             exp.payee,
-                            exp.amount,
-                            new Date(exp.transactionDate).toLocaleString(),
+                            exp.currency === 'PEN' ? 'S/ ' + exp.amount.toFixed(2) : '$ ' + exp.amount.toFixed(2),
+                            formatDateWithMonthText(exp.transactionDate),
                             exp.subCategory.category.name,
                             exp.subCategory.name,
-                            exp.sharedAmount ? exp.sharedAmount : 'N/A',
+                            exp.sharedAmount ? exp.currency === 'PEN' ? 'S/ ' + exp.sharedAmount.toFixed(2) : '$ ' + exp.sharedAmount.toFixed(2) : '-',
                             `<input type="checkbox" class="form-check-input" ${exp.shared ? 'checked' : ''} onchange="toggleShared(${exp.id}, this.checked)">`,
-                            `<button class="btn btn-sm btn-warning me-2" onclick="editExpenditure(${exp.id})">Edit</button>
-                                 <button class="btn btn-sm btn-danger">Delete</button>
-                                 <a href="#" class="btn btn-sm btn-info me-2" onclick="goToLink('${exp.referenceId.replace(/'/g, "\\'")}')">Link</a>`
+                            `<input disabled type="checkbox" class="form-check-input" ${exp.lent ? 'checked' : ''}>`,
+                            exp.lentTo ? exp.lentTo : '-',
+                            `<a href="#" class="btn btn-sm btn-primary" title="Edit" onclick="editExpenditure(${exp.id})">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                                 <a href="#" class="btn btn-sm btn-danger" title="Delete" onclick="deleteExpenditure(${exp.id})">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-info" title="Link" onclick="goToLink('${exp.referenceId.replace(/'/g, "\\'")}')">
+                                <i class="bi bi-send"></i>
+                            </a>`
                         ]);
 
                         callback({
@@ -188,22 +267,14 @@
                             data: rows,
                         });
                     },
+                    error: function (error) {
+                        console.error("Error fetching expenditures:", error);
+                        showErrorToast(error.status, error.responseJSON.message);
+                    }
                 });
             },
-            columns: [
-                {title: "ID"},
-                {title: "Description"},
-                {title: "Payee"},
-                {title: "Amount"},
-                {title: "Transaction Date"},
-                {title: "Category"},
-                {title: "SubCategory"},
-                {title: "Shared Amount"},
-                {title: "Shared"},
-                {title: "Options", orderable: false}
-            ],
-            pageLength: 20,
-            lengthMenu: [5, 10, 20, 50],
+            pageLength: 10,
+            lengthMenu: [8, 10, 20, 50],
             responsive: true,
         });
 
@@ -224,11 +295,20 @@
                 $("#edit-amount").val(exp.amount);
                 $("#edit-transactionDate").val(exp.transactionDate);
                 $(`#subCategory-${exp.subCategory.id}`).prop('checked', true);
+                $("#lentCheckbox").prop('checked', exp.lent);
+                if (exp.lent) {
+                    $("#lentToContainer").show();
+                    $("#lentToInput").val(exp.lentTo);
+                } else {
+                    $("#lentToContainer").hide();
+                    $("#lentToInput").val('');
+                }
 
                 $("#slideForm").addClass("active");
                 $("#save-changes").removeClass("hidden");
             } catch (error) {
                 console.error("Error fetching expenditure details:", error);
+                showErrorToast(error.status, error.responseJSON.message);
             }
         };
 
@@ -254,6 +334,7 @@
                 window.open(mailMessage.webLink, '_blank'); // '_blank' opens the link in a new tab
             } catch (error) {
                 console.error("Error fetching expenditure details:", error);
+                showErrorToast(error.status, error.responseJSON.message);
             }
         };
 
@@ -261,16 +342,24 @@
         $("#save-changes").on("click", function () {
             const entityId = $("#entity-id").val();
             const subCategoryId = $("input[name='subCategory']:checked").val();
-            const editPayeeInput = $("#edit-payee").val();
-            const editPayeeValidation = editPayeeInput !== undefined && editPayeeInput.trim() !== '' ? 1 : 0;
-            let queryParams = '';
-            if (editPayeeValidation === 1) {
-                queryParams = `payee=${editPayeeInput}`;
-            }
+            const lent = $("#lentCheckbox").is(":checked");
+            const lentTo = lent ? $("#lentToInput").val() : null;
+
+            const data = {
+                description: $("#edit-description").val(),
+                payee: $("#edit-payee").val(),
+                amount: $("#edit-amount").val(),
+                transactionDate: $("#edit-transactionDate").val(),
+                subCategoryId: subCategoryId,
+                lent: lent,
+                lentTo: lentTo
+            };
 
             $.ajax({
-                url: `${apiEndpoint}/${entityId}/${subCategoryId}?${queryParams}`,
+                url: `${apiEndpoint}/${entityId}`,
                 method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
                 success: function (response) {
                     console.log("Update successful:", response);
                     $("#slideForm").removeClass("active");
@@ -287,7 +376,8 @@
                     });
                 },
                 error: function (error) {
-                    console.error("Error updating subcategory:", error);
+                    console.error("Error updating expenditure:", error);
+                    showErrorToast(error.status, error.responseJSON.message);
                 }
             });
         });
@@ -304,6 +394,7 @@
                 },
                 error: function (error) {
                     console.error("Error updating shared status:", error);
+                    showErrorToast(error.status, error.responseJSON.message);
                 }
             });
         };
@@ -323,11 +414,54 @@
             'Salud': '🩺',
             'Hogar': '🏠',
             'Tecnologia': '💻',
-            'Por definir': '❓'
+            'Por definir': '❓',
+            'Compras': '🛒'
         };
 
         return categoryEmojiMap[categoryName] ? `${categoryEmojiMap[categoryName]} ${categoryName}` : categoryName;
     }
+
+    function formatDateWithMonthText(dateString) {
+        const date = new Date(dateString);
+
+        const day = String(date.getDate()).padStart(2, "0");
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[date.getMonth()]; // Retrieve the 3-character month abbreviation
+        const year = date.getFullYear();
+
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const period = hours >= 12 ? "PM" : "AM";
+
+        // Convert to 12-hour format
+        hours = hours % 12 || 12;
+
+        return `${day}/${month}/${year} ${String(hours).padStart(2, "0")}:${minutes} ${period}`;
+    }
+
+    function showErrorToast(status, message) {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = `toast-${Date.now()}`;
+        const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <strong>HTTP error ${status}</strong>
+                    <div class="content-fluid">${message}</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 10000  // Duration in milliseconds (5000ms = 5 seconds)
+        });
+        toast.show();
+    }
+
 </script>
 </body>
 

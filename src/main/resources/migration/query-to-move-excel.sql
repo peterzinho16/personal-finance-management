@@ -10,7 +10,7 @@ SELECT
     null AS  Monto_shared_dividido ,
     NULL AS  Prestamo ,
     NULL AS  Monto_Prestamo ,
-    NULL AS  Prestado_a ,
+    ex.lent_to AS  Prestado_a ,
     NULL AS  Estado_Deuda_Amore ,
     NULL AS  Devolver_a ,
     NULL AS  Estado_Devolucion ,
@@ -20,7 +20,3 @@ FROM expenditures ex
          INNER JOIN categories c ON sc.category_id = c.id
 WHERE transaction_date >= '2024-12-31'
 ORDER BY ex.transaction_date ASC;
-
-
-select distinct name
-from sub_categories order by 1 asc;

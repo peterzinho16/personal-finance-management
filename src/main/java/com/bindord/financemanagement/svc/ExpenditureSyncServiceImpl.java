@@ -159,6 +159,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .sharedAmount(null)
         .singlePayment(true)
         .installments((short) 1)
+        .lent(false)
         .lentTo(null)
         .loanState(null)
         .loanAmount(null)
