@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenditure Bar Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Expenditure Bar Graph</h1>
+<label for="month-filter">Select Month:</label>
+<select id="month-filter">
+    <option value="all">All</option>
+    <option value="2024-07">July 2024</option>
+    <option value="2024-08">August 2024</option>
+    <option value="2024-09">September 2024</option>
+    <option value="2024-10">October 2024</option>
+    <option value="2024-11">November 2024</option>
+    <option value="2024-12">December 2024</option>
+    <option value="2025-01">January 2025</option>
+    <!-- Add more months as needed -->
+</select>
+<canvas id="expenditure-chart" width="800" height="400"></canvas>
+
+<script>
+    fetch('http://localhost:8080/eureka/finance-app/expenditure?page=0&size=1000')
+        .then(e => e.json())
+        .then(res => {
+            const data = res;
+            let chartInstance = null; // Track the chart instance
+
+            const convertToPEN = (amount, currency) => currency === "USD" ? amount * 3.75 : amount;
+
+            const filterDataByMonth = (data, month) => {
+                if (month === "all") return data;
+                return data.filter(item => item.transactionDate.startsWith(month));
+            };
+
+            const calculateTotals = (data) => {
+                const totals = {};
+                data.forEach(item => {
+                    const category = item.subCategory.category.name;
+                    if (!totals[category]) {
+                        totals[category] = { owner: 0, shared: 0 };
+                    }
+                    const amountPEN = convertToPEN(item.amount, item.currency);
+                    const sharedAmountPEN = item.shared ? convertToPEN(item.sharedAmount, item.currency) : 0;
+                    totals[category].owner += amountPEN;
+                    totals[category].shared += sharedAmountPEN;
+                });
+                return totals;
+            };
+
+            const renderChart = (totals) => {
+                const ctx = document.getElementById('expenditure-chart').getContext('2d');
+
+                // Destroy the existing chart instance if it exists
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                // Create a new chart instance
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(totals),
+                        datasets: [
+                            {
+                                label: 'Owner Amount (PEN)',
+                                data: Object.values(totals).map(total => total.owner),
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Shared Amount (PEN)',
+                                data: Object.values(totals).map(total => total.shared),
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { enabled: true }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            };
+
+            document.getElementById('month-filter').addEventListener('change', (event) => {
+                const month = event.target.value;
+                const filteredData = filterDataByMonth(data.content, month);
+                const totals = calculateTotals(filteredData);
+                renderChart(totals);
+            });
+
+            // Initial rendering
+            const totals = calculateTotals(data.content);
+            renderChart(totals);
+        });
+</script>
+</body>
+</html>

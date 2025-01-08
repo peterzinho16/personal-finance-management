@@ -6,13 +6,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class PagesController {
 
-  @RequestMapping({"/admin"})
+  @RequestMapping({"/home"})
   public String showAdminPage() {
-    return "basic-admin-template";
+    return "expenditure";
   }
 
   @RequestMapping({"/payee-categorization"})
   public String showPayeeCategorizationPage() {
     return "payee-categorization";
+  }
+
+  @RequestMapping({"/bar-chart-categories"})
+  public String showBarChartExpendituresCategoriesPage() {
+    return "bar-chart-categories";
   }
 }

@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.context.ServletContextAware;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.VersionResourceResolver;
@@ -22,6 +23,17 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class WebMvcConfiguration implements WebMvcConfigurer, ServletContextAware {
+  /**
+   * @param registry
+   */
+  @Override
+  public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/**")
+        .allowedOrigins("http://localhost:8080")
+        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        .allowedHeaders("*")
+        .allowCredentials(true);
+  }
 
   private ServletContext context;
 
@@ -43,7 +55,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer, ServletContextAwar
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     WebMvcConfigurer.super.addResourceHandlers(registry);
     registry.addResourceHandler(
-            "/img/**","/fonts/**")
+            "/img/**", "/fonts/**")
         .addResourceLocations(
             "classpath:/static/fonts/",
             "classpath:/static/img/")

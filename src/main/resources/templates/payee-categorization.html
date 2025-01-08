@@ -1,33 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payee Categorization</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/css/styles.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-</head>
+<!-- Include the head fragment -->
+<head th:replace="html-commons/head :: fg-head(title='Payee Categorizations')"></head>
 
 <body>
-<div class="sidebar" id="sidebar">
-    <h2 class="text-center text-white"><a href="/admin">🏦</a></h2>
-    <a href="/admin">Expenditures</a>
-    <a href="/payee-categorization">Payee Categorizations</a>
-    <a href="/">Init flow</a>
-</div>
+<!-- Include the sidebar fragment -->
+<div th:replace="html-commons/sidebar :: fg-sidebar"></div>
 
-<div class="content">
+<div class="content compressed">
     <div class="header d-flex justify-content-between align-items-center">
         <h1>Payee Categorization</h1>
-        <button class="btn btn-outline-light d-md-none" id="toggle-sidebar">☰</button>
+        <button class="btn btn-outline-light" id="toggle-sidebar">☰</button>
     </div>
 
-    <div class="container mt-4">
-        <h2>Payee List</h2>
-        <div class="row">
+    <div class="container-fluid">
+        <div class="row pt-2">
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="totalEventsSelect" class="form-label">Total eventos mayores que:
@@ -95,7 +84,7 @@
                 <input type="datetime-local" class="form-control" id="edit-creationDate">
             </div>
             <div class="mb-3">
-                <label for="edit-subCategory" class="form-label">SubCategory</label>
+                <label class="form-label">SubCategory</label>
                 <div id="category-container" class="row"></div>
             </div>
             <button type="button" class="btn btn-primary fixed-save-button hidden" id="save-changes">Save changes
@@ -104,19 +93,10 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-<script src="/js/scripts.js"></script>
+<!-- Include the scripts fragment -->
+<div th:replace="html-commons/scripts :: fg-js"></div>
 <script>
-    // Initialize Bootstrap tooltips
-    document.addEventListener('DOMContentLoaded', function () {
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-            new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
+
     $(document).ready(function () {
         const apiEndpoint = "http://localhost:8080/eureka/finance-app/payee-categorization";
         const subCategoryEndpoint = "http://localhost:8080/eureka/finance-app/sub-category";
@@ -126,37 +106,7 @@
             url: subCategoryEndpoint,
             method: 'GET',
             success: function (subCategories) {
-                const categoryContainer = $("#category-container");
-                const categories = {};
-
-                // Group subcategories by category
-                subCategories.forEach(subCategory => {
-                    const categoryName = subCategory.category.name;
-                    if (!categories[categoryName]) {
-                        categories[categoryName] = [];
-                    }
-                    categories[categoryName].push(subCategory);
-                });
-
-                // Generate HTML for categories and subcategories
-                for (const [categoryName, subCategories] of Object.entries(categories)) {
-                    const categoryDiv = $(`
-                    <div class="category col-12 mb-4">
-                        <h5>${getCategoryNameWithEmoji(categoryName)}</h5>
-                        <div class="row">
-                            ${subCategories.map(subCategory => `
-                                <div class="col-lg-4 col-md-4 col-xs-6">
-                                    <input class="form-check-input" type="radio" name="subCategory" id="subCategory-${subCategory.id}" value="${subCategory.id}">
-                                    <label class="form-check-label" for="subCategory-${subCategory.id}">
-                                        ${subCategory.name}
-                                    </label>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `);
-                    categoryContainer.append(categoryDiv);
-                }
+                generateCatAndSubCat(subCategories);
             },
             error: function (error) {
                 console.error("Error fetching subcategories:", error);
@@ -245,20 +195,6 @@
             }
         };
 
-        // Close slide form and hide save changes button
-        $("#closeSlideForm").on("click", function () {
-            $("#slideForm").removeClass("active");
-            $("#save-changes").addClass("hidden");
-        });
-
-        // Close slide form with Escape key
-        $(document).on("keydown", function (event) {
-            if (event.key === "Escape") {
-                $("#slideForm").removeClass("active");
-                $("#save-changes").addClass("hidden");
-            }
-        });
-
         // Save changes
         $("#save-changes").on("click", function () {
             const entityId = $("#entity-id").val();
@@ -290,26 +226,6 @@
             });
         });
     });
-
-    function getCategoryNameWithEmoji(categoryName) {
-        const categoryEmojiMap = {
-            'Movilidad': '🚗',
-            'Vestimenta': '👗',
-            'Alimentacion': '🍽️',
-            'Salidas': '🍻',
-            'Obsequios': '🎁',
-            'Servicio': '🛠️',
-            'Educacion': '🎓',
-            'Viaje': '✈️',
-            'Salud': '🩺',
-            'Hogar': '🏠',
-            'Tecnologia': '💻',
-            'Por definir': '❓',
-            'Compras': '🛒'
-        };
-
-        return categoryEmojiMap[categoryName] ? `${categoryEmojiMap[categoryName]} ${categoryName}` : categoryName;
-    }
 </script>
 </body>
 

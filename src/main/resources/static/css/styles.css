@@ -53,7 +53,7 @@ body {
 
 .content {
     margin-left: 80px;
-    padding: 20px;
+    padding: 20px 0;
     transition: margin-left 0.3s ease-in-out;
 }
 
@@ -109,16 +109,6 @@ body {
     overflow-x: auto;
 }
 
-@media (max-width: 768px) {
-    .sidebar {
-        width: 250px;
-    }
-
-    .content {
-        margin-left: 250px;
-    }
-}
-
 .switch {
     position: relative;
     display: block;
@@ -166,4 +156,16 @@ input:checked + .slider:before {
 
 th {
     white-space: nowrap;
+}
+/* Limit the width of the Description column */
+#expenditure-table th:nth-child(2),
+#expenditure-table td:nth-child(2) {
+    max-width: 200px;  /* Adjust the width as needed */
+    overflow: hidden;  /* Hide overflowing content */
+    text-overflow: ellipsis;  /* Display '...' for overflowing content */
+    white-space: nowrap;  /* Prevent text from wrapping */
+}
+
+.content.compressed {
+    margin-top: -20px !important;
 }

@@ -48,7 +48,7 @@ public class WelcomeController {
                 <div style="text-align: center"><a href="#">There is a session already</a></div>
                 <div style="text-align: center"><a href="/eureka/finance-app/automatic-ingest/full">😎 Go full ingest</a></div><br>
                 <div style="text-align: center"><a href="/eureka/finance-app/expenditure/sync">📨 Expenditures sync</a></div><br>
-                <div style="text-align: center"><a href="/admin">👨‍💼 Go to Admin Page</a></div>
+                <div style="text-align: center"><a href="/home">🏠 Go to Expenditure Page</a></div>
              </body>
           </html>
           """;
@@ -58,7 +58,7 @@ public class WelcomeController {
            <head></head>
            <body>
               <div style="text-align: center"><a href="/eureka/finance-app/api-graph/start-flow">Init Flow</a></div><br>
-              <div style="text-align: center"><a href="/admin">👨‍💼 Go to Admin Page</a></div>
+              <div style="text-align: center"><a href="/home">🏠 Go to Expenditure Page</a></div>
            </body>
         </html>
         """;
