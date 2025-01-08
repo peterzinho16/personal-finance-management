@@ -38,6 +38,31 @@ function showErrorToast(status, message) {
     toast.show();
 }
 
+// Show success toast
+function showSuccessToast(response) {
+    console.log(response);
+    const toastContainer = document.querySelector('.toast-container');
+    const toastId = `toast-${Date.now()}`;
+    const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <strong>Peticion exitosa!</strong>
+                    <div class="content-fluid"></div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 10000  // Duration in milliseconds (10000ms = 10 seconds)
+    });
+    toast.show();
+}
+
 // Toggle sidebar
 $(document).ready(function () {
     $("#toggle-sidebar").on("click", function () {
@@ -80,8 +105,10 @@ function getCategoryNameWithEmoji(categoryName) {
     return categoryEmojiMap[categoryName] ? `${categoryEmojiMap[categoryName]} ${categoryName}` : categoryName;
 }
 
-function generateCatAndSubCat(subCategories) {
-
+function generateCatAndSubCat(subCategories, colNum) {
+    if(colNum === undefined || isNaN(colNum) || colNum <=3) {
+        //colNum = 3;
+    }
     const categoryContainer = $("#category-container");
     const categories = {};
 
@@ -97,11 +124,11 @@ function generateCatAndSubCat(subCategories) {
     // Generate HTML for categories and subcategories
     for (const [categoryName, subCategories] of Object.entries(categories)) {
         const categoryDiv = $(`
-                    <div class="category col-12 mb-4">
+                    <div class="category col-12 mb-3">
                         <h5>${getCategoryNameWithEmoji(categoryName)}</h5>
                         <div class="row">
                             ${subCategories.map(subCategory => `
-                                <div class="col-lg-4 col-md-4 col-xs-6">
+                                <div class="col-lg-3 col-md-4 col-xs-6">
                                     <input class="form-check-input" type="radio" name="subCategory" id="subCategory-${subCategory.id}" value="${subCategory.id}">
                                     <label class="form-check-label" for="subCategory-${subCategory.id}">
                                         ${subCategory.name}
@@ -113,4 +140,24 @@ function generateCatAndSubCat(subCategories) {
                 `);
         categoryContainer.append(categoryDiv);
     }
+}
+
+
+
+function formatDateWithMonthText(dateString) {
+    const date = new Date(dateString);
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[date.getMonth()]; // Retrieve the 3-character month abbreviation
+    const year = date.getFullYear();
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const period = hours >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hours = hours % 12 || 12;
+
+    return `${day}/${month}/${year} ${String(hours).padStart(2, "0")}:${minutes} ${period}`;
 }

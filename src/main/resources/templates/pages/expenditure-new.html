@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include the head fragment -->
+<head th:replace="html-commons/head :: fg-head(title='Add Expenditure')"></head>
+
+<body>
+<!-- Include the sidebar fragment -->
+<div th:replace="html-commons/sidebar :: fg-sidebar"></div>
+
+<div class="content compressed">
+    <div class="header d-flex justify-content-between align-items-center">
+        <button class="btn btn-outline-light" id="toggle-sidebar">☰</button>
+        <h1>New Expenditure</h1>
+    </div>
+
+    <!-- Slide Form -->
+    <div class="container mt-4" id="slideForm">
+        <div class="p-4 bg-light rounded">
+            <h5 class="text text-primary">Add Expenditure Form</h5>
+            <hr>
+            <form id="new-form">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="new-description" class="form-label">Description (Default: Registro manual)</label>
+                        <input type="text" class="form-control" id="new-description" value="Registro manual"
+                               maxlength="60">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="new-payee" class="form-label">Payee</label>
+                        <input type="text" class="form-control" id="new-payee" maxlength="60">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="new-currency" class="form-label">Currency</label>
+                                <select name="new-currency" id="new-currency" class="form-select">
+                                    <option value="PEN" selected="selected">PEN</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="new-amount" class="form-label">Amount <span class="badge bg-primary">(Min val: 1)</span></label>
+                                <input type="number" step="0.01" class="form-control" id="new-amount">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="new-transactionDate" class="form-label">Transaction Date</label>
+                        <input type="datetime-local" class="form-control" id="new-transactionDate">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="sharedCheckbox" class="form-label">Shared</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="sharedCheckbox" name="shared" value="false">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="lentCheckbox" class="form-label">Lent</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="lentCheckbox" name="lent" value="false">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="col-md-6" id="lentToContainer" style="display: none;">
+                                <label for="lentToInput" class="form-label">Lent to <span class="badge bg-primary">(Default value: Amor)</span></label>
+                                <input type="text" id="lentToInput" name="lentTo" class="form-control" maxlength="36">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">SubCategory</label>
+                        <div id="category-container"
+                             class="row"
+                             style="max-height: 300px; overflow-y: scroll">
+
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" id="save-changes">Save changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="errorToastTitle"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastBody"></div>
+    </div>
+</div>
+
+<!-- Include the scripts fragment -->
+<div th:replace="html-commons/scripts :: fg-js"></div>
+<script>
+    // Default values for some fields
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000; // Convert offset to milliseconds
+    const localDatetime = new Date(now.getTime() - offset).toISOString().slice(0, 16);
+
+    document.getElementById('new-transactionDate').value = localDatetime;
+</script>
+<script>
+    $(document).ready(function () {
+        const apiEndpoint = "http://localhost:8080/eureka/finance-app/expenditure";
+        const subCategoryEndpoint = "http://localhost:8080/eureka/finance-app/sub-category";
+
+        // Show/hide lentTo input based on lent checkbox
+        $("#lentCheckbox").on("change", function () {
+            if ($(this).is(":checked")) {
+                $("#lentToContainer").show();
+                $("#lentToInput").val('Amor');
+            } else {
+                $("#lentToContainer").hide();
+                $("#lentToInput").val('');
+            }
+        });
+
+        // Fetch subcategories and populate the category container
+        $.ajax({
+            url: subCategoryEndpoint,
+            method: 'GET',
+            success: function (subCategories) {
+                generateCatAndSubCat(subCategories);
+            },
+            error: function (error) {
+                console.error("Error fetching subcategories:", error);
+                showErrorToast(error.status, error.responseJSON.message);
+            }
+        });
+
+        // Save changes
+        $("#save-changes").on("click", function () {
+            const subCategoryId = $("input[name='subCategory']:checked").val();
+            const shared = $("#sharedCheckbox").is(":checked");
+            const lent = $("#lentCheckbox").is(":checked");
+            const lentTo = lent ? $("#lentToInput").val() : null;
+
+            const data = {
+                description: $("#new-description").val(),
+                payee: $("#new-payee").val(),
+                currency: $("#new-currency").val(),
+                amount: $("#new-amount").val(),
+                transactionDate: $("#new-transactionDate").val(),
+                subCategoryId: subCategoryId,
+                shared: shared,
+                lent: lent,
+                lentTo: lentTo
+            };
+
+            console.log(data);
+
+            $.ajax({
+                url: `${apiEndpoint}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    showSuccessToast(response);
+                },
+                error: function (error) {
+                    console.error("Error adding expenditure:", error);
+                    showErrorToast(error.status, error.responseJSON.message);
+                }
+            });
+        });
+
+    });
+
+</script>
+</body>
+
+</html>

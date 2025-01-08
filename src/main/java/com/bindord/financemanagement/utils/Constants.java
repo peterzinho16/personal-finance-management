@@ -9,5 +9,9 @@ public class Constants {
 
   public static final String INBOX_FOLDER_ID = "AQMkADAwATNiZmYAZC1jNTRiLTg5N2EtMDACLTAwCgAuAAADoowy8RjcUkyj3Qv2gECIoAEAJZOEFSNNi02ZcdREwq9DeAAAAgEMAAAA";
   public static final String NOTIF_COMPRAS_SUB_FOLDER_ID = "AQMkADAwATNiZmYAZC1jNTRiLTg5N2EtMDACLTAwCgAuAAADoowy8RjcUkyj3Qv2gECIoAEAJZOEFSNNi02ZcdREwq9DeAAGx92vkwAAAA==";
+  public static final String MSG_ERROR_SHARED_AND_LENT = "The expenditure can be submitted because both shared and lent can't be true at the" +
+      " same" +
+      " " +
+      "time";
 
 }

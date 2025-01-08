@@ -2,13 +2,21 @@ package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
+import com.bindord.financemanagement.repository.SubCategoryRepository;
+import com.bindord.financemanagement.utils.Utilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.security.NoSuchAlgorithmException;
+
+import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
+import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
+import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -18,6 +26,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
 
   private final ExpenditureRepository repository;
   private final PayeeCategorizationRepository payeeCategorizationRepository;
+  private final SubCategoryRepository subCategoryRepository;
 
   /**
    * @param id
@@ -46,9 +55,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     }
 
     if (qExpenditure.getShared() && qExpenditure.getLent()) {
-      var msg = "The expenditure can be updated because both shared and lent can't be true at the same" +
-          " " +
-          "time";
+      var msg = MSG_ERROR_SHARED_AND_LENT;
       log.warn(msg);
       throw new CustomValidationException(msg);
     }
@@ -57,7 +64,8 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     var qSubCatId = qExpenditure.getSubCategory().getId();
     var expenditureResponse = repository.save(qExpenditure);
     if (expenditureDto.getSubCategoryId() != null && !subCatId.equals(qSubCatId)) {
-      expenditureResponse = updateSubCategoryById(expenditureDto.getSubCategoryId(), id, qExpenditure.getPayee());
+      expenditureResponse = updateSubCategoryById(expenditureDto.getSubCategoryId(), id,
+          qExpenditure.getPayee());
     }
     return expenditureResponse;
   }
@@ -106,6 +114,15 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     return repository.save(expenditure);
   }
 
+  /**
+   * @param expenditureDto
+   * @return
+   */
+  @Override
+  public Expenditure saveNewManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
+    return expenditureMapperForManualInsert(expenditureDto);
+  }
+
   private static void updateSharedState(Expenditure expenditure) {
     var sharedState = !expenditure.getShared();
     expenditure.setShared(sharedState);
@@ -119,5 +136,43 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     expenditure.setLentTo(nwLentValue ? expenditureUpdateDto.getLentTo() : null);
     expenditure.setLoanAmount(nwLentValue ? expenditure.getAmount() : null);
     expenditure.setLoanState(nwLentValue ? Expenditure.LoanState.PENDING : null);
+  }
+
+  private Expenditure expenditureMapperForManualInsert(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
+    var sharedVal = expenditureDto.getShared() != null ? expenditureDto.getShared() : false;
+    var lentVal = expenditureDto.getLent() != null ? expenditureDto.getLent() : false;
+    if(sharedVal && lentVal) {
+      throw new CustomValidationException(MSG_ERROR_SHARED_AND_LENT);
+    }
+    var payee = expenditureDto.getPayee();
+    Double amount = expenditureDto.getAmount();
+    var referenceId =
+        Utilities.generateSha256FromMailIdOrPayee(expenditureDto.getTransactionDate(), payee);
+    return repository.save(Expenditure.builder()
+        .referenceId(referenceId)
+        .description(expenditureDto.getDescription())
+        .transactionDate(
+            expenditureDto.getTransactionDate()
+        )
+        .payee(payee)
+        .currency(PEN.name().equals(expenditureDto.getCurrency()) ? PEN : USD)
+        .amount(
+            amount
+        )
+        .shared(sharedVal)
+        .sharedAmount(sharedVal ? amount / 2 : null)
+        .singlePayment(true)
+        .installments((short) 1)
+        .lent(lentVal)
+        .lentTo(expenditureDto.getLentTo())
+        .loanState(lentVal ? Expenditure.LoanState.PENDING : null)
+        .loanAmount(lentVal ? amount : null)
+        .recurrent(false)
+        .manualRegister(true)
+        .subCategory(subCategoryRepository
+            .findById(expenditureDto.getSubCategoryId())
+            .orElseThrow(() ->
+                new CustomValidationException("Sub category doesn't exists!"))
+        ).build());
   }
 }

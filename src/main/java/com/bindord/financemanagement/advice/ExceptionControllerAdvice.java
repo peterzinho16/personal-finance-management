@@ -63,6 +63,7 @@ public class ExceptionControllerAdvice {
   @ExceptionHandler(IllegalArgumentException.class)
   public ApiError handleIllegalArgumentException(IllegalArgumentException ex) {
     log.warn("method {}", "handleIllegalArgumentException");
+    ex.printStackTrace();
     return new ApiError(ex.getMessage(), ex);
   }
 

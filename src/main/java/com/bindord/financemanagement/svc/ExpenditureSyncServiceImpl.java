@@ -122,7 +122,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
                                          List<Expenditure> expenditures,
                                          List<MailMessage> mailMessages) throws NoSuchAlgorithmException {
     var transactionDate = convertDatetimeToUTCMinusFive(msg.getCreatedDateTime());
-    var referenceId = Utilities.generateSha256FromMailContent(transactionDate, msg.getId());
+    var referenceId = Utilities.generateSha256FromMailIdOrPayee(transactionDate, msg.getId());
     var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.getBody());
     var subject = msg.getSubject();
     var payee = ExpenditureExtractorUtil.extractThePayeeTrim(subject, bodyTextContent);

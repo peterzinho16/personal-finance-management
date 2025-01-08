@@ -8,16 +8,21 @@ public class PagesController {
 
   @RequestMapping({"/home"})
   public String showAdminPage() {
-    return "expenditure";
+    return "pages/expenditure";
   }
 
-  @RequestMapping({"/payee-categorization"})
+  @RequestMapping({"/pages/payee-categorization"})
   public String showPayeeCategorizationPage() {
-    return "payee-categorization";
+    return "pages/payee-categorization";
   }
 
   @RequestMapping({"/bar-chart-categories"})
   public String showBarChartExpendituresCategoriesPage() {
-    return "bar-chart-categories";
+    return "pages/bar-chart-categories";
+  }
+
+  @RequestMapping({"/expenditure/new"})
+  public String addNewExpenditureManually() {
+    return "pages/expenditure-new";
   }
 }

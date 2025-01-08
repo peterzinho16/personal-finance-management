@@ -114,6 +114,9 @@ public class Expenditure {
         USD
     }
 
+    @Column
+    private Boolean manualRegister = false;
+
     @JsonManagedReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id", nullable = false)

@@ -1,11 +1,14 @@
 package com.bindord.financemanagement.controller.expend;
 
+import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.svc.ExpenditureService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.security.NoSuchAlgorithmException;
 
 @Controller
 @RestController
@@ -48,8 +53,8 @@ public class ExpenditureController {
   }
 
   @PostMapping
-  Expenditure save(Expenditure expenditure) {
-    return repository.save(expenditure);
+  Expenditure save(@RequestBody @Valid ExpenditureAddDto expenditure) throws CustomValidationException, NoSuchAlgorithmException {
+    return expenditureService.saveNewManually(expenditure);
   }
 
   @PutMapping("/{id}")

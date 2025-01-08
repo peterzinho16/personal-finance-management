@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
@@ -35,7 +34,7 @@ public class Utilities {
     return localDateTime;
   }
 
-  public static String generateSha256FromMailContent(LocalDateTime transactionDate, String mailId) throws NoSuchAlgorithmException {
+  public static String generateSha256FromMailIdOrPayee(LocalDateTime transactionDate, String mailId) throws NoSuchAlgorithmException {
     String timestamp = transactionDate.format(DateTimeFormatter.ISO_DATE_TIME);
     String flSting = timestamp + mailId;
 
