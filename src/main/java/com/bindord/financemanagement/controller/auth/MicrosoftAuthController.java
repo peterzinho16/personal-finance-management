@@ -78,6 +78,7 @@ public class MicrosoftAuthController {
     accessTokenToDb.setCreatedAt(LocalDateTime.now());
     accessTokenToDb.setExpiresAt(expiresAt);
 
+    log.debug("accessToken: {}", accessTokenToDb);
     session.setAttribute("sessionToken", accessTokenToDb);
 
     var response = JacksonFactory

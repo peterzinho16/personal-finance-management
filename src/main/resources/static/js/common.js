@@ -122,7 +122,8 @@ function generateCatAndSubCat(subCategories, colNum) {
     });
 
     // Generate HTML for categories and subcategories
-    for (const [categoryName, subCategories] of Object.entries(categories)) {
+    console.log(categories);
+    for (const [categoryName, subCategories] of Object.entries(categories).toSorted()) {
         const categoryDiv = $(`
                     <div class="category col-12 mb-3">
                         <h5>${getCategoryNameWithEmoji(categoryName)}</h5>
@@ -160,4 +161,10 @@ function formatDateWithMonthText(dateString) {
     hours = hours % 12 || 12;
 
     return `${day}/${month}/${year} ${String(hours).padStart(2, "0")}:${minutes} ${period}`;
+}
+
+function generateDateTimeNowFormatted() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000; // Convert offset to milliseconds
+    return new Date(now.getTime() - offset).toISOString().slice(0, 16);
 }

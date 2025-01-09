@@ -3,11 +3,10 @@
       xmlns:th="http://www.thymeleaf.org">
 
 <!-- Include the head fragment -->
-<head th:replace="html-commons/head :: fg-head(title='Payee Categorizations')"></head>
-
+<head th:replace="~{html-commons/head :: fg-head(title='Payee Categorizations')}"></head>
 <body>
 <!-- Include the sidebar fragment -->
-<div th:replace="html-commons/sidebar :: fg-sidebar"></div>
+<div th:replace="~{html-commons/sidebar :: fg-sidebar}"></div>
 
 <div class="content compressed">
     <div class="header d-flex justify-content-between align-items-center">
@@ -16,7 +15,7 @@
     </div>
 
     <div class="container-fluid">
-        <div class="row pt-2">
+        <div class="row pt-2 align-items-end">
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="totalEventsSelect" class="form-label">Total eventos mayores que:
@@ -30,10 +29,10 @@
                     </span>
                     </label>
                     <select class="form-select" id="totalEventsSelect">
-                        <option value="0">Todos</option>
+                        <option value="0" selected="selected">Todos</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
-                        <option value="3" selected>3</option>
+                        <option value="3">3</option>
                         <option value="4">4</option>
                         <option value="5">5</option>
                         <option value="6">6</option>
@@ -48,6 +47,17 @@
                         <option value="Por definir">Por definir</option>
                         <option value="0">Todos</option>
                     </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="searchInputPayee" class="form-label">Payee:</label>
+                    <input type="text" class="form-control" id="searchInputPayee">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3 d-flex align-items-end">
+                    <button class="btn btn-primary ms-2" id="searchPayeeButton"><i class="bi bi-search"></i></button>
                 </div>
             </div>
         </div>
@@ -94,7 +104,7 @@
 </div>
 
 <!-- Include the scripts fragment -->
-<div th:replace="html-commons/scripts :: fg-js"></div>
+<div th:replace="~{html-commons/scripts :: fg-js}"></div>
 <script>
 
     $(document).ready(function () {
@@ -122,12 +132,17 @@
                 const size = data.length;
                 const totalEvents = $("#totalEventsSelect").val();
                 const subCategoryName = $("#subCategorySelect").val();
+                const payeeInpt = $("#searchInputPayee").val();
+
                 let url = `${apiEndpoint}?page=${page}&size=${size}`;
                 if (totalEvents !== "0") {
                     url += `&totalEvents=${totalEvents}`;
                 }
                 if (subCategoryName !== "0") {
                     url += `&subCategoryName=${subCategoryName}`;
+                }
+                if (payeeInpt !== undefined && payeeInpt.trim() !== '') {
+                    url += `&payee=${payeeInpt}`;
                 }
 
                 $.ajax({
@@ -174,6 +189,11 @@
 
         // Event listener for subCategorySelect
         $("#subCategorySelect").on("change", function () {
+            table.ajax.reload();
+        });
+
+        // Event listener for searchPayeeButton
+        $("#searchPayeeButton").on("click", function () {
             table.ajax.reload();
         });
 

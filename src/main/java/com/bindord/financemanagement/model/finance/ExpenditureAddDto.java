@@ -39,10 +39,17 @@ public class ExpenditureAddDto {
   private String payee;
   @Max(99999)
   private Integer subCategoryId;
-  private Boolean lent;
+
   private Boolean shared;
+
+  private Boolean lent;
   @Size(max = 255)
   private String lentTo;
+
+  private Boolean wasBorrowed;
+
+  @Size(max = 255)
+  private String borrowedFrom;
 
   @NotNull
   @Min(-999)

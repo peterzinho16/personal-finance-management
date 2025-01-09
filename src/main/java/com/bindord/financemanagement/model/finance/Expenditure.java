@@ -100,6 +100,17 @@ public class Expenditure {
     @Enumerated(EnumType.STRING)
     private LoanState loanState;
 
+    @Column
+    private Boolean wasBorrowed = false;
+
+    @Size(max = 255)
+    @Column
+    private String borrowedFrom;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private LoanState borrowedState;
+
     @PositiveOrZero
     @Column
     private Double loanAmount;

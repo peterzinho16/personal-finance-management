@@ -16,7 +16,7 @@ import java.security.NoSuchAlgorithmException;
 
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
-import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT;
+import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -55,7 +55,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     }
 
     if (qExpenditure.getShared() && qExpenditure.getLent()) {
-      var msg = MSG_ERROR_SHARED_AND_LENT;
+      var msg = MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
       log.warn(msg);
       throw new CustomValidationException(msg);
     }
@@ -103,11 +103,13 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   public Expenditure updateSharedById(Integer id) throws Exception {
     var expenditure = this.findById(id);
     updateSharedState(expenditure);
+    var sharedVal = expenditure.getShared() != null ? expenditure.getShared() : false;
+    var lentVal = expenditure.getLent() != null ? expenditure.getLent() : false;
+    var wasBorrowVal = expenditure.getWasBorrowed() != null
+        ? expenditure.getWasBorrowed() : false;
 
-    if (expenditure.getShared() && expenditure.getLent()) {
-      var msg = "The expenditure can be updated because shared and lent can't be true at the same" +
-          " " +
-          "time";
+    if (sharedVal && lentVal || lentVal && wasBorrowVal || wasBorrowVal && sharedVal) {
+      var msg = MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
       log.warn(msg);
       throw new CustomValidationException(msg);
     }
@@ -141,9 +143,13 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   private Expenditure expenditureMapperForManualInsert(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
     var sharedVal = expenditureDto.getShared() != null ? expenditureDto.getShared() : false;
     var lentVal = expenditureDto.getLent() != null ? expenditureDto.getLent() : false;
-    if(sharedVal && lentVal) {
-      throw new CustomValidationException(MSG_ERROR_SHARED_AND_LENT);
+    var wasBorrowVal = expenditureDto.getWasBorrowed() != null
+        ? expenditureDto.getWasBorrowed() : false;
+
+    if (sharedVal && lentVal || lentVal && wasBorrowVal || wasBorrowVal && sharedVal) {
+      throw new CustomValidationException(MSG_ERROR_SHARED_AND_LENT_AND_BORROWED);
     }
+
     var payee = expenditureDto.getPayee();
     Double amount = expenditureDto.getAmount();
     var referenceId =
@@ -164,9 +170,12 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .singlePayment(true)
         .installments((short) 1)
         .lent(lentVal)
-        .lentTo(expenditureDto.getLentTo())
+        .lentTo(lentVal ? expenditureDto.getLentTo() : null)
         .loanState(lentVal ? Expenditure.LoanState.PENDING : null)
         .loanAmount(lentVal ? amount : null)
+        .wasBorrowed(wasBorrowVal)
+        .borrowedFrom(wasBorrowVal ? expenditureDto.getBorrowedFrom() : null)
+        .borrowedState(wasBorrowVal ? Expenditure.LoanState.PENDING : null)
         .recurrent(false)
         .manualRegister(true)
         .subCategory(subCategoryRepository

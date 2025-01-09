@@ -11,7 +11,7 @@ public class PagesController {
     return "pages/expenditure";
   }
 
-  @RequestMapping({"/pages/payee-categorization"})
+  @RequestMapping({"/payee-categorization"})
   public String showPayeeCategorizationPage() {
     return "pages/payee-categorization";
   }

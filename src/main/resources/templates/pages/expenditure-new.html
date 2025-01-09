@@ -3,11 +3,11 @@
       xmlns:th="http://www.thymeleaf.org">
 
 <!-- Include the head fragment -->
-<head th:replace="html-commons/head :: fg-head(title='Add Expenditure')"></head>
+<head th:replace="~{html-commons/head :: fg-head(title='Add Expenditure')}"></head>
 
 <body>
 <!-- Include the sidebar fragment -->
-<div th:replace="html-commons/sidebar :: fg-sidebar"></div>
+<div th:replace="~{html-commons/sidebar :: fg-sidebar}"></div>
 
 <div class="content compressed">
     <div class="header d-flex justify-content-between align-items-center">
@@ -23,8 +23,8 @@
             <form id="new-form">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="new-description" class="form-label">Description (Default: Registro manual)</label>
-                        <input type="text" class="form-control" id="new-description" value="Registro manual"
+                        <label for="new-description" class="form-label">Description <span class="badge bg-primary"> (Default: Registro manual)</span></label>
+                        <input type="text" class="form-control" id="new-description" value=""
                                maxlength="60">
                     </div>
                     <div class="col-md-6 mb-3">
@@ -33,16 +33,16 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <label for="new-currency" class="form-label">Currency</label>
                                 <select name="new-currency" id="new-currency" class="form-select">
                                     <option value="PEN" selected="selected">PEN</option>
                                     <option value="USD">USD</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <label for="new-amount" class="form-label">Amount <span class="badge bg-primary">(Min val: 1)</span></label>
                                 <input type="number" step="0.01" class="form-control" id="new-amount">
                             </div>
@@ -55,29 +55,42 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <div class="row">
-                            <div class="col-md-6">
-                                <label for="sharedCheckbox" class="form-label">Shared</label>
+                            <div class="col-md-3 mb-3">
+                                <label for="sharedCheckbox" class="form-label">Shared?</label>
                                 <label class="switch">
                                     <input type="checkbox" id="sharedCheckbox" name="shared" value="false">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="lentCheckbox" class="form-label">Lent</label>
+                            <div class="col-md-3 mb-3">
+                                <label for="lentCheckbox" class="form-label">Lent?</label>
                                 <label class="switch">
                                     <input type="checkbox" id="lentCheckbox" name="lent" value="false">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            <div class="col-md-6" id="lentToContainer" style="display: none;">
+                            <div class="col-md-6 mb-3" id="lentToContainer" style="display: none;">
                                 <label for="lentToInput" class="form-label">Lent to <span class="badge bg-primary">(Default value: Amor)</span></label>
                                 <input type="text" id="lentToInput" name="lentTo" class="form-control" maxlength="36">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="wasBorrowCheckbox" class="form-label">Was borrowed?</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="wasBorrowCheckbox" name="lent" value="false">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="col-md-6 mb-3" id="borrowedFromContainer" style="display: none;">
+                                <label for="borrowedFromInput" class="form-label">Borrowed from <span
+                                        class="badge bg-primary">(Default value: Amor)</span></label>
+                                <input type="text" id="borrowedFromInput" name="lentTo" class="form-control"
+                                       maxlength="36">
                             </div>
                         </div>
                     </div>
@@ -85,7 +98,7 @@
                 <hr>
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label">SubCategory</label>
+                        <label class="form-label">Sub Category</label>
                         <div id="category-container"
                              class="row"
                              style="max-height: 300px; overflow-y: scroll">
@@ -93,7 +106,14 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-primary" id="save-changes">Save changes</button>
+                <div class="row pt-3 pb-2 justify-content-center">
+                    <div class="col col-lg-4 col-md-4 col-sm-6 col-xs-8 text-center">
+                        <button type="button" class="btn btn-lg btn-primary w-100 py-3 rounded-pill" id="save-changes">
+                            Save changes
+                        </button>
+                    </div>
+                </div>
+
             </form>
         </div>
     </div>
@@ -111,28 +131,42 @@
 </div>
 
 <!-- Include the scripts fragment -->
-<div th:replace="html-commons/scripts :: fg-js"></div>
+<div th:replace="~{html-commons/scripts :: fg-js}"></div>
 <script>
-    // Default values for some fields
-    const now = new Date();
-    const offset = now.getTimezoneOffset() * 60000; // Convert offset to milliseconds
-    const localDatetime = new Date(now.getTime() - offset).toISOString().slice(0, 16);
-
-    document.getElementById('new-transactionDate').value = localDatetime;
+    const defaultValueForLentAndBorrowed = 'Amor';
+    function resetFormAndInitWithParams() {
+        $('#new-form')[0].reset();
+        document.getElementById('new-transactionDate').value = generateDateTimeNowFormatted();
+        document.getElementById('new-description').value = 'Registro manual';
+        $("#lentToContainer").hide();
+        $("#borrowedFromContainer").hide();
+    }
+    resetFormAndInitWithParams();
 </script>
 <script>
     $(document).ready(function () {
-        const apiEndpoint = "http://localhost:8080/eureka/finance-app/expenditure";
-        const subCategoryEndpoint = "http://localhost:8080/eureka/finance-app/sub-category";
+        const apiEndpoint = "http://192.168.18.154:8080/eureka/finance-app/expenditure";
+        const subCategoryEndpoint = "http://192.168.18.154:8080/eureka/finance-app/sub-category";
 
         // Show/hide lentTo input based on lent checkbox
         $("#lentCheckbox").on("change", function () {
             if ($(this).is(":checked")) {
                 $("#lentToContainer").show();
-                $("#lentToInput").val('Amor');
+                $("#lentToInput").val(defaultValueForLentAndBorrowed);
             } else {
                 $("#lentToContainer").hide();
                 $("#lentToInput").val('');
+            }
+        });
+
+        // Show/hide lentTo input based on lent checkbox
+        $("#wasBorrowCheckbox").on("change", function () {
+            if ($(this).is(":checked")) {
+                $("#borrowedFromContainer").show();
+                $("#borrowedFromInput").val(defaultValueForLentAndBorrowed);
+            } else {
+                $("#borrowedFromContainer").hide();
+                $("#borrowedFromInput").val('');
             }
         });
 
@@ -155,6 +189,8 @@
             const shared = $("#sharedCheckbox").is(":checked");
             const lent = $("#lentCheckbox").is(":checked");
             const lentTo = lent ? $("#lentToInput").val() : null;
+            const wasBorrowed = $("#wasBorrowCheckbox").is(":checked");
+            const borrowedFrom = wasBorrowed ? $("#borrowedFromInput").val() : null;
 
             const data = {
                 description: $("#new-description").val(),
@@ -165,7 +201,9 @@
                 subCategoryId: subCategoryId,
                 shared: shared,
                 lent: lent,
-                lentTo: lentTo
+                lentTo: lentTo,
+                wasBorrowed: wasBorrowed,
+                borrowedFrom: borrowedFrom
             };
 
             console.log(data);
@@ -177,6 +215,8 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     showSuccessToast(response);
+                    resetFormAndInitWithParams();
+
                 },
                 error: function (error) {
                     console.error("Error adding expenditure:", error);

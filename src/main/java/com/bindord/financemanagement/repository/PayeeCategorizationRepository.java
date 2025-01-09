@@ -42,9 +42,11 @@ public interface PayeeCategorizationRepository extends JpaRepository<PayeeCatego
       "JOIN FETCH SC.category " +
       "WHERE (:totalEvents IS NULL OR PC.totalEvents >= :totalEvents) " +
       "AND (:subCategoryId IS NULL OR SC.id = :subCategoryId) " +
+      "AND (:payee IS NULL OR :payee = '' OR PC.lowerPayee LIKE CONCAT('%', :payee, '%')) " +
       "ORDER BY PC.creationDate DESC")
   Page<PayeeCategorization> findAllWithSubCategory(@Param("totalEvents") Integer totalEvents,
                                                    @Param("subCategoryId") Integer subCategoryId,
+                                                   @Param("payee") String payee,
                                                    Pageable pageable);
 
 

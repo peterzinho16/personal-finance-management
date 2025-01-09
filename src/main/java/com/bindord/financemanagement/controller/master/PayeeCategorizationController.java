@@ -30,7 +30,8 @@ public class PayeeCategorizationController {
   public Page<PayeeCategorization> findAllWithPageable(
       Pageable pageable,
       @RequestParam(required = false) Integer totalEvents,
-      @RequestParam(required = false) String subCategoryName) {
+      @RequestParam(required = false) String subCategoryName,
+      @RequestParam(required = false) String payee) {
     Integer subCatId;
     if (subCategoryName == null) {
       subCatId = null;
@@ -38,7 +39,8 @@ public class PayeeCategorizationController {
       SubCategory subCategory = subCategoryRepository.findByName(subCategoryName);
       subCatId = subCategory.getId();
     }
-    return payeeCategorizationRepository.findAllWithSubCategory(totalEvents, subCatId, pageable);
+    return payeeCategorizationRepository.findAllWithSubCategory(totalEvents, subCatId,
+        payee == null ? "" : payee.toLowerCase(), pageable);
   }
 
   @GetMapping("/{id}")

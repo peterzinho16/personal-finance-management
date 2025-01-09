@@ -3,11 +3,11 @@
       xmlns:th="http://www.thymeleaf.org">
 
 <!-- Include the head fragment -->
-<head th:replace="html-commons/head :: fg-head(title='Expenditures')"></head>
+<head th:replace="~{html-commons/head :: fg-head(title='Expenditures')}"></head>
 
 <body>
 <!-- Include the sidebar fragment -->
-<div th:replace="html-commons/sidebar :: fg-sidebar"></div>
+<div th:replace="~{html-commons/sidebar :: fg-sidebar}"></div>
 
 <div class="content compressed">
     <div class="header d-flex justify-content-between align-items-center">
@@ -42,6 +42,7 @@
                     <th title="Indicate if the expense is shared">Shared</th>
                     <th title="Indicate if the expense was made for another person">Lent</th>
                     <th title="Indicate for who was the loan">Lent To</th>
+                    <th title="Indicate if this expense was borrowed by somebody">Borrowed</th>
                     <th>Options Menu</th>
                 </tr>
                 </thead>
@@ -105,7 +106,7 @@
             <hr>
             <div class="row">
                 <div class="col-md-12 mb-3">
-                    <label class="form-label">SubCategory</label>
+                    <label class="form-label">Sub Category</label>
                     <div id="category-container" class="row"></div>
                 </div>
             </div>
@@ -116,7 +117,7 @@
 </div>
 
 <!-- Include the scripts fragment -->
-<div th:replace="html-commons/scripts :: fg-js"></div>
+<div th:replace="~{html-commons/scripts :: fg-js}"></div>
 <script>
     $(document).ready(function () {
         const apiEndpoint = "http://localhost:8080/eureka/finance-app/expenditure";
@@ -174,6 +175,7 @@
                             `<input type="checkbox" class="form-check-input" ${exp.shared ? 'checked' : ''} onchange="toggleShared(${exp.id}, this.checked)">`,
                             `<input disabled type="checkbox" class="form-check-input" ${exp.lent ? 'checked' : ''}>`,
                             exp.lentTo ? exp.lentTo : '-',
+                            `<input disabled type="checkbox" class="form-check-input" ${exp.wasBorrowed ? 'checked' : ''}>`,
                             `<a href="#" class="btn btn-sm btn-primary" title="Edit" onclick="editExpenditure(${exp.id})">
                                 <i class="bi bi-pencil"></i>
                             </a>

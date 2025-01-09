@@ -4,16 +4,19 @@ import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static com.bindord.financemanagement.utils.Utilities.storeSessionToken;
 import static com.bindord.financemanagement.utils.Utilities.validateIfExistsValidSession;
 
+@Slf4j
 @RestController
 @RequestMapping("/")
 @AllArgsConstructor
@@ -37,7 +40,8 @@ public class WelcomeController {
   public String welcomeInitPage(HttpSession session) {
     MicrosoftAccessToken appData =
         appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
-    if (Objects.nonNull(appData)) {
+    if (Objects.nonNull(appData) && appData.getExpiresAt().isAfter(LocalDateTime.now())) {
+      log.debug("appData {}", appData);
       storeSessionToken(session, appData);
     }
     if (validateIfExistsValidSession(session)) {

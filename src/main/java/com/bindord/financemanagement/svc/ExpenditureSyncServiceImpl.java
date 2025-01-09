@@ -163,6 +163,9 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .lentTo(null)
         .loanState(null)
         .loanAmount(null)
+        .wasBorrowed(false)
+        .borrowedFrom(null)
+        .borrowedState(null)
         .recurrent(false)
         .subCategory(subCategory)
         .build();
