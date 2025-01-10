@@ -5,15 +5,18 @@ import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
 import com.bindord.financemanagement.svc.ExpenditureSyncService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static com.bindord.financemanagement.utils.Utilities.*;
 
+@Slf4j
 @Controller
 @RestController
 @AllArgsConstructor
@@ -29,7 +32,8 @@ public class ExpenditureSyncController {
 
     MicrosoftAccessToken appData =
         appDataConfiguration.getConfigData().get(AppDataConfiguration.APP_DATA_KEY);
-    if (Objects.nonNull(appData)) {
+    if (Objects.nonNull(appData) && appData.getExpiresAt().isAfter(LocalDateTime.now())) {
+      log.debug("appData {}", appData);
       storeSessionToken(session, appData);
     }
     if (validateIfExistsValidSession(session)) {

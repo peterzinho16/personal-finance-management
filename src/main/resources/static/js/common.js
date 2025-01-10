@@ -99,7 +99,8 @@ function getCategoryNameWithEmoji(categoryName) {
         'Hogar': '🏠',
         'Tecnologia': '💻',
         'Por definir': '❓',
-        'Compras': '🛒'
+        'Compras': '🛒',
+        'Cuidado Corporal' : '🧴'
     };
 
     return categoryEmojiMap[categoryName] ? `${categoryEmojiMap[categoryName]} ${categoryName}` : categoryName;
@@ -168,3 +169,11 @@ function generateDateTimeNowFormatted() {
     const offset = now.getTimezoneOffset() * 60000; // Convert offset to milliseconds
     return new Date(now.getTime() - offset).toISOString().slice(0, 16);
 }
+
+(function eventListenerForSubCategoryList(){
+    document.querySelector('#category-container').addEventListener('click', (event) => {
+        if(event.target.type === 'radio') {
+            console.log(`${event.target.parentElement.textContent.trim()}: ${event.target.value}`);
+        }
+    })
+})();

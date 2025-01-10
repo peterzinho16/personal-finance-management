@@ -12,8 +12,8 @@ import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
 import com.bindord.financemanagement.repository.MailMessageRepository;
 import com.bindord.financemanagement.repository.ParameterRepository;
+import com.bindord.financemanagement.repository.PayeeCoincidenceRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
-import com.bindord.financemanagement.utils.Constants;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.bindord.financemanagement.utils.Constants.DEFAULT_EXPENDITURE_CATEGORY;
 import static com.bindord.financemanagement.utils.MailRegex.extractExpenditureAmount;
 import static com.bindord.financemanagement.utils.Utilities.convertDatetimeToUTCMinusFive;
 
@@ -48,6 +49,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final SubCategoryRepository subCategoryRepository;
   private final MailMessageRepository mailMessageRepository;
   private final PayeeCategorizationService payeeCategorizationService;
+  private final PayeeCoincidenceRepository payeeCoincidenceRepository;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -83,9 +85,10 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
 
     //Preparation
-    Category category = categoryRepository.findByName(Constants.DEFAULT_EXPENDITURE_CATEGORY);
+    Category category = categoryRepository.findByName(DEFAULT_EXPENDITURE_CATEGORY);
     SubCategory subCategory = subCategoryRepository.findByCategoryIdAndName(category.getId(),
-        Constants.DEFAULT_EXPENDITURE_CATEGORY);
+        DEFAULT_EXPENDITURE_CATEGORY);
+    subCategory.setCategory(category);
     List<Expenditure> expenditures = new ArrayList<>();
     List<MailMessage> mailMessages = new ArrayList<>();
 
@@ -129,7 +132,12 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     if (payee != null) {
       Integer subCategoryId = payeeCategorizationService.obtainSubCategoryByPayee(payee);
       if (Objects.nonNull(subCategoryId)) {
-        subCategory = subCategoryRepository.findById(subCategoryId).orElse(subCategory);
+        subCategory = subCategoryRepository.findByIdWithCategory(subCategoryId).orElse(subCategory);
+        if (DEFAULT_EXPENDITURE_CATEGORY.equals(subCategory.getCategory().getName())) {
+          subCategory = updateSubCategoryIfFindCoincidence(payee, subCategory);
+        }
+      } else {
+        subCategory = updateSubCategoryIfFindCoincidence(payee, subCategory);
       }
     }
     Expenditure expenditure = expenditureMapper(msg, subCategory, referenceId, subject, payee,
@@ -187,5 +195,18 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .webLink(msg.getWebLink())
         .referenceId(referenceId)
         .build();
+  }
+
+  private SubCategory updateSubCategoryIfFindCoincidence(String payee, SubCategory subCategory) {
+    var optCoincidence =
+        payeeCoincidenceRepository.findAllWithSubCategory()
+            .stream()
+            .filter(pc ->
+                payee.toLowerCase().contains(pc.getPartialPayeeName().toLowerCase())
+            ).findFirst();
+    if (optCoincidence.isPresent()) {
+      return optCoincidence.get().getSubCategory();
+    }
+    return subCategory;
   }
 }
