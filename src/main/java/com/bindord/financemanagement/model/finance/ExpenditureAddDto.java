@@ -2,13 +2,10 @@ package com.bindord.financemanagement.model.finance;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.aspectj.lang.annotation.Before;
 
 import java.time.LocalDateTime;
 
@@ -43,6 +39,7 @@ public class ExpenditureAddDto {
   private Boolean shared;
 
   private Boolean lent;
+
   @Size(max = 255)
   private String lentTo;
 

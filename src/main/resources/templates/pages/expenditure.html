@@ -165,7 +165,7 @@
                     success: function (response) {
                         const rows = response.content.map(exp => [
                             exp.id,
-                            exp.description,
+                            `<span title="${exp.description}">${exp.description}</span>`,
                             exp.payee,
                             exp.currency === 'PEN' ? 'S/ ' + exp.amount.toFixed(2) : '$ ' + exp.amount.toFixed(2),
                             formatDateWithMonthText(exp.transactionDate),
@@ -193,6 +193,7 @@
                             recordsFiltered: response.totalElements,
                             data: rows,
                         });
+                        setTimeout(() => enableToolTipForDescriptionOnTableElements(), 250);
                     },
                     error: function (error) {
                         console.error("Error fetching expenditures:", error);

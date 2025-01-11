@@ -4,6 +4,7 @@ import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
+import com.bindord.financemanagement.model.finance.RecurrentExpenditure;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
@@ -184,4 +186,24 @@ public class ExpenditureServiceImpl implements ExpenditureService {
                 new CustomValidationException("Sub category doesn't exists!"))
         ).build());
   }
+
+  public Expenditure expenditureMapperFromRecurrentExpenditure(
+      RecurrentExpenditure recurrentExpenditure) throws NoSuchAlgorithmException,
+      CustomValidationException {
+    var expenditure = expenditureMapperForManualInsert(
+        ExpenditureAddDto.builder()
+            .description(recurrentExpenditure.getDescription())
+            .payee(recurrentExpenditure.getDescription())
+            .subCategoryId(recurrentExpenditure.getSubCategory().getId())
+            .shared(false)
+            .lent(false)
+            .wasBorrowed(false)
+            .amount(recurrentExpenditure.getAmount())
+            .currency(PEN.name())
+            .transactionDate(LocalDateTime.now())
+            .build());
+    expenditure.setRecurrent(true);
+    return expenditure;
+  }
+
 }
