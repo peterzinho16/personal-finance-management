@@ -124,7 +124,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    */
   @Override
   public Expenditure saveNewManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
-    return expenditureMapperForManualInsert(expenditureDto);
+    return repository.save(expenditureMapperForManualInsert(expenditureDto));
   }
 
   private static void updateSharedState(Expenditure expenditure) {
@@ -156,7 +156,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     Double amount = expenditureDto.getAmount();
     var referenceId =
         Utilities.generateSha256FromMailIdOrPayee(expenditureDto.getTransactionDate(), payee);
-    return repository.save(Expenditure.builder()
+    return Expenditure.builder()
         .referenceId(referenceId)
         .description(expenditureDto.getDescription())
         .transactionDate(
@@ -184,7 +184,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
             .findById(expenditureDto.getSubCategoryId())
             .orElseThrow(() ->
                 new CustomValidationException("Sub category doesn't exists!"))
-        ).build());
+        ).build();
   }
 
   public Expenditure expenditureMapperFromRecurrentExpenditure(
