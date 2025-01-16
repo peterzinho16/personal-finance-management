@@ -55,6 +55,11 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     if (nonNull(expenditureDto.getLent()) && qExpenditure.getLent() != expenditureDto.getLent()) {
       updateLentState(qExpenditure, expenditureDto);
     }
+    if (nonNull(expenditureDto.getDescription())
+        && !expenditureDto.getDescription().isEmpty()
+        && !qExpenditure.getDescription().equals(expenditureDto.getDescription())) {
+      qExpenditure.setDescription(expenditureDto.getDescription());
+    }
 
     if (qExpenditure.getShared() && qExpenditure.getLent()) {
       var msg = MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;

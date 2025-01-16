@@ -18,6 +18,7 @@ import lombok.ToString;
 public class ExpenditureUpdateDto {
 
   private Integer id;
+  private String description;
   private Integer subCategoryId;
   private Boolean lent;
   private Boolean shared;
