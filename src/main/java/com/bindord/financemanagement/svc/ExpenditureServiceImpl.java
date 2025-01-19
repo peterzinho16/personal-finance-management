@@ -3,8 +3,10 @@ package com.bindord.financemanagement.svc;
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
+import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
 import com.bindord.financemanagement.model.finance.RecurrentExpenditure;
+import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
@@ -29,6 +31,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   private final ExpenditureRepository repository;
   private final PayeeCategorizationRepository payeeCategorizationRepository;
   private final SubCategoryRepository subCategoryRepository;
+  private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
 
   /**
    * @param id
@@ -124,12 +127,35 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   }
 
   /**
-   * @param expenditureDto
-   * @return
+   * @param expenditureDto obj with the properties of expenditure to be persisted
+   * @return Expenditure obj that was persisted
    */
   @Override
   public Expenditure saveNewManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
-    return repository.save(expenditureMapperForManualInsert(expenditureDto));
+    Expenditure expenditure = expenditureMapperForManualInsert(expenditureDto);
+    Short totalInstallments = expenditureDto.getInstallments();
+    if (totalInstallments > 1) {
+      var installmentAmount = expenditure.getAmount() / totalInstallments;
+      var expInstallEntity = ExpenditureInstallment.builder()
+          .description(expenditure.getDescription())
+          .payee(expenditure.getPayee())
+          .subCategory(expenditure.getSubCategory())
+          .amount(expenditure.getAmount())
+          .installmentAmount(installmentAmount)
+          .installments(totalInstallments)
+          .transactionDate(expenditure.getTransactionDate())
+          .finishDebtDate(expenditure.getTransactionDate().plusMonths(totalInstallments))
+          .pendingAmount(expenditure.getAmount() - expenditure.getAmount() / totalInstallments)
+          .currency(expenditure.getCurrency())
+          .referenceId(expenditure.getReferenceId())
+          .fullPaid(false)
+          .build();
+      ExpenditureInstallment expInstPersisted =
+          expenditureInstallmentRepository.save(expInstallEntity);
+      expenditure.setExpenditureInstallmentId(expInstPersisted.getId());
+      expenditure.setInstallments(totalInstallments);
+    }
+    return repository.save(expenditure);
   }
 
   private static void updateSharedState(Expenditure expenditure) {
@@ -175,7 +201,8 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .shared(sharedVal)
         .sharedAmount(sharedVal ? amount / 2 : null)
         .singlePayment(true)
-        .installments((short) 1)
+        .installments(expenditureDto.getInstallments())
+        .expenditureInstallmentId(null)
         .lent(lentVal)
         .lentTo(lentVal ? expenditureDto.getLentTo() : null)
         .loanState(lentVal ? Expenditure.LoanState.PENDING : null)

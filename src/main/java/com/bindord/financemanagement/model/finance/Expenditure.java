@@ -111,6 +111,9 @@ public class Expenditure {
     @Enumerated(EnumType.STRING)
     private LoanState borrowedState;
 
+    @Column
+    private Integer expenditureInstallmentId;
+
     @PositiveOrZero
     @Column
     private Double loanAmount;

@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.model.finance;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -56,4 +57,9 @@ public class ExpenditureAddDto {
   private String currency;
 
   private LocalDateTime transactionDate;
+
+  @Min(1)
+  @Max(48)
+  @Column
+  private Short installments;
 }
