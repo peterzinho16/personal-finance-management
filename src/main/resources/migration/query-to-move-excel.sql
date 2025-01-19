@@ -25,6 +25,7 @@ select round(sum(amount::numeric), 2)
 from expenditures
 where shared;
 
+--Monthly report
 select round(
                sum(case
                        when
