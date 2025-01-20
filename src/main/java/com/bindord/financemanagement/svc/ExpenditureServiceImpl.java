@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
+import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
 import static java.util.Objects.nonNull;
 
@@ -52,6 +53,14 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   @Override
   public Expenditure updateById(ExpenditureUpdateDto expenditureDto, Integer id) throws Exception {
     var qExpenditure = this.findById(id);
+    var newInstallmentsValue = expenditureDto.getInstallments();
+    if (qExpenditure.getInstallments() > 1
+        && !qExpenditure.getInstallments().equals(newInstallmentsValue)) {
+      var msg = MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
+      log.warn(msg);
+      throw new CustomValidationException(msg);
+    }
+
     if (nonNull(expenditureDto.getShared()) && qExpenditure.getShared() != expenditureDto.getShared()) {
       updateSharedState(qExpenditure);
     }

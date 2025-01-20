@@ -23,4 +23,5 @@ public class ExpenditureUpdateDto {
   private Boolean lent;
   private Boolean shared;
   private String lentTo;
+  private Short installments;
 }

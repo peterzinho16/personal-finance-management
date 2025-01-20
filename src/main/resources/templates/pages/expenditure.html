@@ -91,16 +91,38 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="lentCheckbox" class="form-label">Lent</label>
-                    <label class="switch">
-                        <input type="checkbox" id="lentCheckbox" name="lent" value="false">
-                        <span class="slider"></span>
-                    </label>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="lentCheckbox" class="form-label">Lent</label>
+                            <label class="switch">
+                                <input type="checkbox" id="lentCheckbox" name="lent" value="false">
+                                <span class="slider"></span>
+                            </label>
+
+                        </div>
+                        <div class="col-md-6 mb-3" id="lentToContainer" style="display: none;">
+                            <label for="lentToInput" class="form-label">Lent to <span class="badge bg-primary">(Default value: Amor)</span></label>
+                            <input type="text" id="lentToInput" name="lentTo" class="form-control" maxlength="36">
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3" id="lentToContainer" style="display: none;">
-                    <label for="lentToInput" class="form-label">Lent to <span class="badge bg-primary">(Default value: Amor)</span></label>
-                    <input type="text" id="lentToInput" name="lentTo" class="form-control" maxlength="36">
+                <div class="col-md-6 mb-3">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="installmentsCheckbox" class="form-label">Installments?</label>
+                            <label class="switch">
+                                <input type="checkbox" id="installmentsCheckbox" name="installments" value="false">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="col-md-6 mb-3" id="totalInstallmentsContainer" style="display: none;">
+                            <label for="totalInstallmentsInput" class="form-label">Total</label>
+                            <input type="number" id="totalInstallmentsInput" name="totalInstallments"
+                                   class="form-control"
+                                   maxlength="48" value="1">
+                        </div>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -132,6 +154,17 @@
             } else {
                 $("#lentToContainer").hide();
                 $("#lentToInput").val('');
+            }
+        });
+
+        // Show/hide installment input based on installments checkbox
+        $("#installmentsCheckbox").on("change", function () {
+            if ($(this).is(":checked")) {
+                $("#totalInstallmentsContainer").show();
+                $("#totalInstallmentsInput").val(1);
+            } else {
+                $("#totalInstallmentsContainer").hide();
+                $("#totalInstallmentsInput").val('');
             }
         });
 
@@ -224,6 +257,15 @@
                 $("#edit-transactionDate").val(exp.transactionDate);
                 $(`#subCategory-${exp.subCategory.id}`).prop('checked', true);
                 $("#lentCheckbox").prop('checked', exp.lent);
+                var wasFinanced = exp.installments > 1;
+                $("#installmentsCheckbox").prop('checked', wasFinanced);
+                if(wasFinanced) {
+                    $("#totalInstallmentsContainer").show();
+                    $("#totalInstallmentsInput").val(exp.installments);
+                } else {
+                    $("#totalInstallmentsContainer").hide();
+                    $("#totalInstallmentsInput").val(1);
+                }
                 if (exp.lent) {
                     $("#lentToContainer").show();
                     $("#lentToInput").val(exp.lentTo);
@@ -258,6 +300,8 @@
             const subCategoryId = $("input[name='subCategory']:checked").val();
             const lent = $("#lentCheckbox").is(":checked");
             const lentTo = lent ? $("#lentToInput").val() : null;
+            const financed = $("#installmentsCheckbox").is(":checked");
+            const installments = financed ? $("#totalInstallmentsInput").val() : 1;
 
             const data = {
                 description: $("#edit-description").val(),
@@ -266,7 +310,8 @@
                 transactionDate: $("#edit-transactionDate").val(),
                 subCategoryId: subCategoryId,
                 lent: lent,
-                lentTo: lentTo
+                lentTo: lentTo,
+                installments: installments
             };
 
             $.ajax({

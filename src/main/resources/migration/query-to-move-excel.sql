@@ -32,16 +32,22 @@ select round(
                            shared is false and
                            lent is false and
                            was_borrowed is false
-                           then amount
+                           then case when currency = 'PEN' then amount else amount * 3.75 end
                        else 0 end)::numeric,
-               2)                                                                     Gastos_individuales,
-       round(sum(case when shared is true then shared_amount else 0 end)::numeric, 2) Gastos_Compartidos,
-       round(sum(case when was_borrowed is true then amount else 0 end)::numeric, 2) Gastos_Pagados_Por_Tercero,
-       round(sum(case when lent is true then loan_amount else 0 end)::numeric, 2) Total_Tus_Prestamos,
-       (select sum(amount) from recurrent_expenditures) Gastos_Recurrentes_Total
+               2)                                                                    Gastos_individuales,
+       round(sum(case
+                     when shared is true
+                         then case when currency = 'PEN' then shared_amount else shared_amount * 3.75 end
+                     else 0 end)::numeric, 2)                                        Gastos_Compartidos,
+       round(sum(case when was_borrowed is true then case when currency = 'PEN' then amount else amount * 3.75 end else 0 end)::numeric, 2) Gastos_Pagados_Por_Tercero,
+       round(sum(case when lent is true then case when currency = 'PEN' then loan_amount else loan_amount * 3.75 end else 0 end)::numeric, 2)    Total_Tus_Prestamos,
+       (select sum(amount) from recurrent_expenditures)                              Gastos_Recurrentes_Total
 from expenditures
 where transaction_date between '2025-01-01' and '2025-01-31';
 
-
+--Total expenses by month and with its total amount
 select borrowed_from, round(sum(amount)::numeric, 2)
-from expenditures where transaction_date between '2025-01-01' and '2025-01-31' and borrowed_from is not null group by borrowed_from;
+from expenditures
+where transaction_date between '2025-01-01' and '2025-01-31'
+  and borrowed_from is not null
+group by borrowed_from;

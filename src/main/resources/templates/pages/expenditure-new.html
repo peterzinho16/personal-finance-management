@@ -158,6 +158,7 @@
         document.getElementById('new-description').value = 'Registro manual';
         $("#lentToContainer").hide();
         $("#borrowedFromContainer").hide();
+        $("#totalInstallmentsContainer").hide();
     }
 
     resetFormAndInitWithParams();
@@ -189,7 +190,7 @@
             }
         });
 
-        // Show/hide lentTo input based on lent checkbox
+        // Show/hide installment input based on installments checkbox
         $("#installmentsCheckbox").on("change", function () {
             if ($(this).is(":checked")) {
                 $("#totalInstallmentsContainer").show();
