@@ -54,11 +54,23 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   public Expenditure updateById(ExpenditureUpdateDto expenditureDto, Integer id) throws Exception {
     var qExpenditure = this.findById(id);
     var newInstallmentsValue = expenditureDto.getInstallments();
+    var installmentsWasModified = !qExpenditure.getInstallments().equals(newInstallmentsValue);
     if (qExpenditure.getInstallments() > 1
-        && !qExpenditure.getInstallments().equals(newInstallmentsValue)) {
+        && installmentsWasModified) {
       var msg = MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
       log.warn(msg);
       throw new CustomValidationException(msg);
+    }
+
+    if (nonNull(newInstallmentsValue) && newInstallmentsValue > 0 && installmentsWasModified) {
+      var installmentAmount = qExpenditure.getAmount() / newInstallmentsValue;
+      var expInstObj = expenditureInstallmentMapper(qExpenditure, installmentAmount,
+          newInstallmentsValue);
+      ExpenditureInstallment expInstPersisted =
+          expenditureInstallmentRepository.save(expInstObj);
+      qExpenditure.setExpenditureInstallmentId(expInstPersisted.getId());
+      qExpenditure.setInstallments(newInstallmentsValue);
+      qExpenditure.setAmount(installmentAmount);
     }
 
     if (nonNull(expenditureDto.getShared()) && qExpenditure.getShared() != expenditureDto.getShared()) {
@@ -145,26 +157,33 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     Short totalInstallments = expenditureDto.getInstallments();
     if (totalInstallments > 1) {
       var installmentAmount = expenditure.getAmount() / totalInstallments;
-      var expInstallEntity = ExpenditureInstallment.builder()
-          .description(expenditure.getDescription())
-          .payee(expenditure.getPayee())
-          .subCategory(expenditure.getSubCategory())
-          .amount(expenditure.getAmount())
-          .installmentAmount(installmentAmount)
-          .installments(totalInstallments)
-          .transactionDate(expenditure.getTransactionDate())
-          .finishDebtDate(expenditure.getTransactionDate().plusMonths(totalInstallments))
-          .pendingAmount(expenditure.getAmount() - expenditure.getAmount() / totalInstallments)
-          .currency(expenditure.getCurrency())
-          .referenceId(expenditure.getReferenceId())
-          .fullPaid(false)
-          .build();
+      var expInstallEntity = expenditureInstallmentMapper(expenditure, installmentAmount,
+          totalInstallments);
       ExpenditureInstallment expInstPersisted =
           expenditureInstallmentRepository.save(expInstallEntity);
       expenditure.setExpenditureInstallmentId(expInstPersisted.getId());
       expenditure.setInstallments(totalInstallments);
     }
     return repository.save(expenditure);
+  }
+
+  private ExpenditureInstallment expenditureInstallmentMapper(Expenditure expenditure,
+                                                              double installmentAmount,
+                                                              Short totalInstallments) {
+    return ExpenditureInstallment.builder()
+        .description(expenditure.getDescription())
+        .payee(expenditure.getPayee())
+        .subCategory(expenditure.getSubCategory())
+        .amount(expenditure.getAmount())
+        .installmentAmount(installmentAmount)
+        .installments(totalInstallments)
+        .transactionDate(expenditure.getTransactionDate())
+        .finishDebtDate(expenditure.getTransactionDate().plusMonths(totalInstallments))
+        .pendingAmount(expenditure.getAmount() - expenditure.getAmount() / totalInstallments)
+        .currency(expenditure.getCurrency())
+        .referenceId(expenditure.getReferenceId())
+        .fullPaid(false)
+        .build();
   }
 
   private static void updateSharedState(Expenditure expenditure) {
