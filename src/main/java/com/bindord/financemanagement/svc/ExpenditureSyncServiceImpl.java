@@ -2,6 +2,7 @@ package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
 import com.bindord.financemanagement.model.finance.RecurrentExpenditure;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.MailExclusionRule;
@@ -9,6 +10,7 @@ import com.bindord.financemanagement.model.source.MailMessage;
 import com.bindord.financemanagement.model.source.MessageDto;
 import com.bindord.financemanagement.model.source.Parameter;
 import com.bindord.financemanagement.repository.CategoryRepository;
+import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
 import com.bindord.financemanagement.repository.MailMessageRepository;
@@ -21,10 +23,13 @@ import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +39,7 @@ import java.util.stream.Collectors;
 import static com.bindord.financemanagement.utils.Constants.DEFAULT_EXPENDITURE_CATEGORY;
 import static com.bindord.financemanagement.utils.MailRegex.extractExpenditureAmount;
 import static com.bindord.financemanagement.utils.Utilities.convertDatetimeToUTCMinusFive;
+import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyTwoDecimals;
 
 @Slf4j
 @AllArgsConstructor
@@ -55,6 +61,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final PayeeCoincidenceRepository payeeCoincidenceRepository;
   private final RecurrentExpenditureRepository recurrentExpenditureRepository;
   private final ExpenditureServiceImpl expenditureService;
+  private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -68,8 +75,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     Set<String> exclusions =
         exclusionsList.stream().map(MailExclusionRule::getKeyword).collect(Collectors.toSet());
     Parameter parameter =
-        parameterRepository.findById(LAST_SYNC_DATE).orElseThrow(() -> new Exception("Error while" +
-            " trying to get the last sync date from parameters table"));
+        parameterRepository.findById(LAST_SYNC_DATE).orElseThrow(() -> new Exception("Error " +
+            "while" + " trying to get the last sync date from parameters table"));
     String paramLastSyncDateTime = parameter.getValue();
     OffsetDateTime lastSyncDateTime = OffsetDateTime.parse(paramLastSyncDateTime);
     List<MessageDto> beforeFilterMessages =
@@ -125,6 +132,35 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     }
     parameter.setValue(lastMessageDateTime);
     parameterRepository.save(parameter);
+
+    List<ExpenditureInstallment> expenditureInstallments =
+        expenditureInstallmentRepository.findAllByFullPaidIsFalse();
+
+    var now = LocalDateTime.now(ZoneOffset.UTC).minusHours(5);
+    for (ExpenditureInstallment expenditureInstallment : expenditureInstallments) {
+      List<Expenditure> expenditureList =
+          expenditureRepository.findAllByExpenditureInstallmentIdOrderById(expenditureInstallment.getId());
+
+      var initDate = expenditureInstallment.getTransactionDate();
+      var projectionDate = initDate.plusMonths(expenditureList.size());
+      if (now.isAfter(projectionDate)) {
+        var expenditureReference = expenditureList.getFirst();
+        expenditureReference.setId(null);
+        var newExpenditure = new Expenditure();
+        BeanUtils.copyProperties(expenditureReference, newExpenditure);
+        newExpenditure.setTransactionDate(projectionDate);
+        expenditureRepository.save(newExpenditure);
+        var newPendingAmount =
+            convertNumberToOnlyTwoDecimals(
+                expenditureInstallment.getPendingAmount() - expenditureInstallment.getInstallmentAmount()
+            );
+        expenditureInstallment.setPendingAmount(newPendingAmount);
+        if (newPendingAmount < 1) {
+          expenditureInstallment.setFullPaid(true);
+        }
+        expenditureInstallmentRepository.save(expenditureInstallment);
+      }
+    }
     return "The sync was successful";
   }
 
@@ -167,7 +203,24 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   public static Expenditure expenditureMapper(MessageDto msg, SubCategory subCategory,
                                               String referenceId, String subject, String payee,
                                               String bodyTextContent) {
-    return Expenditure.builder().referenceId(referenceId).description(subject).transactionDate(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())).payee(payee).currency(MailRegex.extractExpenditureCurrency(bodyTextContent)).amount(extractExpenditureAmount(bodyTextContent)).shared(false).sharedAmount(null).singlePayment(true).installments((short) 1).lent(false).lentTo(null).loanState(null).loanAmount(null).wasBorrowed(false).borrowedFrom(null).borrowedState(null).recurrent(false).subCategory(subCategory).build();
+    return Expenditure.builder().referenceId(referenceId).description(subject)
+        .transactionDate(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime()))
+        .payee(payee)
+        .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
+        .amount(extractExpenditureAmount(bodyTextContent))
+        .shared(false)
+        .sharedAmount(null)
+        .singlePayment(true)
+        .installments((short) 1).lent(false)
+        .lentTo(null)
+        .loanState(null)
+        .loanAmount(null)
+        .wasBorrowed(false)
+        .borrowedFrom(null)
+        .borrowedState(null)
+        .recurrent(false)
+        .subCategory(subCategory)
+        .build();
   }
 
   public static MailMessage mailMessageMapper(MessageDto msg, String referenceId,

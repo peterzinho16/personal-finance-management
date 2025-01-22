@@ -22,6 +22,7 @@ import static com.bindord.financemanagement.model.finance.Expenditure.Currency.P
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
+import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyTwoDecimals;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -163,6 +164,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
           expenditureInstallmentRepository.save(expInstallEntity);
       expenditure.setExpenditureInstallmentId(expInstPersisted.getId());
       expenditure.setInstallments(totalInstallments);
+      expenditure.setAmount(installmentAmount);
     }
     return repository.save(expenditure);
   }
@@ -179,7 +181,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .installments(totalInstallments)
         .transactionDate(expenditure.getTransactionDate())
         .finishDebtDate(expenditure.getTransactionDate().plusMonths(totalInstallments))
-        .pendingAmount(expenditure.getAmount() - expenditure.getAmount() / totalInstallments)
+        .pendingAmount(convertNumberToOnlyTwoDecimals(expenditure.getAmount() - expenditure.getAmount() / totalInstallments))
         .currency(expenditure.getCurrency())
         .referenceId(expenditure.getReferenceId())
         .fullPaid(false)

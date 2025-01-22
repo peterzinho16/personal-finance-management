@@ -276,6 +276,13 @@
 
                 $("#slideForm").addClass("active");
                 $("#save-changes").removeClass("hidden");
+                if(exp.installments && exp.installments > 1) {
+                    $('#installmentsCheckbox').prop('disabled', true);
+                    $('#totalInstallmentsInput').prop('disabled', true);
+                } else {
+                    $('#installmentsCheckbox').prop('disabled', false);
+                    $('#totalInstallmentsInput').prop('disabled', false);
+                }
             } catch (error) {
                 console.error("Error fetching expenditure details:", error);
                 showErrorToast(error.status, error.responseJSON.message);

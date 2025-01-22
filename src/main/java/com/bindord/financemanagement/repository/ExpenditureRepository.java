@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,4 +41,8 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
       "id = :id", nativeQuery = true)
   void updateSubCategoryByPayeeId(@Param("subCategoryId") Integer subCategoryId,
                                   @Param("id") Integer id);
+
+  @Query(value = "SELECT EX from Expenditure EX JOIN FETCH EX.subCategory SC JOIN FETCH " +
+      "SC.category WHERE EX.expenditureInstallmentId = ?1 ORDER BY EX.id")
+  List<Expenditure> findAllByExpenditureInstallmentIdOrderById(Integer expenditureInstallmentId);
 }

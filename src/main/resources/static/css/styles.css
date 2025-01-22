@@ -169,3 +169,10 @@ th {
 .content.compressed {
     margin-top: -20px !important;
 }
+
+input:disabled {
+    background-color: #e0e0e0;
+    color: #a0a0a0;
+    cursor: not-allowed;
+    border: 1px solid #d0d0d0;
+}

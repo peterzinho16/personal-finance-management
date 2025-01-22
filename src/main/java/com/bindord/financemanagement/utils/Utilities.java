@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,7 +22,8 @@ public class Utilities {
   public static final String SESSION_TOKEN = "sessionToken";
 
   public static LocalDateTime convertDatetimeToUTCMinusFive(String dateTimeString) {
-    ZonedDateTime utcDateTime = ZonedDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
+    ZonedDateTime utcDateTime = ZonedDateTime.parse(dateTimeString,
+        DateTimeFormatter.ISO_DATE_TIME);
 
     // Subtract 5 hours to get the new time in UTC-5
     ZonedDateTime dateTimeInUTCMinus5 = utcDateTime.minusHours(5);
@@ -34,7 +36,8 @@ public class Utilities {
     return localDateTime;
   }
 
-  public static String generateSha256FromMailIdOrPayee(LocalDateTime transactionDate, String mailId) throws NoSuchAlgorithmException {
+  public static String generateSha256FromMailIdOrPayee(LocalDateTime transactionDate,
+                                                       String mailId) throws NoSuchAlgorithmException {
     String timestamp = transactionDate.format(DateTimeFormatter.ISO_DATE_TIME);
     String flSting = timestamp + mailId;
 
@@ -71,7 +74,7 @@ public class Utilities {
 
   public static boolean validateIfExistsValidSession(HttpSession session) {
     MicrosoftAccessToken obj = (MicrosoftAccessToken) session.getAttribute(SESSION_TOKEN);
-    if(obj == null) {
+    if (obj == null) {
       log.info("AccessToken is null");
     } else {
       log.info("Created at: {}", obj.getCreatedAt().toString());
@@ -84,13 +87,14 @@ public class Utilities {
   }
 
   public static MicrosoftAccessToken retrieveSessionToken(HttpSession session) {
-    if(validateIfExistsValidSession(session)) {
+    if (validateIfExistsValidSession(session)) {
       return (MicrosoftAccessToken) session.getAttribute(SESSION_TOKEN);
     }
     return null;
   }
 
-  public static List<MessageDto> getFilteredMessages(List<MessageDto> originalList, Set<String> exclusions) {
+  public static List<MessageDto> getFilteredMessages(List<MessageDto> originalList,
+                                                     Set<String> exclusions) {
     List<MessageDto> postFilterMessages = originalList.stream().filter(
         msg -> exclusions
             .stream()
@@ -103,5 +107,14 @@ public class Utilities {
 
   public enum EntitiesKeyword {
     YAPE, BCP, DINERS
+  }
+
+  public static double convertNumberToOnlyTwoDecimals(Double number) {
+    // Create DecimalFormat for two decimal places
+    DecimalFormat df = new DecimalFormat("#.00");
+    // Format to a string
+    String formattedNumber = df.format(number);
+    // Convert back to double
+    return Double.parseDouble(formattedNumber);
   }
 }
