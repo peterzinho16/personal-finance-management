@@ -26,30 +26,32 @@ from expenditures
 where shared;
 
 --Monthly report
-select round(
-               sum(case
-                       when
-                           shared is false and
-                           lent is false and
-                           was_borrowed is false
-                           then case when currency = 'PEN' then amount else amount * 3.75 end
-                       else 0 end)::numeric,
-               2)                                       Gastos_individuales,
-       round(sum(case
-                     when shared is true
-                         then case when currency = 'PEN' then shared_amount else shared_amount * 3.75 end
-                     else 0 end)::numeric, 2)           Gastos_Compartidos,
-       round(sum(case
-                     when was_borrowed is true then case when currency = 'PEN' then amount else amount * 3.75 end
-                     else 0 end)::numeric, 2)           Gastos_Pagados_Por_Tercero,
-       round(sum(case
-                     when lent is true then case when currency = 'PEN' then loan_amount else loan_amount * 3.75 end
-                     else 0 end)::numeric, 2)           Total_Tus_Prestamos,
-       (select sum(amount) from recurrent_expenditures) Gastos_Recurrentes_Total
-from expenditures
-where transaction_date between '2025-01-01' and '2025-01-31';
-select *
-from expenditure_installments;
+select
+    subtot.Gastos_individuales + subtot.Gastos_Compartidos + subtot.Mis_Gastos_Pagados_Por_Tercero Final_Total_Gastos,
+    subtot.*
+from (select to_char(transaction_date, 'YYYY-MM') periodo, round(
+        sum(case
+                when
+                    shared is false and
+                    lent is false and
+                    was_borrowed is false
+                    then case when currency = 'PEN' then amount else amount * 3.75 end
+                else 0 end)::numeric,
+        2)                                       Gastos_individuales,
+             round(sum(case
+                           when shared is true
+                               then case when currency = 'PEN' then shared_amount else shared_amount * 3.75 end
+                           else 0 end)::numeric, 2)           Gastos_Compartidos,
+             round(sum(case
+                           when was_borrowed is true then case when currency = 'PEN' then amount else amount * 3.75 end
+                           else 0 end)::numeric, 2)           Mis_Gastos_Pagados_Por_Tercero,
+             round(sum(case
+                           when lent is true
+                               then case when currency = 'PEN' then loan_amount else loan_amount * 3.75 end
+                           else 0 end)::numeric, 2)           Total_Tus_Prestamos,
+             (select sum(amount) from recurrent_expenditures) Gastos_Recurrentes_Total
+      from expenditures
+      group by to_char(transaction_date, 'YYYY-MM') order by 1 desc) as subtot;
 
 --Total expenses by month and with its total amount
 select borrowed_from, round(sum(amount)::numeric, 2)

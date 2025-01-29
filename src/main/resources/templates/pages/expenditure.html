@@ -125,6 +125,22 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="forDaughterCheckbox" class="form-label">For daughter</label>
+                            <label class="switch">
+                                <input type="checkbox" id="forDaughterCheckbox" name="lent" value="false">
+                                <span class="slider"></span>
+                            </label>
+
+                        </div>
+                        <div class="col-md-6 mb-3" id="wildcardContainer" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <hr>
             <div class="row">
                 <div class="col-md-12 mb-3">
@@ -142,9 +158,9 @@
 <div th:replace="~{html-commons/scripts :: fg-js}"></div>
 <script>
     $(document).ready(function () {
-        const apiEndpoint = "http://localhost:8080/eureka/finance-app/expenditure";
-        const apiEndpointMailMessage = "http://localhost:8080/eureka/finance-app/mail-message";
-        const subCategoryEndpoint = "http://localhost:8080/eureka/finance-app/sub-category";
+        const apiEndpoint = "/eureka/finance-app/expenditure";
+        const apiEndpointMailMessage = "/eureka/finance-app/mail-message";
+        const subCategoryEndpoint = "/eureka/finance-app/sub-category";
 
         // Show/hide lentTo input based on lent checkbox
         $("#lentCheckbox").on("change", function () {
@@ -257,6 +273,7 @@
                 $("#edit-transactionDate").val(exp.transactionDate);
                 $(`#subCategory-${exp.subCategory.id}`).prop('checked', true);
                 $("#lentCheckbox").prop('checked', exp.lent);
+                $("#forDaughterCheckbox").prop('checked', exp.forDaughter);
                 var wasFinanced = exp.installments > 1;
                 $("#installmentsCheckbox").prop('checked', wasFinanced);
                 if(wasFinanced) {
@@ -307,6 +324,7 @@
             const subCategoryId = $("input[name='subCategory']:checked").val();
             const lent = $("#lentCheckbox").is(":checked");
             const lentTo = lent ? $("#lentToInput").val() : null;
+            const forDaughter = $("#forDaughterCheckbox").is(":checked");
             const financed = $("#installmentsCheckbox").is(":checked");
             const installments = financed ? $("#totalInstallmentsInput").val() : 1;
 
@@ -318,7 +336,8 @@
                 subCategoryId: subCategoryId,
                 lent: lent,
                 lentTo: lentTo,
-                installments: installments
+                installments: installments,
+                forDaughter: forDaughter
             };
 
             $.ajax({

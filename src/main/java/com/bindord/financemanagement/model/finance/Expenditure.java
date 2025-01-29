@@ -114,6 +114,9 @@ public class Expenditure {
     @Column
     private Integer expenditureInstallmentId;
 
+    @Column
+    private Boolean forDaughter = false;
+
     @PositiveOrZero
     @Column
     private Double loanAmount;

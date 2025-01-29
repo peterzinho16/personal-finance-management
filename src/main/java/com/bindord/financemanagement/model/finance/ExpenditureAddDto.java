@@ -62,4 +62,6 @@ public class ExpenditureAddDto {
   @Max(48)
   @Column
   private Short installments;
+
+  private Boolean forDaughter;
 }

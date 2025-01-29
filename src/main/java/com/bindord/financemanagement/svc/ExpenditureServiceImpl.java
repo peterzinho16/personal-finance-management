@@ -86,6 +86,11 @@ public class ExpenditureServiceImpl implements ExpenditureService {
       qExpenditure.setDescription(expenditureDto.getDescription());
     }
 
+    if (nonNull(expenditureDto.getForDaughter())
+        && qExpenditure.getForDaughter() != expenditureDto.getForDaughter()) {
+      qExpenditure.setForDaughter(expenditureDto.getForDaughter());
+    }
+
     if (qExpenditure.getShared() && qExpenditure.getLent()) {
       var msg = MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
       log.warn(msg);
@@ -242,6 +247,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .borrowedState(wasBorrowVal ? Expenditure.LoanState.PENDING : null)
         .recurrent(false)
         .manualRegister(true)
+        .forDaughter(expenditureDto.getForDaughter())
         .subCategory(subCategoryRepository
             .findById(expenditureDto.getSubCategoryId())
             .orElseThrow(() ->

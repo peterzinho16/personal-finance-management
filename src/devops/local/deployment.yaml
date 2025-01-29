@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: personal-finance-management
+  labels:
+    service: personal-finance-management
+    app: personal-finance-management
+    type: backend
+    consume: db
+    db: postgres
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      service: personal-finance-management
+      type: backend
+  template:
+    metadata:
+      name: personal-finance-management
+      labels:
+        service: personal-finance-management
+        type: backend
+    spec:
+      containers:
+        - name: personal-finance-management
+          image: peterzinho16/finance-management:v2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: tomcat-port
+          resources:
+            requests:
+              cpu: 1200m
+              memory: 400Mi
+            limits:
+              memory: 2024Mi
+              cpu: 1500m
+          env:
+            - name: APP_CC_CLIENT_SECRET
+              value: pG28Q~W~TnLlqsSGMRadwkQYSA4fxYICXBVIzdpW
+            - name: APP_CLIENT_ID
+              value: b33f4746-8cfc-41d4-a6bc-b13c92980040
+            - name: DEFAULT_HOST
+              value: host.docker.internal
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 50%

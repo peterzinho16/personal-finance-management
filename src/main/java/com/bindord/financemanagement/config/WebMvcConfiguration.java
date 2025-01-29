@@ -28,11 +28,11 @@ public class WebMvcConfiguration implements WebMvcConfigurer, ServletContextAwar
    */
   @Override
   public void addCorsMappings(CorsRegistry registry) {
-    registry.addMapping("/**")
-        .allowedOrigins("http://localhost:8080")
+    registry.addMapping("/eureka/**")
+        .allowedOrigins("*")
         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
         .allowedHeaders("*")
-        .allowCredentials(true);
+        .allowCredentials(false);
   }
 
   private ServletContext context;

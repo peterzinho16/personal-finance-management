@@ -23,7 +23,7 @@
 <canvas id="expenditure-chart" width="800" height="400"></canvas>
 
 <script>
-    fetch('http://localhost:8080/eureka/finance-app/expenditure?page=0&size=1000')
+    fetch('/eureka/finance-app/expenditure?page=0&size=1000')
         .then(e => e.json())
         .then(res => {
             const data = res;
