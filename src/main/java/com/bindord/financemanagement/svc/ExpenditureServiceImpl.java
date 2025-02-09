@@ -11,6 +11,7 @@ import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.utils.Utilities;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -136,6 +137,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    * @return
    * @throws Exception
    */
+  @Transactional
   @Override
   public Expenditure updateSharedById(Integer id) throws Exception {
     var expenditure = this.findById(id);

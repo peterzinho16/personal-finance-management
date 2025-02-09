@@ -29,15 +29,16 @@ where shared;
 select
     subtot.Gastos_individuales + subtot.Gastos_Compartidos + subtot.Mis_Gastos_Pagados_Por_Tercero Final_Total_Gastos,
     subtot.*
-from (select to_char(transaction_date, 'YYYY-MM') periodo, round(
-        sum(case
-                when
-                    shared is false and
-                    lent is false and
-                    was_borrowed is false
-                    then case when currency = 'PEN' then amount else amount * 3.75 end
-                else 0 end)::numeric,
-        2)                                       Gastos_individuales,
+from (select to_char(transaction_date, 'YYYY-MM')             periodo,
+             round(
+                     sum(case
+                             when
+                                 shared is false and
+                                 lent is false and
+                                 was_borrowed is false
+                                 then case when currency = 'PEN' then amount else amount * 3.75 end
+                             else 0 end)::numeric,
+                     2)                                       Gastos_individuales,
              round(sum(case
                            when shared is true
                                then case when currency = 'PEN' then shared_amount else shared_amount * 3.75 end
@@ -51,7 +52,27 @@ from (select to_char(transaction_date, 'YYYY-MM') periodo, round(
                            else 0 end)::numeric, 2)           Total_Tus_Prestamos,
              (select sum(amount) from recurrent_expenditures) Gastos_Recurrentes_Total
       from expenditures
-      group by to_char(transaction_date, 'YYYY-MM') order by 1 desc) as subtot;
+      group by to_char(transaction_date, 'YYYY-MM')
+      order by 1 desc) as subtot;
+
+--Total loans amount effectuated for me by person (Grouped)
+select to_char(transaction_date, 'YYYY-MM') periodo,
+       lent_to,
+       round(sum(case when currency = 'PEN' then amount else amount * 3.75 end)::numeric, 2)
+FROM expenditures
+where lent = true
+group by to_char(transaction_date, 'YYYY-MM'), lent_to
+order by to_char(transaction_date, 'YYYY-MM') desc;
+
+--Total loans amount effectuated for me by person (Detailed)
+select to_char(transaction_date, 'YYYY-MM') periodo,
+       lent_to,
+       description,
+       round(case when currency = 'PEN' then amount else amount * 3.75 end::numeric, 2)
+FROM expenditures
+where lent = true
+order by to_char(transaction_date, 'YYYY-MM') desc, lent_to;
+
 
 --Total expenses by month and with its total amount
 select borrowed_from, round(sum(amount)::numeric, 2)
@@ -59,3 +80,15 @@ from expenditures
 where transaction_date between '2025-01-01' and '2025-01-31'
   and borrowed_from is not null
 group by borrowed_from;
+
+--Update loan state after being paid
+--1. List
+select *
+from public.expenditures
+where transaction_date between '01-01-2025' and '31-01-2025'
+  AND loan_state = 'PENDING'
+order by transaction_date desc;
+--2. Update
+update expenditures set loan_state='PAID'
+where transaction_date between '01-01-2025' and '31-01-2025'
+  AND loan_state = 'PENDING';

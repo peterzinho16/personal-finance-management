@@ -3,6 +3,7 @@ package com.bindord.financemanagement.controller.expend;
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
+import com.bindord.financemanagement.model.finance.ExpenditureDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.NoSuchAlgorithmException;
+
+import static org.springframework.beans.BeanUtils.copyProperties;
 
 @Controller
 @RestController
@@ -53,13 +56,19 @@ public class ExpenditureController {
   }
 
   @PostMapping
-  Expenditure save(@RequestBody @Valid ExpenditureAddDto expenditure) throws CustomValidationException, NoSuchAlgorithmException {
-    return expenditureService.saveNewManually(expenditure);
+  ExpenditureDto save(@RequestBody @Valid ExpenditureAddDto expenditure) throws CustomValidationException, NoSuchAlgorithmException {
+    var response = expenditureService.saveNewManually(expenditure);
+    var responseObj = new ExpenditureDto();
+    copyProperties(response, responseObj);
+    return responseObj;
   }
 
   @PutMapping("/{id}")
-  Expenditure update(@RequestBody ExpenditureUpdateDto expenditure, @PathVariable Integer id) throws Exception {
-    return expenditureService.updateById(expenditure, id);
+  ExpenditureDto update(@RequestBody ExpenditureUpdateDto expenditure, @PathVariable Integer id) throws Exception {
+    var response = expenditureService.updateById(expenditure, id);
+    var responseObj = new ExpenditureDto();
+    copyProperties(response, responseObj);
+    return responseObj;
   }
 
   @PutMapping("/{id}/{subCategoryId}")
@@ -70,7 +79,10 @@ public class ExpenditureController {
   }
 
   @PutMapping("/{id}/update/shared")
-  public Expenditure updateSharedStateById(@PathVariable Integer id) throws Exception {
-    return expenditureService.updateSharedById(id);
+  public ExpenditureDto updateSharedStateById(@PathVariable Integer id) throws Exception {
+    var response = expenditureService.updateSharedById(id);
+    var responseObj = new ExpenditureDto();
+    copyProperties(response, responseObj);
+    return responseObj;
   }
 }

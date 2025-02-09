@@ -128,15 +128,22 @@
                 <configuration>
                     <skipNativeTests>true</skipNativeTests>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.hibernate.orm.tooling</groupId>
                 <artifactId>hibernate-enhance-maven-plugin</artifactId>
-                <version>6.6.5.Final</version>
                 <executions>
                     <execution>
                         <configuration>
                             <failOnError>true</failOnError>
+                            <enableLazyInitialization>true</enableLazyInitialization>
                         </configuration>
                         <goals>
                             <goal>enhance</goal>
