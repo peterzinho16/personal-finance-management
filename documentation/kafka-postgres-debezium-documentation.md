@@ -1,3 +1,5 @@
+*Shortcut to open MD Preview: SHIFT + CMD + V*
+
 # Setting Up Debezium with PostgreSQL and Kafka (KRaft) on macOS
 
 ## **1. Install and Configure Kafka (KRaft Mode)**
