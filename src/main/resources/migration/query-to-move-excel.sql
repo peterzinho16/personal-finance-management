@@ -26,9 +26,12 @@ from expenditures
 where shared;
 
 --Monthly report
-select
-    subtot.Gastos_individuales + subtot.Gastos_Compartidos + subtot.Mis_Gastos_Pagados_Por_Tercero Final_Total_Gastos,
-    subtot.*
+select (select round(SUM(case when currency = 'PEN' then amount else amount * 3.75 end)::numeric, 2)
+        from incomes
+        where to_char(received_date, 'YYYY-MM') = periodo)                                            otros_ingresos,
+       subtot.Gastos_individuales + subtot.Gastos_Compartidos +
+       subtot.Mis_Gastos_Pagados_Por_Tercero                                                          Final_Total_Gastos,
+       subtot.*
 from (select to_char(transaction_date, 'YYYY-MM')             periodo,
              round(
                      sum(case
@@ -89,6 +92,7 @@ where transaction_date between '01-01-2025' and '31-01-2025'
   AND loan_state = 'PENDING'
 order by transaction_date desc;
 --2. Update
-update expenditures set loan_state='PAID'
+update expenditures
+set loan_state='PAID'
 where transaction_date between '01-01-2025' and '31-01-2025'
   AND loan_state = 'PENDING';
