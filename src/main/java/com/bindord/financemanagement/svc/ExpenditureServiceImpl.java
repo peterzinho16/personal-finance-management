@@ -5,6 +5,7 @@ import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
+import com.bindord.financemanagement.model.finance.ExpenditureUpdateFormDto;
 import com.bindord.financemanagement.model.finance.RecurrentExpenditure;
 import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
@@ -17,13 +18,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
 import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyTwoDecimals;
+import static com.bindord.financemanagement.utils.Utilities.getLocalDateTimeNowWithFormat;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -48,12 +49,13 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   }
 
   /**
-   * @param expenditureDto
+   * @param expenditureUpdateFormDto
    * @param id
-   * @return
+   * @return {@link Expenditure}
    */
   @Override
-  public Expenditure updateById(ExpenditureUpdateDto expenditureDto, Integer id) throws Exception {
+  public Expenditure updateById(ExpenditureUpdateFormDto expenditureUpdateFormDto, Integer id) throws Exception {
+    ExpenditureUpdateDto expenditureDto = expenditureUpdateFormDto.getExpenditureUpdateDto();
     var qExpenditure = this.findById(id);
     var newInstallmentsValue = expenditureDto.getInstallments();
     var installmentsWasModified = !qExpenditure.getInstallments().equals(newInstallmentsValue);
@@ -65,14 +67,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     }
 
     if (nonNull(newInstallmentsValue) && newInstallmentsValue > 0 && installmentsWasModified) {
-      var installmentAmount = qExpenditure.getAmount() / newInstallmentsValue;
-      var expInstObj = expenditureInstallmentMapper(qExpenditure, installmentAmount,
-          newInstallmentsValue);
-      ExpenditureInstallment expInstPersisted =
-          expenditureInstallmentRepository.save(expInstObj);
-      qExpenditure.setExpenditureInstallmentId(expInstPersisted.getId());
-      qExpenditure.setInstallments(newInstallmentsValue);
-      qExpenditure.setAmount(installmentAmount);
+      updateExpenditureWithInstallments(qExpenditure, newInstallmentsValue);
     }
 
     if (nonNull(expenditureDto.getShared()) && qExpenditure.getShared() != expenditureDto.getShared()) {
@@ -102,10 +97,28 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     var qSubCatId = qExpenditure.getSubCategory().getId();
     var expenditureResponse = repository.save(qExpenditure);
     if (expenditureDto.getSubCategoryId() != null && !subCatId.equals(qSubCatId)) {
-      expenditureResponse = updateSubCategoryById(expenditureDto.getSubCategoryId(), id,
-          qExpenditure.getPayee());
+      if (expenditureUpdateFormDto.getFormBehaviour().getUpdateWithoutPayeeCategorization()) {
+        expenditureResponse =
+            updateSubCategoryInTableExpenditureOnly(expenditureDto.getSubCategoryId(), id);
+      } else {
+        expenditureResponse = updateSubCategoryById(expenditureDto.getSubCategoryId(), id,
+            qExpenditure.getPayee());
+      }
     }
     return expenditureResponse;
+  }
+
+  private void updateExpenditureWithInstallments(Expenditure qExpenditure,
+                                                 Short newInstallmentsValue) {
+    var installmentAmount =
+        convertNumberToOnlyTwoDecimals(qExpenditure.getAmount() / newInstallmentsValue);
+    var expInstObj = expenditureInstallmentMapper(qExpenditure, installmentAmount,
+        newInstallmentsValue);
+    ExpenditureInstallment expInstPersisted =
+        expenditureInstallmentRepository.save(expInstObj);
+    qExpenditure.setExpenditureInstallmentId(expInstPersisted.getId());
+    qExpenditure.setInstallments(newInstallmentsValue);
+    qExpenditure.setAmount(installmentAmount);
   }
 
   /**
@@ -127,6 +140,19 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         payeeCategorizationRepository.updateSubCategoryByPayeeId(subCategoryId, payeeId);
       }
     }
+    repository.updateSubCategoryByPayeeId(subCategoryId, id);
+    return repository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
+        " exists"));
+  }
+
+  /**
+   * update subCategoryID only on entity {@link Expenditure}
+   *
+   * @param subCategoryId
+   * @param id
+   * @return
+   */
+  public Expenditure updateSubCategoryInTableExpenditureOnly(Integer subCategoryId, Integer id) throws Exception {
     repository.updateSubCategoryByPayeeId(subCategoryId, id);
     return repository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
         " exists"));
@@ -164,14 +190,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     Expenditure expenditure = expenditureMapperForManualInsert(expenditureDto);
     Short totalInstallments = expenditureDto.getInstallments();
     if (totalInstallments > 1) {
-      var installmentAmount = expenditure.getAmount() / totalInstallments;
-      var expInstallEntity = expenditureInstallmentMapper(expenditure, installmentAmount,
-          totalInstallments);
-      ExpenditureInstallment expInstPersisted =
-          expenditureInstallmentRepository.save(expInstallEntity);
-      expenditure.setExpenditureInstallmentId(expInstPersisted.getId());
-      expenditure.setInstallments(totalInstallments);
-      expenditure.setAmount(installmentAmount);
+      updateExpenditureWithInstallments(expenditure, totalInstallments);
     }
     return repository.save(expenditure);
   }
@@ -270,7 +289,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
             .wasBorrowed(false)
             .amount(recurrentExpenditure.getAmount())
             .currency(PEN.name())
-            .transactionDate(LocalDateTime.now())
+            .transactionDate(getLocalDateTimeNowWithFormat())
             .build());
     expenditure.setRecurrent(true);
     return expenditure;

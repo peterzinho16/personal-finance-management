@@ -36,6 +36,20 @@ public class Utilities {
     return localDateTime;
   }
 
+  public static LocalDateTime getLocalDateTimeNowWithFormat() {
+    // Get current LocalDateTime
+    LocalDateTime now = LocalDateTime.now();
+
+    // Define formatter with the correct pattern
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
+    // Format LocalDateTime to String
+    String formattedDate = now.format(formatter);
+
+    // Parse back to LocalDateTime
+    return LocalDateTime.parse(formattedDate, formatter);
+  }
+
   public static String generateSha256FromMailIdOrPayee(LocalDateTime transactionDate,
                                                        String mailId) throws NoSuchAlgorithmException {
     String timestamp = transactionDate.format(DateTimeFormatter.ISO_DATE_TIME);

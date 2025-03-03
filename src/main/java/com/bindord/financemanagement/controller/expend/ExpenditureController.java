@@ -4,7 +4,7 @@ import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureDto;
-import com.bindord.financemanagement.model.finance.ExpenditureUpdateDto;
+import com.bindord.financemanagement.model.finance.ExpenditureUpdateFormDto;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
@@ -64,8 +64,9 @@ public class ExpenditureController {
   }
 
   @PutMapping("/{id}")
-  ExpenditureDto update(@RequestBody ExpenditureUpdateDto expenditure, @PathVariable Integer id) throws Exception {
-    var response = expenditureService.updateById(expenditure, id);
+  ExpenditureDto update(@RequestBody ExpenditureUpdateFormDto expenditureUpdateFormDto,
+                        @PathVariable Integer id) throws Exception {
+    var response = expenditureService.updateById(expenditureUpdateFormDto, id);
     var responseObj = new ExpenditureDto();
     copyProperties(response, responseObj);
     return responseObj;

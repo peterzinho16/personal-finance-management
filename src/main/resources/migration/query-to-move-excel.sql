@@ -25,38 +25,61 @@ select round(sum(amount::numeric), 2)
 from expenditures
 where shared;
 
+--Temp 9570.63 al dia 02/03/25 a las horas 14:21 PM
+
 --Monthly report
-select (select round(SUM(case when currency = 'PEN' then amount else amount * 3.75 end)::numeric, 2)
-        from incomes
-        where to_char(received_date, 'YYYY-MM') = periodo)                                            otros_ingresos,
+WITH constants AS (SELECT 3.70 AS exchange_rate),
+     subtot AS (SELECT to_char(transaction_date, 'YYYY-MM')             AS periodo,
+                       round(
+                               sum(CASE
+                                       WHEN shared IS FALSE
+                                           AND lent IS FALSE
+                                           AND was_borrowed IS FALSE
+                                           THEN CASE
+                                                    WHEN currency = 'PEN' THEN amount
+                                                    ELSE amount * (SELECT exchange_rate FROM constants)
+                                           END
+                                       ELSE 0
+                                   END)::NUMERIC, 2)                    AS Gastos_individuales,
+                       round(sum(CASE
+                                     WHEN shared IS TRUE
+                                         THEN CASE
+                                                  WHEN currency = 'PEN' THEN shared_amount
+                                                  ELSE shared_amount * (SELECT exchange_rate FROM constants)
+                                         END
+                                     ELSE 0
+                           END)::NUMERIC, 2)                            AS Gastos_Compartidos,
+                       round(sum(CASE
+                                     WHEN was_borrowed IS TRUE
+                                         THEN CASE
+                                                  WHEN currency = 'PEN' THEN amount
+                                                  ELSE amount * (SELECT exchange_rate FROM constants)
+                                         END
+                                     ELSE 0
+                           END)::NUMERIC, 2)                            AS Mis_Gastos_Pagados_Por_Tercero,
+                       round(sum(CASE
+                                     WHEN lent IS TRUE
+                                         THEN CASE
+                                                  WHEN currency = 'PEN' THEN loan_amount
+                                                  ELSE loan_amount * (SELECT exchange_rate FROM constants)
+                                         END
+                                     ELSE 0
+                           END)::NUMERIC, 2)                            AS Total_Tus_Prestamos,
+                       (SELECT sum(amount) FROM recurrent_expenditures) AS Gastos_Recurrentes_Total
+                FROM expenditures
+                GROUP BY to_char(transaction_date, 'YYYY-MM')
+                order by 1 desc)
+SELECT (SELECT round(SUM(CASE
+                             WHEN currency = 'PEN' THEN amount
+                             ELSE amount * (SELECT exchange_rate FROM constants)
+    END)::NUMERIC, 2)
+        FROM incomes
+        WHERE to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
        subtot.Gastos_individuales + subtot.Gastos_Compartidos +
-       subtot.Mis_Gastos_Pagados_Por_Tercero                                                          Final_Total_Gastos,
+       subtot.Mis_Gastos_Pagados_Por_Tercero                      AS Final_Total_Gastos,
        subtot.*
-from (select to_char(transaction_date, 'YYYY-MM')             periodo,
-             round(
-                     sum(case
-                             when
-                                 shared is false and
-                                 lent is false and
-                                 was_borrowed is false
-                                 then case when currency = 'PEN' then amount else amount * 3.75 end
-                             else 0 end)::numeric,
-                     2)                                       Gastos_individuales,
-             round(sum(case
-                           when shared is true
-                               then case when currency = 'PEN' then shared_amount else shared_amount * 3.75 end
-                           else 0 end)::numeric, 2)           Gastos_Compartidos,
-             round(sum(case
-                           when was_borrowed is true then case when currency = 'PEN' then amount else amount * 3.75 end
-                           else 0 end)::numeric, 2)           Mis_Gastos_Pagados_Por_Tercero,
-             round(sum(case
-                           when lent is true
-                               then case when currency = 'PEN' then loan_amount else loan_amount * 3.75 end
-                           else 0 end)::numeric, 2)           Total_Tus_Prestamos,
-             (select sum(amount) from recurrent_expenditures) Gastos_Recurrentes_Total
-      from expenditures
-      group by to_char(transaction_date, 'YYYY-MM')
-      order by 1 desc) as subtot;
+FROM subtot;
+
 
 --Total loans amount effectuated for me by person (Grouped)
 select to_char(transaction_date, 'YYYY-MM') periodo,
@@ -67,13 +90,15 @@ where lent = true
 group by to_char(transaction_date, 'YYYY-MM'), lent_to
 order by to_char(transaction_date, 'YYYY-MM') desc;
 
---Total loans amount effectuated for me by person (Detailed)
+--Total loans amount effectuated from me by person (Detailed) WHERE loan is still not paid
 select to_char(transaction_date, 'YYYY-MM') periodo,
        lent_to,
        description,
-       round(case when currency = 'PEN' then amount else amount * 3.75 end::numeric, 2)
+       round(case when currency = 'PEN' then amount else amount * 3.75 end::numeric, 2),
+       *
 FROM expenditures
 where lent = true
+  AND loan_state != 'PAID'
 order by to_char(transaction_date, 'YYYY-MM') desc, lent_to;
 
 
@@ -88,11 +113,29 @@ group by borrowed_from;
 --1. List
 select *
 from public.expenditures
-where transaction_date between '01-01-2025' and '31-01-2025'
+where transaction_date between '01-03-2025' and '01-04-2025'
   AND loan_state = 'PENDING'
 order by transaction_date desc;
 --2. Update
 update expenditures
 set loan_state='PAID'
-where transaction_date between '01-01-2025' and '31-01-2025'
+where transaction_date between '01-03-2025' and '01-04-2025'
   AND loan_state = 'PENDING';
+
+--Auditing shared expenditures
+WITH constants AS (SELECT 3.70 AS exchange_rate)
+SELECT id,
+       payee,
+       description,
+       transaction_date,
+       CASE
+           WHEN currency = 'USD' THEN expenditures.shared_amount * (SELECT exchange_rate FROM constants)
+           ELSE shared_amount
+           END AS shared_amount_in_soles,
+       amount,
+       currency,
+       *
+FROM public.expenditures
+WHERE transaction_date BETWEEN '01-03-2025' and '01-04-2025'
+  AND shared
+ORDER BY transaction_date DESC;

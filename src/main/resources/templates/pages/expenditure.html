@@ -131,12 +131,27 @@
                         <div class="col-md-6 mb-3">
                             <label for="forDaughterCheckbox" class="form-label">For daughter</label>
                             <label class="switch">
-                                <input type="checkbox" id="forDaughterCheckbox" name="lent" value="false">
+                                <input type="checkbox" id="forDaughterCheckbox" name="daughterCheckbox" value="false">
                                 <span class="slider"></span>
                             </label>
 
                         </div>
                         <div class="col-md-6 mb-3" id="wildcardContainer" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="updateWithoutPayeeCatCheckbox" class="form-label">Update without Tbl. Payee
+                                Cat</label>
+                            <label class="switch">
+                                <input type="checkbox" id="updateWithoutPayeeCatCheckbox" name="withoutPayeeCatCheckbox"
+                                       value="false">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="col-md-6 mb-3" id="wildcardContainer2" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -276,7 +291,7 @@
                 $("#forDaughterCheckbox").prop('checked', exp.forDaughter);
                 var wasFinanced = exp.installments > 1;
                 $("#installmentsCheckbox").prop('checked', wasFinanced);
-                if(wasFinanced) {
+                if (wasFinanced) {
                     $("#totalInstallmentsContainer").show();
                     $("#totalInstallmentsInput").val(exp.installments);
                 } else {
@@ -293,13 +308,15 @@
 
                 $("#slideForm").addClass("active");
                 $("#save-changes").removeClass("hidden");
-                if(exp.installments && exp.installments > 1) {
+                if (exp.installments && exp.installments > 1) {
                     $('#installmentsCheckbox').prop('disabled', true);
                     $('#totalInstallmentsInput').prop('disabled', true);
                 } else {
                     $('#installmentsCheckbox').prop('disabled', false);
                     $('#totalInstallmentsInput').prop('disabled', false);
                 }
+
+                $("#updateWithoutPayeeCatCheckbox").prop('checked', false);
             } catch (error) {
                 console.error("Error fetching expenditure details:", error);
                 showErrorToast(error.status, error.responseJSON.message);
@@ -340,11 +357,18 @@
                 forDaughter: forDaughter
             };
 
+            const flDataObj = {
+                expenditureUpdateDto: data,
+                formBehaviour: {
+                    updateWithoutPayeeCategorization: $("#updateWithoutPayeeCatCheckbox").is(":checked")
+                }
+            }
+
             $.ajax({
                 url: `${apiEndpoint}/${entityId}`,
                 method: 'PUT',
                 contentType: 'application/json',
-                data: JSON.stringify(data),
+                data: JSON.stringify(flDataObj),
                 success: function (response) {
                     console.log("Update successful:", response);
                     $("#slideForm").removeClass("active");
