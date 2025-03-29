@@ -149,6 +149,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         var newExpenditure = new Expenditure();
         BeanUtils.copyProperties(expenditureReference, newExpenditure);
         newExpenditure.setTransactionDate(projectionDate);
+        newExpenditure.setDescription(expenditureInstallment.getDescription());
         expenditureRepository.save(newExpenditure);
         var newPendingAmount =
             convertNumberToOnlyTwoDecimals(

@@ -74,7 +74,7 @@ SELECT (SELECT round(SUM(CASE
                              ELSE amount * (SELECT exchange_rate FROM constants)
     END)::NUMERIC, 2)
         FROM incomes
-        WHERE to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
+        WHERE was_received and to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
        subtot.Gastos_individuales + subtot.Gastos_Compartidos +
        subtot.Mis_Gastos_Pagados_Por_Tercero                      AS Final_Total_Gastos,
        subtot.*
