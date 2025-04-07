@@ -66,6 +66,12 @@ public class ExpenditureServiceImpl implements ExpenditureService {
       throw new CustomValidationException(msg);
     }
 
+    if (nonNull(expenditureDto.getDescription())
+        && !expenditureDto.getDescription().isEmpty()
+        && !qExpenditure.getDescription().equals(expenditureDto.getDescription())) {
+      qExpenditure.setDescription(expenditureDto.getDescription());
+    }
+
     if (nonNull(newInstallmentsValue) && newInstallmentsValue > 0 && installmentsWasModified) {
       updateExpenditureWithInstallments(qExpenditure, newInstallmentsValue);
     }
@@ -75,11 +81,6 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     }
     if (nonNull(expenditureDto.getLent()) && qExpenditure.getLent() != expenditureDto.getLent()) {
       updateLentState(qExpenditure, expenditureDto);
-    }
-    if (nonNull(expenditureDto.getDescription())
-        && !expenditureDto.getDescription().isEmpty()
-        && !qExpenditure.getDescription().equals(expenditureDto.getDescription())) {
-      qExpenditure.setDescription(expenditureDto.getDescription());
     }
 
     if (nonNull(expenditureDto.getForDaughter())
@@ -290,6 +291,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
             .amount(recurrentExpenditure.getAmount())
             .currency(PEN.name())
             .transactionDate(getLocalDateTimeNowWithFormat())
+            .installments((short) 1)
             .build());
     expenditure.setRecurrent(true);
     return expenditure;

@@ -16,7 +16,7 @@ public class PagesController {
     return "pages/payee-categorization";
   }
 
-  @RequestMapping({"/bar-chart-categories"})
+  @RequestMapping({"/charts/bar-chart-categories"})
   public String showBarChartExpendituresCategoriesPage() {
     return "pages/bar-chart-categories";
   }
