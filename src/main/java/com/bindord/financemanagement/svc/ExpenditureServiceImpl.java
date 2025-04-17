@@ -183,6 +183,15 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   }
 
   /**
+   * @param id
+   * @throws Exception
+   */
+  @Override
+  public void deleteById(Integer id) {
+    repository.deleteById(id);
+  }
+
+  /**
    * @param expenditureDto obj with the properties of expenditure to be persisted
    * @return Expenditure obj that was persisted
    */

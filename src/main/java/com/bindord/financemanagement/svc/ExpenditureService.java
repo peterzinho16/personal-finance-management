@@ -17,5 +17,7 @@ public interface ExpenditureService {
 
   Expenditure updateSharedById(Integer id) throws Exception;
 
+  void deleteById(Integer id) throws Exception;
+
   Expenditure saveNewManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException;
 }

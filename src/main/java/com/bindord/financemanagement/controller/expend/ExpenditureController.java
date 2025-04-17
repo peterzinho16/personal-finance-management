@@ -11,9 +11,11 @@ import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.svc.ExpenditureService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
 
+@Slf4j
 @Controller
 @RestController
 @RequestMapping("/eureka/finance-app/expenditure")
@@ -85,5 +88,14 @@ public class ExpenditureController {
     var responseObj = new ExpenditureDto();
     copyProperties(response, responseObj);
     return responseObj;
+  }
+
+
+
+  @DeleteMapping("/{id}")
+  public void delete(@PathVariable Integer id) throws Exception {
+    log.info("Initialization... deleting expenditure with id {}", id);
+    expenditureService.deleteById(id);
+    log.info("Finished deleting expenditure with id {}", id);
   }
 }
