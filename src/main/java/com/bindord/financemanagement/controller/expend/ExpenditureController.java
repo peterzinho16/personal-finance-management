@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.advice.CustomValidationException;
+import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureDto;
@@ -8,6 +9,7 @@ import com.bindord.financemanagement.model.finance.ExpenditureUpdateFormDto;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
+import com.bindord.financemanagement.svc.ExpenditureReportService;
 import com.bindord.financemanagement.svc.ExpenditureService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
 
@@ -39,6 +42,7 @@ public class ExpenditureController {
   private final ExpenditureRepository repository;
   private final SubCategoryRepository subCategoryRepository;
   private final ExpenditureService expenditureService;
+  private final ExpenditureReportService expenditureReportService;
 
   @GetMapping
   Page<Expenditure> findAll(Pageable pageable,
@@ -91,11 +95,15 @@ public class ExpenditureController {
   }
 
 
-
   @DeleteMapping("/{id}")
   public void delete(@PathVariable Integer id) throws Exception {
     log.info("Initialization... deleting expenditure with id {}", id);
     expenditureService.deleteById(id);
     log.info("Finished deleting expenditure with id {}", id);
+  }
+
+  @GetMapping("/reports/get-category-monthly-totals")
+  public List<CategoryMonthlyTotalsProjection> getCategoryMonthlyTotals() {
+    return expenditureReportService.expenditureReport();
   }
 }
