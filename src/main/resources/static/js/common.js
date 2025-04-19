@@ -179,9 +179,12 @@ function generateDateTimeNowFormatted() {
 }
 
 (function eventListenerForSubCategoryList() {
-    document.querySelector('#category-container').addEventListener('click', (event) => {
-        if (event.target.type === 'radio') {
-            console.log(`${event.target.parentElement.textContent.trim()}: ${event.target.value}`);
-        }
-    })
+    var container = document.querySelector('#category-container');
+    if(container) {
+        container.addEventListener('click', (event) => {
+            if (event.target.type === 'radio') {
+                console.log(`${event.target.parentElement.textContent.trim()}: ${event.target.value}`);
+            }
+        })
+    }
 })();

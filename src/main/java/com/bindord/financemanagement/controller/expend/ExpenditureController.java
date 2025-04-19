@@ -2,11 +2,13 @@ package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
+import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateFormDto;
 import com.bindord.financemanagement.model.finance.SubCategory;
+import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.svc.ExpenditureReportService;
@@ -28,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
@@ -43,6 +47,7 @@ public class ExpenditureController {
   private final SubCategoryRepository subCategoryRepository;
   private final ExpenditureService expenditureService;
   private final ExpenditureReportService expenditureReportService;
+  private final CategoryRepository categoryRepository;
 
   @GetMapping
   Page<Expenditure> findAll(Pageable pageable,
@@ -105,5 +110,24 @@ public class ExpenditureController {
   @GetMapping("/reports/get-category-monthly-totals")
   public List<CategoryMonthlyTotalsProjection> getCategoryMonthlyTotals() {
     return expenditureReportService.expenditureReport();
+  }
+
+  @GetMapping("/reports/list/by-period-and-category")
+  List<Expenditure> findAllByYearMonthAndCategory(
+      @RequestParam String period, @RequestParam String categoryName, @RequestParam Boolean shared) {
+    String[] date = period.split("-");
+    Category category = categoryRepository.findByNameIgnoreCase(categoryName);
+    Integer categoryId = category.getId();
+    return repository.findAllByYearMonthAndCategoryAndShared(
+        LocalDateTime.of(
+            Integer.parseInt(date[0]),
+            Integer.parseInt(date[1]),
+            1, 0, 0,0),
+        LocalDateTime.of(
+            Integer.parseInt(date[0]),
+            Integer.parseInt(date[1]) + 1,
+            1, 0, 0,0),
+        categoryId,
+        shared);
   }
 }

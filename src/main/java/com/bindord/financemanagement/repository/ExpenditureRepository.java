@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -49,37 +50,47 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
 
 
   @Query(value = """
-        WITH constants AS (
-            SELECT 3.67 AS exchange_rate
-        ),
-        category_monthly_totals AS (
-            SELECT
-                to_char(e.transaction_date, 'YYYY-MM') AS periodo,
-                c.name AS categoria,
-                round(
-                    sum(CASE
-                        WHEN e.shared IS FALSE AND e.lent IS FALSE AND e.was_borrowed IS FALSE
-                        THEN CASE
-                            WHEN e.currency = 'PEN' THEN e.amount
-                            ELSE e.amount * (SELECT exchange_rate FROM constants)
-                        END
-                        ELSE 0
-                    END)::NUMERIC, 2) AS gastos_individuales,
-                round(
-                    sum(CASE
-                        WHEN e.shared IS TRUE
-                        THEN CASE
-                            WHEN e.currency = 'PEN' THEN e.shared_amount
-                            ELSE e.shared_amount * (SELECT exchange_rate FROM constants)
-                        END
-                        ELSE 0
-                    END)::NUMERIC, 2) AS gastos_compartidos
-            FROM expenditures e
-            JOIN sub_categories sc ON sc.id = e.sub_category_id
-            JOIN categories c ON c.id = sc.category_id
-            GROUP BY to_char(e.transaction_date, 'YYYY-MM'), c.name
-        )
-        SELECT * FROM category_monthly_totals ORDER BY periodo DESC, categoria
-        """, nativeQuery = true)
+      WITH constants AS (
+          SELECT 3.67 AS exchange_rate
+      ),
+      category_monthly_totals AS (
+          SELECT
+              to_char(e.transaction_date, 'YYYY-MM') AS periodo,
+              c.name AS categoria,
+              round(
+                  sum(CASE
+                      WHEN e.shared IS FALSE AND e.lent IS FALSE AND e.was_borrowed IS FALSE
+                      THEN CASE
+                          WHEN e.currency = 'PEN' THEN e.amount
+                          ELSE e.amount * (SELECT exchange_rate FROM constants)
+                      END
+                      ELSE 0
+                  END)::NUMERIC, 2) AS gastos_individuales,
+              round(
+                  sum(CASE
+                      WHEN e.shared IS TRUE
+                      THEN CASE
+                          WHEN e.currency = 'PEN' THEN e.shared_amount
+                          ELSE e.shared_amount * (SELECT exchange_rate FROM constants)
+                      END
+                      ELSE 0
+                  END)::NUMERIC, 2) AS gastos_compartidos
+          FROM expenditures e
+          JOIN sub_categories sc ON sc.id = e.sub_category_id
+          JOIN categories c ON c.id = sc.category_id
+          GROUP BY to_char(e.transaction_date, 'YYYY-MM'), c.name
+      )
+      SELECT * FROM category_monthly_totals ORDER BY periodo DESC, categoria
+      """, nativeQuery = true)
   List<CategoryMonthlyTotalsProjection> getCategoryMonthlyTotals();
+
+  @Query(value = "SELECT EX from Expenditure EX " +
+      "JOIN FETCH EX.subCategory SC " +
+      "JOIN FETCH SC.category C " +
+      "WHERE EX.transactionDate BETWEEN :initMonth AND :endMonthPlusOne " +
+      "AND C.id = :categoryId " +
+      "AND EX.shared = :shared")
+  List<Expenditure> findAllByYearMonthAndCategoryAndShared(LocalDateTime initMonth,
+                                                           LocalDateTime endMonthPlusOne,
+                                                           Integer categoryId, Boolean shared);
 }
