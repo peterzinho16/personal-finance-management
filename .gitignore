@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+#Secrets
+tokens
+src/main/resources/secrets
+
 ### STS ###
 .apt_generated
 .classpath

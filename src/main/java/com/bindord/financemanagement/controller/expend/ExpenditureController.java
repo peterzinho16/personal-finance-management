@@ -2,6 +2,7 @@ package com.bindord.financemanagement.controller.expend;
 
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
+import com.bindord.financemanagement.model.dashboard.MonthlyExpenseSummaryDTO;
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
@@ -30,8 +31,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
@@ -114,20 +115,34 @@ public class ExpenditureController {
 
   @GetMapping("/reports/list/by-period-and-category")
   List<Expenditure> findAllByYearMonthAndCategory(
-      @RequestParam String period, @RequestParam String categoryName, @RequestParam Boolean shared) {
+      @RequestParam String period,
+      @RequestParam String categoryName,
+      @RequestParam Boolean shared) {
+
     String[] date = period.split("-");
+    int year = Integer.parseInt(date[0]);
+    int month = Integer.parseInt(date[1]);
+
     Category category = categoryRepository.findByNameIgnoreCase(categoryName);
     Integer categoryId = category.getId();
+
+    // First day of the given month at start of day
+    LocalDateTime start = YearMonth.of(year, month).atDay(1).atStartOfDay();
+
+    // First day of the *next* month at start of day
+    LocalDateTime end = start.plusMonths(1);
+
     return repository.findAllByYearMonthAndCategoryAndShared(
-        LocalDateTime.of(
-            Integer.parseInt(date[0]),
-            Integer.parseInt(date[1]),
-            1, 0, 0,0),
-        LocalDateTime.of(
-            Integer.parseInt(date[0]),
-            Integer.parseInt(date[1]) + 1,
-            1, 0, 0,0),
+        start,
+        end,
         categoryId,
-        shared);
+        shared
+    );
+  }
+
+
+  @GetMapping("/reports/list/monthly-summary")
+  public List<MonthlyExpenseSummaryDTO> getMonthlySummary() {
+    return expenditureReportService.getMonthlySummaries();
   }
 }

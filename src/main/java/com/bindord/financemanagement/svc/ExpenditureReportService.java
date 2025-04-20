@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
+import com.bindord.financemanagement.model.dashboard.MonthlyExpenseSummaryDTO;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,5 +18,9 @@ public class ExpenditureReportService {
 
   public List<CategoryMonthlyTotalsProjection> expenditureReport(){
     return expenditureRepository.getCategoryMonthlyTotals();
+  }
+
+  public List<MonthlyExpenseSummaryDTO> getMonthlySummaries() {
+    return expenditureRepository.getMonthlySummary();
   }
 }

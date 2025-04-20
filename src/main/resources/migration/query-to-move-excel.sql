@@ -80,6 +80,7 @@ SELECT (SELECT round(SUM(CASE
        subtot.*
 FROM subtot;
 
+select * from expenditures where lent_to is not null order by transaction_date;
 
 --Total loans amount effectuated for me by person (Grouped)
 select to_char(transaction_date, 'YYYY-MM') periodo,
