@@ -32,6 +32,7 @@ public class ExpenditureExtractorUtil {
       }
       return lastSplit[0];
     }
+
     if (subjectLwc.contains(EntitiesKeyword.BCP.name().toLowerCase())) {
       var bodyParts = bodyTextContent.split("\\s+");
       int indexEmpresa = IntStream.range(0, bodyParts.length)
@@ -49,6 +50,7 @@ public class ExpenditureExtractorUtil {
           .orElse(0);
 
       if (indexNumero == 0) {
+        log.info("No se puede obtener payee from {}", EntitiesKeyword.BCP.name());
         return INPUT_NOT_FOUND;
       }
       return Arrays.stream(bodyParts, indexEmpresa + 1, indexNumero)
@@ -73,12 +75,40 @@ public class ExpenditureExtractorUtil {
           .orElse(0);
 
       if (indexNumero == 0) {
+        log.info("No se puede obtener payee from {}", EntitiesKeyword.DINERS.name());
         return INPUT_NOT_FOUND;
       }
 
       return Arrays.stream(bodyParts, indexEmpresa + 1, indexNumero)
           .collect(Collectors.joining(" "));
     }
+
+    if (subjectLwc.contains(EntitiesKeyword.OH.name().toLowerCase())) {
+
+      var bodyParts = bodyTextContent.split("\\s+");
+      int indexEmpresa = IntStream.range(0, bodyParts.length)
+          .filter(i -> bodyParts[i].contains("Establecimiento"))
+          .findFirst()
+          .orElse(0);
+
+      if (indexEmpresa == 0) {
+        return INPUT_NOT_FOUND;
+      }
+
+      int indexNumero = IntStream.range(indexEmpresa, bodyParts.length)
+          .filter(ix -> bodyParts[ix].contains("Monto"))
+          .findFirst()
+          .orElse(0);
+
+      if (indexNumero == 0) {
+        log.info("No se puede obtener payee from {}", EntitiesKeyword.OH.name());
+        return INPUT_NOT_FOUND;
+      }
+
+      return Arrays.stream(bodyParts, indexEmpresa + 1, indexNumero)
+          .collect(Collectors.joining(" "));
+    }
+    log.info("No se puede obtener payee");
     return INPUT_NOT_FOUND;
   }
 
@@ -89,5 +119,9 @@ public class ExpenditureExtractorUtil {
 
   public static String convertHTMLTextToPlainText(MessageDto.Body body) {
     return HTMLTextExtractor.extractTextJsoup(body.getContent());
+  }
+
+  public static String convertHTMLTextToPlainText(String htmlText) {
+    return HTMLTextExtractor.extractTextJsoup(htmlText);
   }
 }

@@ -2,7 +2,6 @@ package com.bindord.financemanagement.controller.auth;
 
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import org.slf4j.Logger;
@@ -35,7 +34,7 @@ public class GoogleAuthController {
     this.flow = flow;
   }
 
-  @GetMapping("/gmail/auth")
+  @GetMapping("/start-flow")
   public RedirectView authorize() throws IOException {
     AuthorizationCodeRequestUrl authorizationUrl = flow.newAuthorizationUrl();
     authorizationUrl.setRedirectUri(redirectUri);
@@ -49,7 +48,7 @@ public class GoogleAuthController {
     logger.info("Received authorization code: {}", code);
     if (code != null) {
       TokenResponse response = flow.newTokenRequest(code).setRedirectUri(redirectUri).execute();
-      Credential credential = flow.createAndStoreCredential(response, "user"); // "user" is a user identifier
+      flow.createAndStoreCredential(response, "user"); // "user" is a user identifier
       return "Authorization successful! You can now access your Gmail.";
     } else {
       return "Authorization failed.";

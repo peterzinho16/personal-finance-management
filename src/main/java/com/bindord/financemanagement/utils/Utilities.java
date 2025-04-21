@@ -1,6 +1,8 @@
 package com.bindord.financemanagement.utils;
 
+import com.bindord.financemanagement.model.finance.ExpenditureOthers;
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
+import com.bindord.financemanagement.model.source.GmailMessageDto;
 import com.bindord.financemanagement.model.source.MessageDto;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +14,9 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -20,6 +24,7 @@ public class Utilities {
 
   private static final String SECURE_HASH = "SHA-256";
   public static final String SESSION_TOKEN = "sessionToken";
+  public static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
   public static LocalDateTime convertDatetimeToUTCMinusFive(String dateTimeString) {
     ZonedDateTime utcDateTime = ZonedDateTime.parse(dateTimeString,
@@ -41,7 +46,7 @@ public class Utilities {
     LocalDateTime now = LocalDateTime.now();
 
     // Define formatter with the correct pattern
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATETIME_FORMAT);
 
     // Format LocalDateTime to String
     String formattedDate = now.format(formatter);
@@ -109,6 +114,7 @@ public class Utilities {
 
   public static List<MessageDto> getFilteredMessages(List<MessageDto> originalList,
                                                      Set<String> exclusions) {
+
     List<MessageDto> postFilterMessages = originalList.stream().filter(
         msg -> exclusions
             .stream()
@@ -119,8 +125,21 @@ public class Utilities {
     return postFilterMessages;
   }
 
+  public static List<GmailMessageDto> getFilteredGmailMessages(List<GmailMessageDto> originalList,
+                                                               Set<String> exclusions) {
+
+    List<GmailMessageDto> postFilterMessages = originalList.stream().filter(
+        msg -> exclusions
+            .stream()
+            .noneMatch(
+                ex -> msg.getSubject().toLowerCase().contains(ex)
+            )
+    ).toList();
+    return postFilterMessages;
+  }
+
   public enum EntitiesKeyword {
-    YAPE, BCP, DINERS
+    YAPE, BCP, DINERS, OH
   }
 
   public static double convertNumberToOnlyTwoDecimals(Double number) {
@@ -130,5 +149,17 @@ public class Utilities {
     String formattedNumber = df.format(number);
     // Convert back to double
     return Double.parseDouble(formattedNumber);
+  }
+
+  public static LocalDateTime getMaxTransactionDate(List<ExpenditureOthers> expenditures) {
+    if (expenditures == null || expenditures.isEmpty()) {
+      return null; // Or throw an exception if an empty list is not expected
+    }
+
+    Optional<LocalDateTime> maxDate = expenditures.stream()
+        .map(ExpenditureOthers::getTransactionDate)
+        .max(Comparator.naturalOrder());
+
+    return maxDate.orElse(null); // Returns null if the list was empty
   }
 }

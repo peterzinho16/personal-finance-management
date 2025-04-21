@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 
 public class MailRegex {
 
-  private static final Pattern EXTRACT_EXPENDITURE_AMOUNT = Pattern.compile("(S/|\\$)\\s*(\\d+(\\.\\d+)?)");
+  private static final Pattern EXTRACT_EXPENDITURE_AMOUNT = Pattern.compile("(S/\\.|S/|\\$)\\s*(\\d+(\\.\\d+)?)");
+
   private static final Pattern VALIDATE_EXPENDITURE_CURRENCY = Pattern.compile("(S/|\\$)");
 
 
@@ -25,7 +26,7 @@ public class MailRegex {
       return null;
     }
     return switch (matcher.group()) {
-      case "S/" -> Expenditure.Currency.PEN;
+      case "S/", "S/." -> Expenditure.Currency.PEN;
       default -> Expenditure.Currency.USD;
     };
   }
