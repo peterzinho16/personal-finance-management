@@ -64,7 +64,7 @@ public class ExpenditureController {
   }
 
   @GetMapping("/{id}")
-  Expenditure findByIdWithPageable(@PathVariable Integer id) {
+  Expenditure findById(@PathVariable Integer id) {
     return repository.findByIdWithSubCategory(id);
   }
 

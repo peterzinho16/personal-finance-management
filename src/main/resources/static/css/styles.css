@@ -68,6 +68,13 @@ body {
     text-align: center;
 }
 
+.header-alt {
+    background-color: #63d25c;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+}
+
 .header h1 {
     margin: 0;
 }

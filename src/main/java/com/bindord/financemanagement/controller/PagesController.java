@@ -11,6 +11,11 @@ public class PagesController {
     return "pages/expenditure";
   }
 
+  @RequestMapping({"/home/others"})
+  public String showOthersExpenditurePage() {
+    return "pages/expenditure-others";
+  }
+
   @RequestMapping({"/payee-categorization"})
   public String showPayeeCategorizationPage() {
     return "pages/payee-categorization";
