@@ -60,6 +60,16 @@ public class AppDataConfiguration implements ApplicationListener<ApplicationRead
       log.info("Current exchange rate from internet: {}", usdExchangeRateDto);
       exchangeRateData.put(CURRENT_USD_EXCHANGE_RATE,
           usdExchangeRateDto);
+      UsdToPenConversion usdToPenConversion =
+          usdToPenConversionRepository.findLatestByEffectiveDate();
+      if (usdToPenConversion.getEffectiveDate().isBefore(usdExchangeRateDto.getDate().toLocalDate())) {
+        var nwUsdToPenConversion = new UsdToPenConversion();
+        nwUsdToPenConversion.setSource(FROM_SUNAT_SBS.toString());
+        nwUsdToPenConversion.setExchangeRate(usdExchangeRateDto.getUsdExchangeRate());
+        nwUsdToPenConversion.setEffectiveDate(usdExchangeRateDto.getDate().toLocalDate());
+        nwUsdToPenConversion.setCreatedAt(usdExchangeRateDto.getDate());
+        usdToPenConversionRepository.save(nwUsdToPenConversion);
+      }
     } else {
 
       UsdToPenConversion usdToPenConversion =
@@ -102,7 +112,8 @@ public class AppDataConfiguration implements ApplicationListener<ApplicationRead
           }
         }
       } else {
-        log.error("Failed to fetch exchange rate from internet. HTTP response code: {}", responseCode);
+        log.error("Failed to fetch exchange rate from internet. HTTP response code: {}",
+            responseCode);
       }
     } catch (Exception e) {
       log.error("Error fetching exchange rate data from internet", e);
