@@ -18,6 +18,7 @@ public class MonthlyExpenseSummaryDTO {
   private BigDecimal gastosIndividuales;
   private BigDecimal gastosCompartidos;
   private BigDecimal misGastosPagadosPorTercero;
+  private BigDecimal misGastosImportados;
   private BigDecimal totalTusPrestamos;
   private Double gastosRecurrentesTotal;
 }

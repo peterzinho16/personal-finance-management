@@ -261,7 +261,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     var referenceId =
         Utilities.generateSha256FromMailIdOrPayee(expenditureDto.getTransactionDate(), payee);
     return Expenditure.builder()
-        .referenceId(!expenditureDto.getReferenceId().isBlank() ?
+        .referenceId(Objects.nonNull(expenditureDto.getReferenceId()) && !expenditureDto.getReferenceId().isBlank() ?
             expenditureDto.getReferenceId() : referenceId)
         .description(expenditureDto.getDescription())
         .transactionDate(

@@ -38,7 +38,6 @@ import java.util.List;
 import static org.springframework.beans.BeanUtils.copyProperties;
 
 @Slf4j
-@Controller
 @RestController
 @RequestMapping("/eureka/finance-app/expenditure")
 @AllArgsConstructor

@@ -96,44 +96,53 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
                                                            Integer categoryId, Boolean shared);
 
   @Query(value = """
-        WITH constants AS (SELECT 3.67 AS exchange_rate),
-             subtot AS (
-                SELECT to_char(transaction_date, 'YYYY-MM') AS periodo,
-                       round(sum(CASE
-                                     WHEN shared IS FALSE AND lent IS FALSE AND was_borrowed IS FALSE
-                                     THEN CASE WHEN currency = 'PEN' THEN amount
-                                               ELSE amount * (SELECT exchange_rate FROM constants) END
-                                     ELSE 0 END)::NUMERIC, 2) AS gastos_individuales,
-                       round(sum(CASE WHEN shared IS TRUE THEN
-                                         CASE WHEN currency = 'PEN' THEN shared_amount
-                                              ELSE shared_amount * (SELECT exchange_rate FROM constants) END
-                                     ELSE 0 END)::NUMERIC, 2) AS gastos_compartidos,
-                       round(sum(CASE WHEN was_borrowed IS TRUE THEN
-                                         CASE WHEN currency = 'PEN' THEN amount
-                                              ELSE amount * (SELECT exchange_rate FROM constants) END
-                                     ELSE 0 END)::NUMERIC, 2) AS mis_gastos_pagados_por_tercero,
-                       round(sum(CASE WHEN lent IS TRUE THEN
-                                         CASE WHEN currency = 'PEN' THEN loan_amount
-                                              ELSE loan_amount * (SELECT exchange_rate FROM constants) END
-                                     ELSE 0 END)::NUMERIC, 2) AS total_tus_prestamos,
-                       (SELECT sum(amount) FROM recurrent_expenditures) AS gastos_recurrentes_total
-                FROM expenditures
-                GROUP BY to_char(transaction_date, 'YYYY-MM')
-            )
-        SELECT
-            (SELECT round(SUM(CASE WHEN currency = 'PEN' THEN amount
-                                   ELSE amount * (SELECT exchange_rate FROM constants) END)::NUMERIC, 2)
-             FROM incomes
-             WHERE was_received AND to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
-            (subtot.gastos_individuales + subtot.gastos_compartidos + subtot.mis_gastos_pagados_por_tercero) AS final_total_gastos,
-            subtot.periodo,
-            subtot.gastos_individuales,
-            subtot.gastos_compartidos,
-            subtot.mis_gastos_pagados_por_tercero,
-            subtot.total_tus_prestamos,
-            subtot.gastos_recurrentes_total
-        FROM subtot
-        ORDER BY subtot.periodo DESC
-        """, nativeQuery = true)
+      WITH constants AS (SELECT 3.67 AS exchange_rate),
+           subtot AS (
+              SELECT to_char(transaction_date, 'YYYY-MM') AS periodo,
+                     round(sum(CASE
+                                   WHEN shared IS FALSE AND lent IS FALSE AND was_borrowed IS FALSE AND exp_imported IS FALSE
+                                   THEN CASE WHEN currency = 'PEN' THEN amount
+                                             ELSE amount * (SELECT exchange_rate FROM constants) END
+                                   ELSE 0 END)::NUMERIC, 2) AS gastos_individuales,
+                     round(sum(CASE WHEN shared IS TRUE THEN
+                                       CASE WHEN currency = 'PEN' THEN shared_amount
+                                            ELSE shared_amount * (SELECT exchange_rate FROM constants) END
+                                   ELSE 0 END)::NUMERIC, 2) AS gastos_compartidos,
+                     round(sum(CASE WHEN was_borrowed IS TRUE THEN
+                                       CASE WHEN currency = 'PEN' THEN amount
+                                            ELSE amount * (SELECT exchange_rate FROM constants) END
+                                   ELSE 0 END)::NUMERIC, 2) AS mis_gastos_pagados_por_tercero,
+                     round(sum(CASE
+                                   WHEN exp_imported IS TRUE
+                                       THEN CASE
+                                                WHEN currency = 'PEN' THEN shared_amount
+                                                ELSE shared_amount * (SELECT exchange_rate FROM constants)
+                                       END
+                                   ELSE 0
+                         END)::NUMERIC, 2)                            AS Mis_Gastos_Importados,
+                     round(sum(CASE WHEN lent IS TRUE THEN
+                                       CASE WHEN currency = 'PEN' THEN loan_amount
+                                            ELSE loan_amount * (SELECT exchange_rate FROM constants) END
+                                   ELSE 0 END)::NUMERIC, 2) AS total_tus_prestamos,
+                     (SELECT sum(amount) FROM recurrent_expenditures) AS gastos_recurrentes_total
+              FROM expenditures
+              GROUP BY to_char(transaction_date, 'YYYY-MM')
+          )
+      SELECT
+          (SELECT round(SUM(CASE WHEN currency = 'PEN' THEN amount
+                                 ELSE amount * (SELECT exchange_rate FROM constants) END)::NUMERIC, 2)
+           FROM incomes
+           WHERE was_received AND to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
+          (subtot.gastos_individuales + subtot.gastos_compartidos + subtot.mis_gastos_pagados_por_tercero) AS final_total_gastos,
+          subtot.periodo,
+          subtot.gastos_individuales,
+          subtot.gastos_compartidos,
+          subtot.mis_gastos_pagados_por_tercero,
+          subtot.mis_gastos_importados,
+          subtot.total_tus_prestamos,
+          subtot.gastos_recurrentes_total
+      FROM subtot
+      ORDER BY subtot.periodo DESC
+      """, nativeQuery = true)
   List<MonthlyExpenseSummaryDTO> getMonthlySummary();
 }

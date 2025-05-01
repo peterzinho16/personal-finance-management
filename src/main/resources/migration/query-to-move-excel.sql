@@ -35,6 +35,7 @@ WITH constants AS (SELECT 3.67 AS exchange_rate),
                                        WHEN shared IS FALSE
                                            AND lent IS FALSE
                                            AND was_borrowed IS FALSE
+                                           AND exp_imported IS FALSE
                                            THEN CASE
                                                     WHEN currency = 'PEN' THEN amount
                                                     ELSE amount * (SELECT exchange_rate FROM constants)
@@ -58,6 +59,14 @@ WITH constants AS (SELECT 3.67 AS exchange_rate),
                                      ELSE 0
                            END)::NUMERIC, 2)                            AS Mis_Gastos_Pagados_Por_Tercero,
                        round(sum(CASE
+                                     WHEN exp_imported IS TRUE
+                                         THEN CASE
+                                                  WHEN currency = 'PEN' THEN shared_amount
+                                                  ELSE shared_amount * (SELECT exchange_rate FROM constants)
+                                         END
+                                     ELSE 0
+                           END)::NUMERIC, 2)                            AS Mis_Gastos_Importados,
+                       round(sum(CASE
                                      WHEN lent IS TRUE
                                          THEN CASE
                                                   WHEN currency = 'PEN' THEN loan_amount
@@ -74,13 +83,18 @@ SELECT (SELECT round(SUM(CASE
                              ELSE amount * (SELECT exchange_rate FROM constants)
     END)::NUMERIC, 2)
         FROM incomes
-        WHERE was_received and to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
+        WHERE was_received
+          and to_char(received_date, 'YYYY-MM') = subtot.periodo)           AS otros_ingresos,
        subtot.Gastos_individuales + subtot.Gastos_Compartidos +
-       subtot.Mis_Gastos_Pagados_Por_Tercero                      AS Final_Total_Gastos,
-       subtot.*
+       subtot.Mis_Gastos_Pagados_Por_Tercero + subtot.Mis_Gastos_Importados AS Final_Total_Gastos,
+       subtot.Gastos_Compartidos - subtot.Mis_Gastos_Importados AS GastosCompartidos_MenosImportados,
+       subtot.Mis_Gastos_Importados
 FROM subtot;
 
-select * from expenditures where lent_to is not null order by transaction_date;
+select *
+from expenditures
+where lent_to is not null
+order by transaction_date;
 
 --Total loans amount effectuated for me by person (Grouped)
 select to_char(transaction_date, 'YYYY-MM') periodo,
@@ -95,7 +109,7 @@ order by to_char(transaction_date, 'YYYY-MM') desc;
 select to_char(transaction_date, 'YYYY-MM') periodo,
        lent_to,
        description,
-       round(case when currency = 'PEN' then amount else amount * 3.75 end::numeric, 2),
+       round(case when currency = 'PEN' then amount else amount * 3.75 end::numeric, 2) monto,
        *
 FROM expenditures
 where lent = true
@@ -120,7 +134,7 @@ order by transaction_date desc;
 --2. Update
 update expenditures
 set loan_state='PAID'
-where transaction_date between '01-03-2025' and '01-04-2025'
+where transaction_date between '01-03-2025' and '01-05-2025'
   AND loan_state = 'PENDING';
 
 --Auditing shared expenditures
@@ -144,36 +158,31 @@ ORDER BY transaction_date DESC;
 
 -- Query to know the detail expenses of category Gastos_individuales and Gastos_Compartidos
 
-WITH constants AS (
-    SELECT 3.67 AS exchange_rate
-)
-SELECT
-    transaction_date,
-    sub_category_id,
-    payee,
-    description,
-    amount,
-    currency,
-    CASE
-        WHEN shared IS TRUE
-            THEN CASE
-                     WHEN currency = 'PEN' THEN shared_amount
-                     ELSE shared_amount * (SELECT exchange_rate FROM constants)
-            END
-        WHEN shared IS FALSE
-            AND lent IS FALSE
-            AND was_borrowed IS FALSE
-            THEN CASE
-                     WHEN currency = 'PEN' THEN amount
-                     ELSE amount * (SELECT exchange_rate FROM constants)
-            END
-        ELSE 0
-        END amount_in_pen,
-        installments
+WITH constants AS (SELECT 3.67 AS exchange_rate)
+SELECT transaction_date,
+       sub_category_id,
+       payee,
+       description,
+       amount,
+       currency,
+       CASE
+           WHEN shared IS TRUE
+               THEN CASE
+                        WHEN currency = 'PEN' THEN shared_amount
+                        ELSE shared_amount * (SELECT exchange_rate FROM constants)
+               END
+           WHEN shared IS FALSE
+               AND lent IS FALSE
+               AND was_borrowed IS FALSE
+               THEN CASE
+                        WHEN currency = 'PEN' THEN amount
+                        ELSE amount * (SELECT exchange_rate FROM constants)
+               END
+           ELSE 0
+           END amount_in_pen,
+       installments
 FROM expenditures
-WHERE
-    transaction_date between '01-03-2025' and '01-04-2025'
-AND
-    ((shared = FALSE AND lent = FALSE AND was_borrowed = FALSE) -- Gastos_individuales
-   OR (shared = TRUE)) -- Gastos_Compartidos
+WHERE transaction_date between '01-03-2025' and '01-04-2025'
+  AND ((shared = FALSE AND lent = FALSE AND was_borrowed = FALSE) -- Gastos_individuales
+    OR (shared = TRUE)) -- Gastos_Compartidos
 ORDER BY transaction_date DESC;

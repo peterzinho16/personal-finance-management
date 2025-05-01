@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +25,6 @@ import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_EXP_NOT_SH
 import static org.springframework.beans.BeanUtils.copyProperties;
 
 @Slf4j
-@Controller
 @RestController
 @RequestMapping("/eureka/finance-app/expenditure-others")
 @AllArgsConstructor

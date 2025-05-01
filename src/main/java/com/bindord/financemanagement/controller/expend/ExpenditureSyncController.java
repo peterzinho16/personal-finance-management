@@ -6,7 +6,6 @@ import com.bindord.financemanagement.svc.ExpenditureSyncService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +16,6 @@ import java.util.Objects;
 import static com.bindord.financemanagement.utils.Utilities.*;
 
 @Slf4j
-@Controller
 @RestController
 @AllArgsConstructor
 @RequestMapping("/eureka/finance-app/expenditure/sync")

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @Slf4j
-@Controller
 @RestController
 @RequestMapping("/eureka/finance-app/category")
 @AllArgsConstructor

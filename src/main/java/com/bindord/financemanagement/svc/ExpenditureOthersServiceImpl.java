@@ -59,14 +59,13 @@ public class ExpenditureOthersServiceImpl implements ExpenditureOthersService {
   @Override
   public ExpenditureOthers updateSharedById(Integer id) throws Exception {
     var expenditureOther = this.findById(id);
-    updateSharedState(expenditureOther);
-    var sharedVal = expenditureOther.getShared() != null ? expenditureOther.getShared() : false;
 
-    if (sharedVal) {
+    if (expenditureOther.getShared() != null && expenditureOther.getShared()) {
       var msg = MSG_ERROR_SHARED_ALREADY;
       log.warn(msg);
       throw new CustomValidationException(msg);
     }
+    updateSharedState(expenditureOther);
     return repository.save(expenditureOther);
   }
 
