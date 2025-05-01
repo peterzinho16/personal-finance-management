@@ -4,7 +4,13 @@
 
 <!-- Include the head fragment -->
 <head th:replace="~{html-commons/head :: fg-head(title='Expenditures Others')}"></head>
-
+<style>
+    .no-pointer-events-fix.disabled {
+        pointer-events: auto !important;
+        opacity: 0.65; /* mimic disabled look */
+        cursor: not-allowed;
+    }
+</style>
 <body>
 <!-- Include the sidebar fragment -->
 <div th:replace="~{html-commons/sidebar :: fg-sidebar}"></div>
@@ -269,7 +275,10 @@
                             <a href="#" class="btn btn-sm btn-info" title="Link" onclick="goToLink('${exp.referenceId.replace(/'/g, "\\'")}')">
                                 <i class="bi bi-send"></i>
                             </a>
-                            <a href="#" class="btn btn-sm btn-primary" title="Transfer" onclick="transferToMainExpenditures(${exp.id})">
+                            <a href="#"
+                               class="btn btn-sm btn-primary ${exp.wasImported ? 'disabled no-pointer-events-fix' : ''}"
+                               title="${exp.wasImported ? 'This record was imported and cannot be transferred' : 'Transfer'}"
+                               onclick="${exp.wasImported ? 'return false;' : `transferToMainExpenditures(${exp.id})`}">
                                 <i class="bi bi-arrow-down-circle-fill"></i>
                             </a>`
                         ]);
