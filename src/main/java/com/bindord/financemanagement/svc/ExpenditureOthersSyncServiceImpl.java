@@ -152,6 +152,8 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
         .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
         .amount(extractExpenditureAmount(bodyTextContent))
         .singlePayment(true)
+        .shared(false)
+        .sharedAmount(null)
         .subCategory(subCategory)
         .build();
   }

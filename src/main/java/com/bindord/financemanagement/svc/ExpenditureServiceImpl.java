@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
 import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
@@ -133,6 +134,14 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    */
   @Override
   public Expenditure updateSubCategoryById(Integer subCategoryId, Integer id, String payee) throws Exception {
+    updatePayeeCategorization(subCategoryId, payee);
+    repository.updateSubCategoryById(subCategoryId, id);
+    return repository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
+        " exists"));
+  }
+
+  //⚠️This method is utilized in both this class and the ExpenditureOtherServiceImpl class.
+  public void updatePayeeCategorization(Integer subCategoryId, String payee) {
     if (payee != null) {
       var lwrPayee = payee.toLowerCase();
       var payeeId =
@@ -141,9 +150,6 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         payeeCategorizationRepository.updateSubCategoryByPayeeId(subCategoryId, payeeId);
       }
     }
-    repository.updateSubCategoryByPayeeId(subCategoryId, id);
-    return repository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
-        " exists"));
   }
 
   /**
@@ -154,7 +160,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    * @return
    */
   public Expenditure updateSubCategoryInTableExpenditureOnly(Integer subCategoryId, Integer id) throws Exception {
-    repository.updateSubCategoryByPayeeId(subCategoryId, id);
+    repository.updateSubCategoryById(subCategoryId, id);
     return repository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
         " exists"));
   }
@@ -195,11 +201,12 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    * @param expenditureDto obj with the properties of expenditure to be persisted
    * @return Expenditure obj that was persisted
    */
+  @Transactional
   @Override
   public Expenditure saveNewManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
-    Expenditure expenditure = expenditureMapperForManualInsert(expenditureDto);
+    Expenditure expenditure = expenditureMapperForInsertOrImportManually(expenditureDto);
     Short totalInstallments = expenditureDto.getInstallments();
-    if (totalInstallments > 1) {
+    if (Objects.nonNull(totalInstallments) && totalInstallments > 1) {
       updateExpenditureWithInstallments(expenditure, totalInstallments);
     }
     return repository.save(expenditure);
@@ -239,7 +246,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     expenditure.setLoanState(nwLentValue ? Expenditure.LoanState.PENDING : null);
   }
 
-  private Expenditure expenditureMapperForManualInsert(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
+  private Expenditure expenditureMapperForInsertOrImportManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
     var sharedVal = expenditureDto.getShared() != null ? expenditureDto.getShared() : false;
     var lentVal = expenditureDto.getLent() != null ? expenditureDto.getLent() : false;
     var wasBorrowVal = expenditureDto.getWasBorrowed() != null
@@ -254,7 +261,8 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     var referenceId =
         Utilities.generateSha256FromMailIdOrPayee(expenditureDto.getTransactionDate(), payee);
     return Expenditure.builder()
-        .referenceId(referenceId)
+        .referenceId(!expenditureDto.getReferenceId().isBlank() ?
+            expenditureDto.getReferenceId() : referenceId)
         .description(expenditureDto.getDescription())
         .transactionDate(
             expenditureDto.getTransactionDate()
@@ -278,6 +286,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .borrowedState(wasBorrowVal ? Expenditure.LoanState.PENDING : null)
         .recurrent(false)
         .manualRegister(true)
+        .expImported(expenditureDto.getExpImported())
         .forDaughter(expenditureDto.getForDaughter())
         .subCategory(subCategoryRepository
             .findById(expenditureDto.getSubCategoryId())
@@ -289,7 +298,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   public Expenditure expenditureMapperFromRecurrentExpenditure(
       RecurrentExpenditure recurrentExpenditure) throws NoSuchAlgorithmException,
       CustomValidationException {
-    var expenditure = expenditureMapperForManualInsert(
+    var expenditure = expenditureMapperForInsertOrImportManually(
         ExpenditureAddDto.builder()
             .description(recurrentExpenditure.getDescription())
             .payee(recurrentExpenditure.getDescription())
@@ -300,6 +309,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
             .amount(recurrentExpenditure.getAmount())
             .currency(PEN.name())
             .transactionDate(getLocalDateTimeNowWithFormat())
+            .expImported(false)
             .installments((short) 1)
             .build());
     expenditure.setRecurrent(true);

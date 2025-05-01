@@ -346,7 +346,7 @@
     };
 
     // Fetch the summary data and render the third chart
-    fetch('http://localhost:8080/eureka/finance-app/expenditure/reports/list/monthly-summary')
+    fetch('/eureka/finance-app/expenditure/reports/list/monthly-summary')
         .then(response => response.json())
         .then(prevData => {
             const data = prevData.splice(0, 12);

@@ -72,6 +72,19 @@ public class ExpenditureOthers {
     @Column
     private Boolean singlePayment = true;
 
+    @Column
+    private Boolean shared = false;
+
+    @Column
+    private Boolean forDaughter = false;
+
+    @Column
+    private Boolean wasImported = false;
+
+    @PositiveOrZero
+    @Column
+    private Double sharedAmount;
+
     @JsonManagedReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id", nullable = false)

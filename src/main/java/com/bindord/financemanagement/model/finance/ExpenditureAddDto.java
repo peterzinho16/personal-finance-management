@@ -64,4 +64,8 @@ public class ExpenditureAddDto {
   private Short installments;
 
   private Boolean forDaughter;
+
+  private Boolean expImported;
+
+  private String referenceId;
 }

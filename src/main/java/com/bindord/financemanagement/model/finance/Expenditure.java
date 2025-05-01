@@ -117,6 +117,9 @@ public class Expenditure {
     @Column
     private Boolean forDaughter = false;
 
+    @Column
+    private Boolean expImported = false;
+
     @PositiveOrZero
     @Column
     private Double loanAmount;

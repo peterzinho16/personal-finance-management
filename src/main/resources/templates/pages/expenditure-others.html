@@ -38,6 +38,8 @@
                     <th title="Transaction Date">T. Date</th>
                     <th>Category</th>
                     <th title="Sub Category">Sub Category</th>
+                    <th title="Shared Amount">S. Amount</th>
+                    <th title="Indicate if the expense is shared">Shared</th>
                     <th>Options Menu</th>
                 </tr>
                 </thead>
@@ -189,9 +191,12 @@
 <div th:replace="~{html-commons/scripts :: fg-js}"></div>
 <script>
     let selectedIdToDelete = null;
+    let dataTable;
+    let WAS_BORROWED_FROM = 'Amor';
 
     $(document).ready(function () {
         const apiEndpoint = "/eureka/finance-app/expenditure-others";
+        const apiEndpointExpenditure = "/eureka/finance-app/expenditure";
         const apiEndpointMailMessage = "/eureka/finance-app/mail-message";
         const subCategoryEndpoint = "/eureka/finance-app/sub-category";
 
@@ -253,6 +258,8 @@
                             formatDateWithMonthText(exp.transactionDate),
                             exp.subCategory.category.name,
                             exp.subCategory.name,
+                            exp.sharedAmount ? exp.currency === 'PEN' ? 'S/ ' + exp.sharedAmount.toFixed(2) : '$ ' + exp.sharedAmount.toFixed(2) : '-',
+                            `<input type="checkbox" class="form-check-input" ${exp.shared ? 'checked' : ''} onchange="toggleShared(${exp.id}, this.checked)">`,
                             `<a href="#" class="btn btn-sm btn-primary" title="Edit" onclick="editExpenditure(${exp.id})">
                                 <i class="bi bi-pencil"></i>
                             </a>
@@ -261,6 +268,9 @@
                             </a>
                             <a href="#" class="btn btn-sm btn-info" title="Link" onclick="goToLink('${exp.referenceId.replace(/'/g, "\\'")}')">
                                 <i class="bi bi-send"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-primary" title="Transfer" onclick="transferToMainExpenditures(${exp.id})">
+                                <i class="bi bi-arrow-down-circle-fill"></i>
                             </a>`
                         ]);
 
@@ -271,6 +281,7 @@
                             data: rows,
                         });
                         setTimeout(() => enableToolTipForDescriptionOnTableElements(), 250);
+                        dataTable = response.content;
                     },
                     error: function (error) {
                         console.error("Error fetching expenditures:", error);
@@ -348,6 +359,59 @@
             }
         };
 
+        window.transferToMainExpenditures = function (expId) {
+            const expenditureOther = dataTable.find(exp => exp.id === expId);
+            console.log(expenditureOther);
+            const subCategoryId = expenditureOther.subCategory.id;
+            const shared = expenditureOther.shared;
+            const wasBorrowed = true;
+            const borrowedFrom = WAS_BORROWED_FROM;
+            const forDaughter = expenditureOther.forDaughter;
+
+            const data = {
+                description: expenditureOther.description,
+                payee: expenditureOther.payee,
+                currency: expenditureOther.currency,
+                amount: expenditureOther.amount,
+                transactionDate: expenditureOther.transactionDate,
+                referenceId: expenditureOther.referenceId,
+                subCategoryId: subCategoryId,
+                shared: shared,
+                lent: false,
+                lentTo: null,
+                wasBorrowed: false,
+                borrowedFrom: null,
+                forDaughter: forDaughter,
+                expImported: true
+            };
+
+            $.ajax({
+                url: `${apiEndpoint}/${expId}/update/import-state`,
+                method: 'PUT',
+                contentType: 'application/json',
+                success: function (response) {
+                    $.ajax({
+                        url: `${apiEndpointExpenditure}`,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(data),
+                        success: function (response) {
+                            showSuccessToast(response);
+                            resetFormAndInitWithParams();
+                        },
+                        error: function (error) {
+                            console.error("Error importing expenditure:", error);
+                            showErrorToast(error.status, error.responseJSON.message);
+                        }
+                    });
+                },
+                error: function (error) {
+                    console.error("Error updating import state:", error);
+                    showErrorToast(error.status, error.responseJSON.message);
+                }
+            });
+        }
+
         // Save changes
         $("#save-changes").on("click", function () {
             const entityId = $("#entity-id").val();
@@ -406,6 +470,7 @@
 
         // Toggle shared status
         window.toggleShared = function (id, shared) {
+            console.log(id, shared);
             $.ajax({
                 url: `${apiEndpoint}/${id}/update/shared`,
                 method: 'PUT',

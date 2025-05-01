@@ -17,5 +17,12 @@ public class Constants {
       " same" +
       " " +
       "time";
+  public static final String MSG_ERROR_SHARED_ALREADY = "The expenditure is already stored as shared, you can't reverse it";
+
+  public static final String MSG_ERROR_EXP_IMPORTED_ALREADY = "The expenditure was already imported";
+
+  public static final String MSG_ERROR_EXP_NOT_SHARED_CANT_BE_IMPORTED = "Expenditures not shared, can't be imported";
+
+
 
 }

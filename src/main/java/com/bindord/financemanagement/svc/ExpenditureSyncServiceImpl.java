@@ -220,6 +220,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .borrowedFrom(null)
         .borrowedState(null)
         .recurrent(false)
+        .forDaughter(false)
+        .expImported(false)
         .subCategory(subCategory)
         .build();
   }

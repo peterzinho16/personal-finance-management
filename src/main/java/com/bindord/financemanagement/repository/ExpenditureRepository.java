@@ -42,8 +42,8 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
   @Modifying
   @Query(value = "UPDATE expenditures SET sub_category_id = :subCategoryId WHERE " +
       "id = :id", nativeQuery = true)
-  void updateSubCategoryByPayeeId(@Param("subCategoryId") Integer subCategoryId,
-                                  @Param("id") Integer id);
+  void updateSubCategoryById(@Param("subCategoryId") Integer subCategoryId,
+                             @Param("id") Integer id);
 
   @Query(value = "SELECT EX from Expenditure EX JOIN FETCH EX.subCategory SC JOIN FETCH " +
       "SC.category WHERE EX.expenditureInstallmentId = ?1 ORDER BY EX.id")
