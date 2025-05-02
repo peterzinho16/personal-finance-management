@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.advice.CustomValidationException;
+import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
@@ -37,6 +38,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   private final PayeeCategorizationRepository payeeCategorizationRepository;
   private final SubCategoryRepository subCategoryRepository;
   private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
+  private final AppDataConfiguration appDataConfiguration;
 
   /**
    * @param id
@@ -260,6 +262,14 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     Double amount = expenditureDto.getAmount();
     var referenceId =
         Utilities.generateSha256FromMailIdOrPayee(expenditureDto.getTransactionDate(), payee);
+
+
+    Double conversionToPen = null;
+    if(USD.name().equals(expenditureDto.getCurrency())) {
+      var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+      conversionToPen = usdExchangeRate.doubleValue() * amount;
+    }
+
     return Expenditure.builder()
         .referenceId(Objects.nonNull(expenditureDto.getReferenceId()) && !expenditureDto.getReferenceId().isBlank() ?
             expenditureDto.getReferenceId() : referenceId)
@@ -274,6 +284,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         )
         .shared(sharedVal)
         .sharedAmount(sharedVal ? amount / 2 : null)
+        .conversionToPen(conversionToPen)
         .singlePayment(true)
         .installments(expenditureDto.getInstallments())
         .expenditureInstallmentId(null)

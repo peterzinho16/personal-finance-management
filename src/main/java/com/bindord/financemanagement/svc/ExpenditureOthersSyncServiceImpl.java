@@ -1,6 +1,8 @@
 package com.bindord.financemanagement.svc;
 
+import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.Category;
+import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureOthers;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.GmailMessageDto;
@@ -50,6 +52,7 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
   private final MailMessageRepository mailMessageRepository;
   private final PayeeCategorizationService payeeCategorizationService;
   private final PayeeCoincidenceRepository payeeCoincidenceRepository;
+  private final AppDataConfiguration appDataConfiguration;
 
   /**
    * Execute synchronization from gmail to expenditure table
@@ -142,15 +145,25 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
     return expenditure.getPayee();
   }
 
-  public static ExpenditureOthers expenditureMapper(GmailMessageDto msg, SubCategory subCategory,
+  public ExpenditureOthers expenditureMapper(GmailMessageDto msg, SubCategory subCategory,
                                                     String referenceId, String subject,
                                                     String payee,
                                                     String bodyTextContent) {
+
+    var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
+    var amount = extractExpenditureAmount(bodyTextContent);
+    Double conversionToPen = null;
+    if(currency == Expenditure.Currency.USD) {
+      var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+      conversionToPen = usdExchangeRate.doubleValue() * amount;
+    }
+
     return ExpenditureOthers.builder().referenceId(referenceId).description(subject)
         .transactionDate(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime()))
         .payee(payee)
-        .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
-        .amount(extractExpenditureAmount(bodyTextContent))
+        .currency(currency)
+        .amount(amount)
+        .conversionToPen(conversionToPen)
         .singlePayment(true)
         .shared(false)
         .sharedAmount(null)

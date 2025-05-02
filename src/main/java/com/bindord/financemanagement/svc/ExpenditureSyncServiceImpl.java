@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.svc;
 
+import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
@@ -62,6 +63,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final RecurrentExpenditureRepository recurrentExpenditureRepository;
   private final ExpenditureServiceImpl expenditureService;
   private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
+  private final AppDataConfiguration appDataConfiguration;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -201,14 +203,22 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     return expenditure.getPayee();
   }
 
-  public static Expenditure expenditureMapper(MessageDto msg, SubCategory subCategory,
+  public Expenditure expenditureMapper(MessageDto msg, SubCategory subCategory,
                                               String referenceId, String subject, String payee,
                                               String bodyTextContent) {
+    var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
+    var amount = extractExpenditureAmount(bodyTextContent);
+    Double conversionToPen = null;
+    if(currency == Expenditure.Currency.USD) {
+      var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+      conversionToPen = usdExchangeRate.doubleValue() * amount;
+    }
     return Expenditure.builder().referenceId(referenceId).description(subject)
         .transactionDate(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime()))
         .payee(payee)
-        .currency(MailRegex.extractExpenditureCurrency(bodyTextContent))
-        .amount(extractExpenditureAmount(bodyTextContent))
+        .currency(currency)
+        .amount(amount)
+        .conversionToPen(conversionToPen)
         .shared(false)
         .sharedAmount(null)
         .singlePayment(true)

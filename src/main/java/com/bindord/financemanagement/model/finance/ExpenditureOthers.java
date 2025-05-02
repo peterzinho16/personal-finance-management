@@ -69,6 +69,10 @@ public class ExpenditureOthers {
     @Column(nullable = false)
     private Double amount;
 
+    @PositiveOrZero
+    @Column
+    private Double conversionToPen;
+
     @Column
     private Boolean singlePayment = true;
 
