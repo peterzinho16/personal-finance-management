@@ -44,6 +44,9 @@ public class MicrosoftAccessToken {
   @Column(nullable = false, columnDefinition = "TEXT")
   private String accessToken;
 
+  @Column(nullable = true, columnDefinition = "TEXT")
+  private String idToken;
+
   @Column(nullable = false)
   private LocalDateTime createdAt;
 

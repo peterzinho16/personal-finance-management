@@ -33,6 +33,7 @@ public class MicrosoftAuthController {
 
   private final MicrosoftAccessTokenRepository microsoftAccessTokenRepository;
   private final MicrosoftOauthClient microsoftOauthRepository;
+  public static final String BASIC_SCOPES_PLUS_OPENID_SCOPES = "Mail.Read openid profile email";
 
   @GetMapping("/start-flow")
   public RedirectView startFlow(HttpSession session) {
@@ -49,7 +50,7 @@ public class MicrosoftAuthController {
         "client_id=" + System.getenv("APP_CLIENT_ID") +
         "&response_type=code" +
         "&redirect_uri=http://localhost:8080/eureka/finance-app/api-graph/exchange-code" +
-        "&scope=Mail.Read" +
+        "&scope=" + BASIC_SCOPES_PLUS_OPENID_SCOPES +
         "&state=" + UUID.randomUUID();
 
     // 3. Create a RedirectView
@@ -68,7 +69,7 @@ public class MicrosoftAuthController {
     params.add("code", code);
     params.add("grant_type", "authorization_code");
     params.add("redirect_uri", "http://localhost:8080/eureka/finance-app/api-graph/exchange-code");
-    params.add("scope", "Mail.Read");
+    params.add("scope", BASIC_SCOPES_PLUS_OPENID_SCOPES);
 
     MicrosoftAccessTokenRecord tokenRecord = microsoftOauthRepository.getAccessToken(params);
     MicrosoftAccessToken accessTokenToDb = MicrosoftAccessToken.builder().build();
@@ -79,6 +80,7 @@ public class MicrosoftAuthController {
     accessTokenToDb.setExpiresAt(expiresAt);
 
     log.debug("accessToken: {}", accessTokenToDb);
+    log.debug("tokenRecord: {}", tokenRecord);
     session.setAttribute("sessionToken", accessTokenToDb);
 
     var response = JacksonFactory
