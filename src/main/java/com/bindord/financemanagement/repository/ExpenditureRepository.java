@@ -51,10 +51,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
 
 
   @Query(value = """
-      WITH constants AS (
-          SELECT 3.67 AS exchange_rate
-      ),
-      category_monthly_totals AS (
+      WITH category_monthly_totals AS (
           SELECT
               to_char(e.transaction_date, 'YYYY-MM') AS periodo,
               c.name AS categoria,
@@ -63,7 +60,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
                       WHEN e.shared IS FALSE AND e.lent IS FALSE AND e.was_borrowed IS FALSE
                       THEN CASE
                           WHEN e.currency = 'PEN' THEN e.amount
-                          ELSE e.amount * (SELECT exchange_rate FROM constants)
+                          ELSE conversion_to_pen
                       END
                       ELSE 0
                   END)::NUMERIC, 2) AS gastos_individuales,
@@ -72,7 +69,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
                       WHEN e.shared IS TRUE
                       THEN CASE
                           WHEN e.currency = 'PEN' THEN e.shared_amount
-                          ELSE e.shared_amount * (SELECT exchange_rate FROM constants)
+                          ELSE conversion_to_pen / 2
                       END
                       ELSE 0
                   END)::NUMERIC, 2) AS gastos_compartidos
@@ -96,33 +93,32 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
                                                            Integer categoryId, Boolean shared);
 
   @Query(value = """
-      WITH constants AS (SELECT 3.67 AS exchange_rate),
-           subtot AS (
+      WITH subtot AS (
               SELECT to_char(transaction_date, 'YYYY-MM') AS periodo,
                      round(sum(CASE
                                    WHEN shared IS FALSE AND lent IS FALSE AND was_borrowed IS FALSE AND exp_imported IS FALSE
                                    THEN CASE WHEN currency = 'PEN' THEN amount
-                                             ELSE amount * (SELECT exchange_rate FROM constants) END
+                                             ELSE conversion_to_pen END
                                    ELSE 0 END)::NUMERIC, 2) AS gastos_individuales,
                      round(sum(CASE WHEN shared IS TRUE THEN
                                        CASE WHEN currency = 'PEN' THEN shared_amount
-                                            ELSE shared_amount * (SELECT exchange_rate FROM constants) END
+                                            ELSE conversion_to_pen / 2 END
                                    ELSE 0 END)::NUMERIC, 2) AS gastos_compartidos,
                      round(sum(CASE WHEN was_borrowed IS TRUE THEN
                                        CASE WHEN currency = 'PEN' THEN amount
-                                            ELSE amount * (SELECT exchange_rate FROM constants) END
+                                            ELSE conversion_to_pen END
                                    ELSE 0 END)::NUMERIC, 2) AS mis_gastos_pagados_por_tercero,
                      round(sum(CASE
                                    WHEN exp_imported IS TRUE
                                        THEN CASE
                                                 WHEN currency = 'PEN' THEN shared_amount
-                                                ELSE shared_amount * (SELECT exchange_rate FROM constants)
+                                                ELSE conversion_to_pen / 2
                                        END
                                    ELSE 0
                          END)::NUMERIC, 2)                            AS Mis_Gastos_Importados,
                      round(sum(CASE WHEN lent IS TRUE THEN
                                        CASE WHEN currency = 'PEN' THEN loan_amount
-                                            ELSE loan_amount * (SELECT exchange_rate FROM constants) END
+                                            ELSE conversion_to_pen END
                                    ELSE 0 END)::NUMERIC, 2) AS total_tus_prestamos,
                      (SELECT sum(amount) FROM recurrent_expenditures) AS gastos_recurrentes_total
               FROM expenditures
@@ -130,10 +126,10 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
           )
       SELECT
           (SELECT round(SUM(CASE WHEN currency = 'PEN' THEN amount
-                                 ELSE amount * (SELECT exchange_rate FROM constants) END)::NUMERIC, 2)
+                                 ELSE conversion_to_pen END)::NUMERIC, 2)
            FROM incomes
            WHERE was_received AND to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
-          (subtot.gastos_individuales + subtot.gastos_compartidos + subtot.mis_gastos_pagados_por_tercero) AS final_total_gastos,
+          (subtot.gastos_individuales + subtot.gastos_compartidos + subtot.mis_gastos_pagados_por_tercero + subtot.Mis_Gastos_Importados) AS final_total_gastos,
           subtot.periodo,
           subtot.gastos_individuales,
           subtot.gastos_compartidos,

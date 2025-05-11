@@ -284,7 +284,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         )
         .shared(sharedVal)
         .sharedAmount(sharedVal ? amount / 2 : null)
-        .conversionToPen(conversionToPen)
+        .conversionToPen(convertNumberToOnlyTwoDecimals(conversionToPen))
         .singlePayment(true)
         .installments(expenditureDto.getInstallments())
         .expenditureInstallmentId(null)

@@ -218,7 +218,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .payee(payee)
         .currency(currency)
         .amount(amount)
-        .conversionToPen(conversionToPen)
+        .conversionToPen(convertNumberToOnlyTwoDecimals(conversionToPen))
         .shared(false)
         .sharedAmount(null)
         .singlePayment(true)

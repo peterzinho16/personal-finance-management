@@ -143,6 +143,9 @@ public class Utilities {
   }
 
   public static double convertNumberToOnlyTwoDecimals(Double number) {
+    if (number == null) {
+      return 0.0;
+    }
     // Create DecimalFormat for two decimal places
     DecimalFormat df = new DecimalFormat("#.00");
     // Format to a string

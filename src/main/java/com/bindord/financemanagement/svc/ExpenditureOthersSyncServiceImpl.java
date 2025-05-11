@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import static com.bindord.financemanagement.utils.Constants.DEFAULT_EXPENDITURE_CATEGORY;
 import static com.bindord.financemanagement.utils.MailRegex.extractExpenditureAmount;
 import static com.bindord.financemanagement.utils.Utilities.convertDatetimeToUTCMinusFive;
+import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyTwoDecimals;
 
 @Slf4j
 @AllArgsConstructor
@@ -163,7 +164,7 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
         .payee(payee)
         .currency(currency)
         .amount(amount)
-        .conversionToPen(conversionToPen)
+        .conversionToPen(convertNumberToOnlyTwoDecimals(conversionToPen))
         .singlePayment(true)
         .shared(false)
         .sharedAmount(null)

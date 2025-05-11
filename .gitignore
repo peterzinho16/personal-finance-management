@@ -7,7 +7,6 @@ target/
 #Secrets
 tokens
 src/main/resources/secrets
-backlog.md
 
 ### STS ###
 .apt_generated
