@@ -77,7 +77,7 @@ where shared;
                 FROM expenditures
                 GROUP BY to_char(transaction_date, 'YYYY-MM')
                 order by 1 desc)
-SELECT (SELECT round(SUM(CASE
+SELECT periodo,(SELECT round(SUM(CASE
                              WHEN currency = 'PEN' THEN amount
                              ELSE conversion_to_pen
     END)::NUMERIC, 2)
@@ -183,3 +183,6 @@ WHERE transaction_date between '01-03-2025' and '01-04-2025'
   AND ((shared = FALSE AND lent = FALSE AND was_borrowed = FALSE) -- Gastos_individuales
     OR (shared = TRUE)) -- Gastos_Compartidos
 ORDER BY transaction_date DESC;
+
+select *
+from expenditure_others order by transaction_date desc;

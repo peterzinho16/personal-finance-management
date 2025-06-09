@@ -196,6 +196,10 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         subCategory = updateSubCategoryIfFindCoincidence(payee, subCategory);
       }
     }
+
+    if(Objects.isNull(payee)) {
+      payee = "Payee not found";
+    }
     Expenditure expenditure = expenditureMapper(msg, subCategory, referenceId, subject, payee,
         bodyTextContent);
     expenditures.add(expenditure);
