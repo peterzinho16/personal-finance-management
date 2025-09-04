@@ -297,7 +297,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .borrowedState(wasBorrowVal ? Expenditure.LoanState.PENDING : null)
         .recurrent(false)
         .manualRegister(true)
-        .expImported(expenditureDto.getExpImported())
+        .expImported(expenditureDto.getExpImported() != null && expenditureDto.getExpImported())
         .forDaughter(expenditureDto.getForDaughter())
         .subCategory(subCategoryRepository
             .findById(expenditureDto.getSubCategoryId())
