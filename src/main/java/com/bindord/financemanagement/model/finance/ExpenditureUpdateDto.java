@@ -25,4 +25,5 @@ public class ExpenditureUpdateDto {
   private String lentTo;
   private Short installments;
   private Boolean forDaughter;
+  private String attachment;
 }

@@ -24,6 +24,7 @@ public class ExpenditureUpdateFormDto {
   @Getter
   public static class FormBehaviour {
     private Boolean updateWithoutPayeeCategorization;
+    private Boolean updateAttachment;
 
   }
 }

@@ -141,6 +141,9 @@ public class Expenditure {
     @Column
     private Boolean manualRegister = false;
 
+    @Column(columnDefinition = "TEXT")
+    private String attachment;
+
     @JsonManagedReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id", nullable = false)

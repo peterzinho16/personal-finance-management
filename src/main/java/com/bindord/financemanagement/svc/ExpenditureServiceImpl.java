@@ -97,6 +97,11 @@ public class ExpenditureServiceImpl implements ExpenditureService {
       throw new CustomValidationException(msg);
     }
 
+    var attachmentUploadedOrUpdated = expenditureUpdateFormDto.getFormBehaviour().getUpdateAttachment();
+    if(attachmentUploadedOrUpdated && nonNull(expenditureDto.getAttachment())) {
+      qExpenditure.setAttachment(expenditureDto.getAttachment());
+    }
+
     var subCatId = expenditureDto.getSubCategoryId();
     var qSubCatId = qExpenditure.getSubCategory().getId();
     var expenditureResponse = repository.save(qExpenditure);

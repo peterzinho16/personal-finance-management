@@ -85,9 +85,14 @@
                     <label for="edit-amount" class="form-label">Amount</label>
                     <input type="number" step="0.01" class="form-control" id="edit-amount">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="edit-transactionDate" class="form-label">Transaction Date</label>
                     <input type="datetime-local" class="form-control" id="edit-transactionDate">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="edit-attachment" class="form-label">Attachment</label>
+                    <input type="file" class="form-control" id="edit-attachment">
+                    <small id="attachmentInfo" class="text-success d-none">Attachment already uploaded</small>
                 </div>
             </div>
             <div class="row">
@@ -263,7 +268,12 @@
                             `<input disabled type="checkbox" class="form-check-input" ${exp.lent ? 'checked' : ''}>`,
                             exp.lentTo ? exp.lentTo : '-',
                             `<input disabled type="checkbox" class="form-check-input" ${exp.wasBorrowed ? 'checked' : ''}>`,
-                            `<a href="#" class="btn btn-sm btn-primary" title="Edit" onclick="editExpenditure(${exp.id})">
+                            `<a href="#" class="btn btn-sm btn-primary ${!exp.attachment ? 'disabled no-pointer-events-fix' : ''}"
+                                    title="Show Attachment"
+                                    onclick="${!exp.attachment ? 'return false;' : `showAttachment('${exp.attachment}')`}">
+                                <i class="bi bi-file-image"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-primary" title="Edit" onclick="editExpenditure(${exp.id})">
                                 <i class="bi bi-pencil"></i>
                             </a>
                                  <a href="#" class="btn btn-sm btn-danger delete-btn" title="Delete" data-id="${exp.id}" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
@@ -301,6 +311,7 @@
         // Edit Expenditure function
         window.editExpenditure = async function (id) {
             try {
+                attachmentBase64 = null;
                 const response = await fetch(`${apiEndpoint}/${id}`);
                 const exp = await response.json();
 
@@ -312,6 +323,7 @@
                 $(`#subCategory-${exp.subCategory.id}`).prop('checked', true);
                 $("#lentCheckbox").prop('checked', exp.lent);
                 $("#forDaughterCheckbox").prop('checked', exp.forDaughter);
+                $("#edit-attachment").val("");
                 var wasFinanced = exp.installments > 1;
                 $("#installmentsCheckbox").prop('checked', wasFinanced);
                 if (wasFinanced) {
@@ -340,6 +352,14 @@
                 }
 
                 $("#updateWithoutPayeeCatCheckbox").prop('checked', false);
+
+                if (exp.attachment) {
+                    $("#attachmentInfo").removeClass("d-none").text("Attachment already uploaded");
+                } else {
+                    $("#attachmentInfo").addClass("d-none");
+                }
+
+
             } catch (error) {
                 console.error("Error fetching expenditure details:", error);
                 showErrorToast(error.status, error.responseJSON.message);
@@ -357,6 +377,24 @@
                 showErrorToast(error.status, error.responseJSON.message);
             }
         };
+
+        // Attachment file handling
+        let attachmentBase64 = null;
+
+        $("#edit-attachment").on("change", function (event) {
+            const file = event.target.files[0];
+            if (file && ["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    attachmentBase64 = e.target.result.split(",")[1]; // Store only base64 part
+                };
+                reader.readAsDataURL(file);
+            } else {
+                attachmentBase64 = null;
+                $("#edit-attachment").val(""); // reset input
+                alert("Please upload a valid image file (JPG, JPEG, PNG).");
+            }
+        });
 
         // Save changes
         $("#save-changes").on("click", function () {
@@ -377,13 +415,15 @@
                 lent: lent,
                 lentTo: lentTo,
                 installments: installments,
-                forDaughter: forDaughter
+                forDaughter: forDaughter,
+                attachment: attachmentBase64
             };
 
             const flDataObj = {
                 expenditureUpdateDto: data,
                 formBehaviour: {
-                    updateWithoutPayeeCategorization: $("#updateWithoutPayeeCatCheckbox").is(":checked")
+                    updateWithoutPayeeCategorization: $("#updateWithoutPayeeCatCheckbox").is(":checked"),
+                    updateAttachment: $("#edit-attachment")[0].files.length > 0
                 }
             }
 
@@ -455,9 +495,51 @@
             }
         });
 
+        // Show Attachment function
+        window.showAttachment = function (base64Image) {
+            const imageSrc = "data:image/png;base64," + base64Image;
+            $("#attachmentImage").attr("src", imageSrc);
+            $("#downloadAttachmentBtn").attr("href", imageSrc);
+            $("#attachmentModal").modal("show");
+        };
+
+        // Panzoom setup
+        const elem = document.getElementById('attachmentImage');
+        const panzoom = Panzoom(elem, {
+            maxScale: 5,
+            contain: 'outside'  // image can move outside container when zoomed
+        });
+
+        // Allow wheel zoom
+        elem.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
+
+        // Reset zoom/position when modal closes
+        $('#attachmentModal').on('hidden.bs.modal', function () {
+            panzoom.reset();
+        });
+
     });
 
 </script>
 </body>
+
+<!-- Attachment Modal -->
+<div class="modal fade" id="attachmentModal" tabindex="-1" aria-labelledby="attachmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attachmentModalLabel">Attachment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="attachmentWrapper" style="overflow: hidden; width: 100%; height: auto;">
+                    <img id="attachmentImage" src="" alt="Attachment" class="img-fluid mb-3" style="cursor: grab;"/>
+                </div>
+                <br/>
+                <a id="downloadAttachmentBtn" class="btn btn-primary" download="attachment.png">Download</a>
+            </div>
+        </div>
+    </div>
+</div>
 
 </html>
