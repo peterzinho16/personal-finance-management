@@ -283,7 +283,6 @@
                                 <i class="bi bi-send"></i>
                             </a>`
                         ]);
-
                         callback({
                             draw: data.draw,
                             recordsTotal: response.totalElements,
@@ -299,7 +298,7 @@
                 });
             },
             pageLength: 15,
-            lengthMenu: [8, 15, 20, 50],
+            lengthMenu: [15, 20, 30, 50],
             responsive: true,
         });
 
@@ -437,15 +436,19 @@
                     $("#slideForm").removeClass("active");
                     $("#save-changes").addClass("hidden");
                     table.ajax.reload(function () {
-                        // Highlight the updated row
-                        const row = $(`#expenditure-table tbody tr`).filter(function () {
-                            return $(this).find('td').first().text() == entityId;
-                        });
-                        row.addClass("highlight");
-                        setTimeout(function () {
-                            row.removeClass("highlight");
-                        }, 3000);
-                    });
+                            setTimeout(function () {
+                                // Highlight the updated row
+                                const row = $(`#expenditure-table tbody tr`).filter(function () {
+                                    return $(this).find('td').first().text() == entityId;
+                                });
+                                console.log(row);
+                                if(row) {
+                                    const firstTd = $(row[0].firstChild);
+                                    firstTd.addClass("highlight");
+                                    setTimeout(() => firstTd.removeClass("highlight"), 3000)
+                                }
+                            }, 800);
+                    }, false);
                 },
                 error: function (error) {
                     console.error("Error updating expenditure:", error);
@@ -462,7 +465,7 @@
                 contentType: 'application/json',
                 success: function (response) {
                     console.log("Shared status updated:", response);
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                 },
                 error: function (error) {
                     console.error("Error updating shared status:", error);
@@ -513,9 +516,17 @@
         // Allow wheel zoom
         elem.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
 
+        const attachmentModal = $('#attachmentModal');
         // Reset zoom/position when modal closes
-        $('#attachmentModal').on('hidden.bs.modal', function () {
+        attachmentModal.on('hidden.bs.modal', function () {
             panzoom.reset();
+        });
+
+        let scrollPos = 0;
+        attachmentModal.on('show.bs.modal', function () {
+            scrollPos = $(window).scrollTop();
+        }).on('hidden.bs.modal', function () {
+            $(window).scrollTop(scrollPos);
         });
 
     });

@@ -86,13 +86,19 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
             lastSyncDateTime.toLocalDateTime().plusMinutes(300).plusSeconds(1));
 
     if (beforeFilterMessages.isEmpty()) {
-      var msg = "There is no record to register";
+      var msg = "There is no record to register. <a href='/home'>Go to home</a>";
       log.info(msg);
       return msg;
     }
 
     List<MessageDto> postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages,
         exclusions);
+
+    if (postFilterMessages.isEmpty()) {
+      var msg = "After filtering... no record to register was found. <a href='/home'>Go to home</a>";
+      log.info(msg);
+      return msg;
+    }
 
 
     //Preparation
@@ -164,7 +170,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         expenditureInstallmentRepository.save(expenditureInstallment);
       }
     }
-    return "The sync was successful";
+    return "The sync was successful. <a href='/home'>Go to home</a>";
   }
 
   /**

@@ -304,6 +304,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .manualRegister(true)
         .expImported(expenditureDto.getExpImported() != null && expenditureDto.getExpImported())
         .forDaughter(expenditureDto.getForDaughter())
+        .attachment(expenditureDto.getAttachment())
         .subCategory(subCategoryRepository
             .findById(expenditureDto.getSubCategoryId())
             .orElseThrow(() ->

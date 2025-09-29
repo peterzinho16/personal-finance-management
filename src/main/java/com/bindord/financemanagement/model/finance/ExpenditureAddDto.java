@@ -68,4 +68,6 @@ public class ExpenditureAddDto {
   private Boolean expImported;
 
   private String referenceId;
+
+  private String attachment;
 }

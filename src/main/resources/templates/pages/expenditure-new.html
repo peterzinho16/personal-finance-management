@@ -122,6 +122,7 @@
                                 </label>
                             </div>
                             <div class="col-md-3 mb-3">
+
                             </div>
                             <div class="col-md-6 mb-3" style="display: none;">
                             </div>
@@ -130,8 +131,8 @@
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                            </div>
-                            <div class="col-md-6 mb-3" style="display: none;">
+                                <label for="new-attachment" class="form-label">Attachment</label>
+                                <input type="file" class="form-control" id="new-attachment">
                             </div>
                         </div>
                     </div>
@@ -226,7 +227,29 @@
             }
         });
 
+        let newAttachmentBase64 = null;
 
+        $("#new-attachment").on("change", function (event) {
+            const file = event.target.files[0];
+            if (file && ["image/jpeg", "image/png", "image/jpg", "image/heic"].includes(file.type)) {
+                if (file.type === "image/heic") {
+                    // For simplicity, just alert unsupported format
+                    alert("HEIC format not supported in this form. Please upload JPG or PNG.");
+                    $(this).val("");
+                    newAttachmentBase64 = null;
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        newAttachmentBase64 = e.target.result.split(",")[1];
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } else {
+                newAttachmentBase64 = null;
+                $("#new-attachment").val("");
+                alert("Please upload a valid image file (JPG, JPEG, PNG).");
+            }
+        });
 
         // Fetch subcategories and populate the category container
         $.ajax({
@@ -266,7 +289,8 @@
                 wasBorrowed: wasBorrowed,
                 borrowedFrom: borrowedFrom,
                 installments: installments,
-                forDaughter: forDaughter
+                forDaughter: forDaughter,
+                attachment: newAttachmentBase64
             };
 
             $.ajax({
@@ -277,7 +301,8 @@
                 success: function (response) {
                     showSuccessToast(response);
                     resetFormAndInitWithParams();
-
+                    $("#new-attachment").val("");
+                    newAttachmentBase64 = null;
                 },
                 error: function (error) {
                     console.error("Error adding expenditure:", error);
