@@ -3,6 +3,7 @@ package com.bindord.financemanagement.repository;
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
 import com.bindord.financemanagement.model.dashboard.MonthlyExpenseSummaryDTO;
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.resume.ResumeSummaryProjection;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -141,4 +143,67 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
       ORDER BY subtot.periodo DESC
       """, nativeQuery = true)
   List<MonthlyExpenseSummaryDTO> getMonthlySummary();
+
+
+  @Query(value = """
+        WITH subtot AS (
+            SELECT
+                date_trunc('month', transaction_date)::date AS periodo,
+                ROUND(SUM(
+                    CASE
+                        WHEN NOT shared AND NOT lent AND NOT was_borrowed AND NOT exp_imported THEN
+                            CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+                        ELSE 0 END
+                )::NUMERIC, 2) AS gastos_individuales,
+                ROUND(SUM(
+                    CASE
+                        WHEN shared AND (exp_imported IS FALSE OR exp_imported IS NULL) THEN
+                            CASE WHEN currency = 'PEN' THEN shared_amount ELSE conversion_to_pen / 2 END
+                        ELSE 0 END
+                )::NUMERIC, 2) AS gastos_compartidos,
+                ROUND(SUM(
+                    CASE
+                        WHEN was_borrowed THEN
+                            CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+                        ELSE 0 END
+                )::NUMERIC, 2) AS mis_gastos_pagados_por_tercero,
+                ROUND(SUM(
+                    CASE
+                        WHEN exp_imported THEN
+                            CASE WHEN currency = 'PEN' THEN shared_amount ELSE conversion_to_pen / 2 END
+                        ELSE 0 END
+                )::NUMERIC, 2) AS mis_gastos_importados,
+                ROUND(SUM(
+                    CASE
+                        WHEN lent THEN
+                            CASE WHEN currency = 'PEN' THEN loan_amount ELSE conversion_to_pen END
+                        ELSE 0 END
+                )::NUMERIC, 2) AS total_tus_prestamos,
+                (SELECT SUM(amount) FROM recurrent_expenditures) AS gastos_recurrentes_total
+            FROM expenditures
+            WHERE transaction_date >= :start_date
+              AND transaction_date < :end_date
+            GROUP BY 1
+        )
+        SELECT
+            TO_CHAR(s.periodo, 'YYYY-MM') AS periodo,
+            COALESCE((
+                SELECT ROUND(SUM(
+                    CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+                )::NUMERIC, 2)
+                FROM incomes i
+                WHERE i.was_received
+                  AND i.received_date >= :start_date
+                  AND i.received_date < :end_date
+            ), 0.0) AS otros_ingresos,
+            COALESCE(s.gastos_individuales + s.gastos_compartidos + s.mis_gastos_pagados_por_tercero, 0.0) AS final_total_gastos,
+            COALESCE(s.gastos_compartidos, 0.0) AS gastos_compartidos,
+            COALESCE(s.mis_gastos_importados, 0.0) AS mis_gastos_compartidos_importados,
+            COALESCE(s.gastos_compartidos - s.mis_gastos_importados, 0.0) AS gastos_a_devolver
+        FROM subtot s;
+        """, nativeQuery = true)
+  List<ResumeSummaryProjection> getMonthlySummary(
+      @Param("start_date") LocalDate startDate,
+      @Param("end_date") LocalDate endDate
+  );
 }

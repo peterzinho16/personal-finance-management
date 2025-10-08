@@ -30,4 +30,9 @@ public class PagesController {
   public String addNewExpenditureManually() {
     return "pages/expenditure-new";
   }
+
+  @RequestMapping("/resume")
+  public String resumePage() {
+    return "pages/resume";
+  }
 }

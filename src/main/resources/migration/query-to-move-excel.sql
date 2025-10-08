@@ -84,11 +84,23 @@ where lent = true
 order by to_char(transaction_date, 'YYYY-MM') desc, lent_to;
 
 
+--Total loans amount effectuated from me by person (Detailed) WHERE loan is still not paid - Grouped
+select to_char(transaction_date, 'YYYY-MM') periodo,
+       lent_to,
+       sum(round(case when currency = 'PEN' then amount else conversion_to_pen end::numeric, 2)) monto_aculumado
+FROM expenditures
+where lent = true
+  AND loan_state != 'PAID'
+group by to_char(transaction_date, 'YYYY-MM'), lent_to
+order by to_char(transaction_date, 'YYYY-MM') desc, lent_to;
+
+
+
 --Recover the total borrowed amount, grouped by individual. (Pending to be paid from me)
 --1. List
 select to_char(transaction_date, 'YYYY-MM') periodo, borrowed_from, round(sum(amount)::numeric, 2)
 from expenditures
-where transaction_date between '01-07-2025' and '01-09-2025'
+where transaction_date between '01-07-2025' and '01-10-2025'
   and borrowed_from is not null
     and borrowed_state != 'PAID'
 group by to_char(transaction_date, 'YYYY-MM'), borrowed_from;

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{html-commons/head :: fg-head(title='Expenditures resume')}">
+</head>
+<!-- Material Design for Bootstrap -->
+<link
+        href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css"
+        rel="stylesheet"
+>
+<style>
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Roboto', sans-serif;
+    }
+    .summary-card {
+        border-radius: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease;
+    }
+    .summary-card:hover {
+        transform: translateY(-2px);
+    }
+    .summary-input {
+        font-weight: 600;
+        color: #2b2b2b;
+        text-align: right;
+    }
+    .section-header {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .action-btn {
+        min-width: 110px;
+    }
+</style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-primary mb-0">Resumen del Mes</h3>
+        <select id="periodSelect" class="form-select w-auto">
+            <!-- Filled dynamically -->
+        </select>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="card summary-card mb-4 p-3">
+        <h5 class="section-header">Consolidado General</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Otros Ingresos</label>
+                <input type="text" id="otrosIngresos" class="form-control summary-input" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Total Gastos</label>
+                <input type="text" id="totalGastos" class="form-control summary-input" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Gastos Compartidos</label>
+                <input type="text" id="gastosCompartidos" class="form-control summary-input" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Mis Gastos Compartidos (Importados)</label>
+                <input type="text" id="misGastosCompartidos" class="form-control summary-input" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Gastos a Devolver</label>
+                <input type="text" id="gastosADevolver" class="form-control summary-input" readonly>
+            </div>
+        </div>
+    </div>
+
+    <!-- Money Lent Section -->
+    <div class="card summary-card mb-4 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="section-header mb-0 text-warning">Dinero Prestado (Pendiente de Pago)</h5>
+        </div>
+        <div id="lentSection" class="row g-3"></div>
+    </div>
+
+    <!-- Money Borrowed Section -->
+    <div class="card summary-card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="section-header mb-0 text-info">Dinero Recibido (Por Devolver)</h5>
+        </div>
+        <div id="borrowedSection" class="row g-3"></div>
+    </div>
+</div>
+
+<!-- MDB & Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Resume Page Script -->
+<script>
+
+    const mockData = {
+        summary: {
+            "periodo": "2025-10",
+            "otrosIngresos": 1250.00,
+            "totalGastos": 9820.45,
+            "gastosCompartidos": 1520.35,
+            "misGastosCompartidosImportados": 1160.00,
+            "gastosADevolver": 360.35
+        },
+        lent: [
+            { "id": 101, "periodo": "2025-10", "lentTo": "Amor", "montoAcumulado": 48.00, "estado": "PENDING" },
+            { "id": 102, "periodo": "2025-10", "lentTo": "Fader", "montoAcumulado": 70.04, "estado": "PENDING" }
+        ],
+        borrowed: [
+            { "id": 203, "periodo": "2025-07", "borrowedFrom": "Amor", "montoAcumulado": 1287.50, "estado": "PENDING" },
+            { "id": 204, "periodo": "2025-08", "borrowedFrom": "Amor", "montoAcumulado": 643.26, "estado": "PENDING" }
+        ]
+    };
+
+    // Keep your mock only for the endpoints you want to simulate
+    const realFetch = window.fetch; // save original fetch
+
+    window.fetch = async (url, options = {}) => {
+        if (url.includes('/api/resume/lent')) {
+            return { json: async () => mockData.lent };
+        }
+        if (url.includes('/api/resume/borrowed')) {
+            return { json: async () => mockData.borrowed };
+        }
+        if (url.includes('/pay')) {
+            console.log("Mock pay:", url);
+            return { ok: true };
+        }
+
+        // For everything else, use the real fetch (including summary)
+        return realFetch(url, options);
+    };
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        const periodSelect = document.getElementById("periodSelect");
+        const periods = [];
+        const today = new Date();
+
+        for (let i = 5; i >= 0; i--) { // last 6 months including current
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            periods.push(`${yyyy}-${mm}`);
+        }
+
+        periods.reverse();
+
+        periods.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = p;
+            periodSelect.appendChild(opt);
+        });
+
+        periodSelect.value = periods[0]; // latest month
+        await loadPeriodData(periodSelect.value);
+
+        periodSelect.addEventListener("change", async (e) => {
+            await loadPeriodData(e.target.value);
+        });
+    });
+
+    async function loadPeriodData(period) {
+        await Promise.all([
+            loadSummary(period),
+            loadLent(period),
+            loadBorrowed(period)
+        ]);
+    }
+
+    async function loadSummary(period) {
+        // Compute startDate and endDate from period (YYYY-MM)
+        const [year, month] = period.split('-').map(Number);
+        const startDate = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-01`;
+        let nextYear = year;
+        let nextMonth = month + 1;
+        if (nextMonth > 12) {
+            nextMonth = 1;
+            nextYear += 1;
+        }
+        const endDate = `${nextYear.toString().padStart(4, '0')}-${nextMonth.toString().padStart(2, '0')}-01`;
+
+        // Example API call (replace with backend endpoint)
+        const data = await fetch(`/api/resume/summary?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
+        const row = data[0];
+        console.log(row);
+        document.getElementById("otrosIngresos").value = `S/ ${row.otrosIngresos}`;
+        document.getElementById("totalGastos").value = `S/ ${row.finalTotalGastos}`;
+        document.getElementById("gastosCompartidos").value = `S/ ${row.gastosCompartidos}`;
+        document.getElementById("misGastosCompartidos").value = `S/ ${row.misGastosCompartidosImportados}`;
+        document.getElementById("gastosADevolver").value = `S/ ${row.gastosADevolver}`;
+    }
+
+    async function loadLent(period) {
+        const lentData = await fetch(`/api/resume/lent?period=${period}`).then(r => r.json());
+        const container = document.getElementById("lentSection");
+        container.innerHTML = lentData.length ? lentData.map(l => `
+        <div class="col-md-4">
+          <div class="card border-warning-subtle">
+            <div class="card-body">
+              <h6 class="text-warning fw-bold mb-1">${l.lentTo}</h6>
+              <p class="mb-1">Monto pendiente:</p>
+              <input type="text" class="form-control summary-input mb-2" value="S/ ${l.montoAcumulado}" readonly>
+              <button class="btn btn-sm btn-success action-btn" onclick="markLentAsPaid(${l.id})">Liquidar</button>
+            </div>
+          </div>
+        </div>
+      `).join('') : `<p class="text-muted">No hay préstamos pendientes</p>`;
+    }
+
+    async function loadBorrowed(period) {
+        const borrowedData = await fetch(`/api/resume/borrowed?period=${period}`).then(r => r.json());
+        const container = document.getElementById("borrowedSection");
+        container.innerHTML = borrowedData.length ? borrowedData.map(b => `
+        <div class="col-md-4">
+          <div class="card border-info-subtle">
+            <div class="card-body">
+              <h6 class="text-info fw-bold mb-1">${b.borrowedFrom}</h6>
+              <p class="mb-1">Por devolver:</p>
+              <input type="text" class="form-control summary-input mb-2" value="S/ ${b.montoAcumulado}" readonly>
+              <button class="btn btn-sm btn-success action-btn" onclick="markBorrowedAsPaid(${b.id})">Liquidar</button>
+            </div>
+          </div>
+        </div>
+      `).join('') : `<p class="text-muted">No hay deudas pendientes</p>`;
+    }
+
+    async function markLentAsPaid(id) {
+        await fetch(`/api/resume/lent/${id}/pay`, { method: "PUT" });
+        await loadLent(document.getElementById("periodSelect").value);
+    }
+
+    async function markBorrowedAsPaid(id) {
+        await fetch(`/api/resume/borrowed/${id}/pay`, { method: "PUT" });
+        await loadBorrowed(document.getElementById("periodSelect").value);
+    }
+</script>
+</body>
+</html>
