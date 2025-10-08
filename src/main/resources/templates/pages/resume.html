@@ -1,242 +1,576 @@
 <!DOCTYPE html>
-<html lang="en-us"
-      xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{html-commons/head :: fg-head(title='Expenditures resume')}">
-</head>
-<!-- Material Design for Bootstrap -->
-<link
-        href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css"
-        rel="stylesheet"
->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{html-commons/head :: fg-head(title='Expenditures – Resumen', includeAppCss=false)}"></head>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css" rel="stylesheet">
+
 <style>
-    body {
-        background-color: #f4f6f9;
-        font-family: 'Roboto', sans-serif;
+    :root{
+        --bg:#f5f7fb;
+        --card:#ffffff;
+        --text:#0f172a;
+        --muted:#6b7280;
+        --brand:#2563eb;
+        --ring:rgba(37,99,235,.15);
+        --radius:18px;
+        --sidebar-w:280px;
     }
-    .summary-card {
-        border-radius: 1rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        transition: transform 0.2s ease;
+    html,body{height:100%}
+    body{
+        background:var(--bg);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", "Noto Sans", sans-serif;
+        color:var(--text);
     }
-    .summary-card:hover {
-        transform: translateY(-2px);
+
+    /* Layout */
+    .app{display:grid; grid-template-columns: var(--sidebar-w) 1fr; min-height:100%}
+
+    /* Sidebar – light, rounded, like the screenshot */
+    .sidebar{
+        background:#fff; padding:20px 14px; position:sticky; top:0; height:100vh;
+        border-right:1px solid #eef0f5; border-top-right-radius:16px; border-bottom-right-radius:16px;
     }
-    .summary-input {
-        font-weight: 600;
-        color: #2b2b2b;
-        text-align: right;
+    .sb-title{
+        font-weight:800; font-size:26px; margin:6px 8px 18px; letter-spacing:.2px;
     }
-    .section-header {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.5rem;
+    .sb-list{list-style:none; padding:0; margin:0}
+    .sb-item>a{
+        display:flex; align-items:center; gap:12px; padding:12px 12px; margin:6px 6px;
+        color:#1f2937; text-decoration:none; border-radius:12px; font-weight:600;
+        transition:background .15s ease, color .15s ease;
     }
-    .action-btn {
-        min-width: 110px;
+    .sb-item>a:hover{ background:#f3f6ff; color:#1e40af }
+    .sb-item a .bi{ font-size:20px; color:#6b7280 }
+    .sb-item.active>a{ background:#eef2ff; color:#1e40af }
+    .sb-item.active>a .bi{ color:#1e40af }
+
+    /* Submenu for Expenses */
+    .submenu{ margin-left:42px; margin-top:2px; margin-bottom:6px; display:none }
+    .submenu a{
+        display:block; padding:8px 10px; margin:4px 6px; border-radius:10px; color:#374151; text-decoration:none; font-weight:500;
+    }
+    .submenu a:hover{ background:#f6f7fb }
+    .sb-caret{ margin-left:auto; transition:transform .15s ease }
+    .sb-item.open .sb-caret{ transform:rotate(90deg) }
+    .sb-item.open .submenu{ display:block }
+
+    /* Topbar minimal */
+    .topbar{
+        height:64px; display:flex; align-items:center; justify-content:space-between;
+        padding:0 20px; background:#373b3b; position:sticky; top:0; z-index:5;
+    }
+
+    /* Body header row (where period + user live now) */
+    .content{ padding:16px 24px 28px }
+    .page-header{
+        display:flex; justify-content:space-between; align-items:center; margin-bottom:18px
+    }
+    .page-header .title{ font-weight:800; font-size:32px }
+    .header-actions{ display:flex; align-items:end; gap:12px }
+    .field{
+        display:flex; flex-direction:column; gap:6px;
+    }
+    .field label{ font-size:12px; color:var(--muted); font-weight:700 }
+    .select-clean{
+        border:1px solid #e5e7eb; border-radius:12px; padding:10px 14px; background:#fff; font-weight:600;
+        min-width:160px;
+    }
+
+    .avatar-btn{
+        width:38px; height:38px; border-radius:999px; display:grid; place-items:center;
+        background:#eef2ff; color:#4f46e5; border:none;
+    }
+
+    /* Cards / metrics */
+    .card-ui{ background:var(--card); border:0; border-radius:var(--radius); box-shadow:0 10px 24px rgba(16,24,40,.06) }
+    .grid{ display:grid; gap:18px; grid-template-columns: repeat(12, minmax(0,1fr)) }
+    .grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .col-3{ grid-column: span 3 } .col-4{ grid-column: span 4 } .col-6{ grid-column: span 6 } .col-12{ grid-column: span 12 }
+
+    .metric{ padding:22px; border-radius:16px; border:1px solid #eef0f5 }
+    .metric .label{ color:var(--muted); font-weight:600; font-size:14px; margin-bottom:8px }
+    .metric .value{ font-size:28px; font-weight:800; letter-spacing:.2px }
+
+    .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px;
+        font-weight:700; font-size:13px; border:1px solid #e5e7eb; background:#fff }
+    .pill.warning{ color:#a16207; background:#fffbeb; border-color:#fde68a }
+    .pill.info{ color:#075985; background:#ecfeff; border-color:#a5f3fc }
+
+    .loan-card{ border:1px solid #eef0f5; border-radius:16px; padding:16px; background:#fff; height:100% }
+    .amount{ font-weight:800; font-size:22px }
+    .shadow-hover{ transition: transform .15s ease, box-shadow .15s ease }
+    .shadow-hover:hover{ transform: translateY(-2px); box-shadow: 0 12px 28px rgba(20,35,90,.08) }
+
+    /* Topbar search input (⌘K) */
+    .topbar .searchbar{position:relative; width:clamp(220px,28vw,340px)}
+    .topbar .search-input{
+        height:36px; width:100%;
+        border:1px solid #e5e7eb; border-radius:12px;
+        padding:0 44px 0 36px; background:#fff; font-weight:500;
+        box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .topbar .search-input:focus{
+        outline:0; border-color:var(--brand); box-shadow:0 0 0 3px var(--ring);
+    }
+    .topbar .search-icon{
+        position:absolute; left:12px; top:50%; transform:translateY(-50%);
+        color:#6b7280; font-size:18px;
+    }
+    .topbar .kbd-badge{
+        position:absolute; right:8px; top:50%; transform:translateY(-50%);
+        padding:2px 6px; border:1px solid #e5e7eb; border-radius:6px;
+        font-size:12px; color:#64748b; background:#fff;
+    }
+
+    /* Avatar button & dropdown */
+    .avatar-btn{ width:38px; height:38px; border-radius:999px; border:0; display:grid; place-items:center;
+        background:#eef2ff; color:#4f46e5; }
+    .avatar-btn.dropdown-toggle::after{ display:none; }
+
+    /* Toggle button */
+    .sb-toggle{
+        position: absolute;
+        top: 50%;
+        right: -14px;                 /* pulls it slightly outside so it doesn't touch the title */
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #4f46e5;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(16,24,40,.12);
+        z-index: 20;
+    }
+    .sb-toggle:hover{ background:#eef2ff }
+    .sb-toggle .bi{ transition: transform .2s ease }
+    .sidebar { overflow: visible; }
+
+    /* Collapsed state */
+    .app.is-collapsed{ --sidebar-w:84px }            /* shrinks the grid column */
+    .app.is-collapsed .sidebar .sb-title{ display:none }
+    .app.is-collapsed .sidebar a span{ display:none } /* hide labels */
+    .app.is-collapsed .sb-caret{ display:none }       /* hide submenu caret */
+    .app.is-collapsed .submenu{ display:none }        /* hide open submenus */
+    .app.is-collapsed .sb-toggle .bi{ transform:rotate(180deg) } /* flip chevron */
+
+
+
+    @media (max-width: 1100px){
+        :root{ --sidebar-w:90px }
+        .sb-title{ display:none }
+        .sb-item>a span{ display:none }
+        .submenu{ margin-left:16px }
+    }
+    @media (max-width: 920px){
+        .grid{ grid-template-columns: repeat(6, minmax(0,1fr)) }
+        .col-3{ grid-column: span 3 } .col-4{ grid-column: span 6 }
+    }
+    @media (max-width: 640px){
+        .app{ grid-template-columns: 1fr }
+        .sidebar{ position:relative; height:auto; border-radius:0 0 16px 16px }
+        .grid{ grid-template-columns: repeat(4, minmax(0,1fr)) }
+        .col-3,.col-4,.col-6{ grid-column: span 4 }
+        .page-header{ align-items:start; gap:12px; flex-direction:column }
+        .header-actions{ width:100%; justify-content:space-between }
     }
 </style>
-</head>
+
 <body>
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-primary mb-0">Resumen del Mes</h3>
-        <select id="periodSelect" class="form-select w-auto">
-            <!-- Filled dynamically -->
-        </select>
-    </div>
+<div class="app">
 
-    <!-- Summary Section -->
-    <div class="card summary-card mb-4 p-3">
-        <h5 class="section-header">Consolidado General</h5>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Otros Ingresos</label>
-                <input type="text" id="otrosIngresos" class="form-control summary-input" readonly>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Total Gastos</label>
-                <input type="text" id="totalGastos" class="form-control summary-input" readonly>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Gastos Compartidos</label>
-                <input type="text" id="gastosCompartidos" class="form-control summary-input" readonly>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Mis Gastos Compartidos (Importados)</label>
-                <input type="text" id="misGastosCompartidos" class="form-control summary-input" readonly>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Gastos a Devolver</label>
-                <input type="text" id="gastosADevolver" class="form-control summary-input" readonly>
-            </div>
-        </div>
-    </div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <button class="sb-toggle" id="sbToggle" type="button"
+                aria-label="Toggle sidebar" aria-expanded="true"
+                onclick="toggleSidebar()">
+            <i class="bi bi-chevron-left"></i>
+        </button>
 
-    <!-- Money Lent Section -->
-    <div class="card summary-card mb-4 p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="section-header mb-0 text-warning">Dinero Prestado (Pendiente de Pago)</h5>
-        </div>
-        <div id="lentSection" class="row g-3"></div>
-    </div>
+        <div class="sb-title">Admin Dashboard</div>
+        <ul class="sb-list">
+            <li class="sb-item"><a href="/home"><i class="bi bi-grid-3x3-gap"></i><span>Dashboard</span></a></li>
 
-    <!-- Money Borrowed Section -->
-    <div class="card summary-card p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="section-header mb-0 text-info">Dinero Recibido (Por Devolver)</h5>
+            <li class="sb-item" id="expItem">
+                <a href="javascript:void(0)" onclick="toggleSubmenu('expItem')">
+                    <i class="bi bi-wallet2"></i><span>Expenses</span>
+                    <i class="bi bi-chevron-right sb-caret"></i>
+                </a>
+                <div class="submenu">
+                    <a href="/expenditure/new">New expense</a>
+                    <a href="/expenditure/list">List</a>
+                    <a href="/expenditure/reports">Reports</a>
+                </div>
+            </li>
+
+            <li class="sb-item"><a href="/income"><i class="bi bi-coin"></i><span>Income</span></a></li>
+            <li class="sb-item"><a href="/categories"><i class="bi bi-folder2"></i><span>Categories</span></a></li>
+            <li class="sb-item"><a href="/home/others"><i class="bi bi-card-text"></i><span>Expenditure Others</span></a></li>
+            <li class="sb-item"><a href="/resume"><i class="bi bi-journal-text"></i><span>Resume</span></a></li>
+        </ul>
+    </aside>
+
+    <!-- Main -->
+    <main>
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="d-flex align-items-center gap-3 ms-auto">
+                <!-- Search -->
+                <div class="searchbar d-none d-md-block">
+                    <i class="bi bi-search search-icon"></i>
+                    <input class="search-input" type="text" placeholder="Search shop" />
+                    <span class="kbd-badge">⌘ K</span>
+                </div>
+
+                <!-- Optional icons -->
+                <button type="button" class="btn btn-link text-muted p-2" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                </button>
+                <button type="button" class="btn btn-link text-muted p-2" title="Apps">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+
+                <!-- User dropdown (Bootstrap, no MDB attribute) -->
+                <div class="dropdown">
+                    <button class="avatar-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
+                        <i class="bi bi-person"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm p-2">
+                        <li><a class="dropdown-item" href="/profile"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><a class="dropdown-item" href="/billing"><i class="bi bi-credit-card me-2"></i>Billing</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
-        <div id="borrowedSection" class="row g-3"></div>
-    </div>
+
+
+        <div class="content">
+
+            <!-- Body header (no user icon here) -->
+            <div class="page-header">
+                <div class="title">Resumen General</div>
+                <div class="header-actions">
+                    <div class="field">
+                        <label for="periodSelect">Periodo</label>
+                        <select id="periodSelect" class="select-clean"></select>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Summary metrics (responsive, no .col-* wrappers) -->
+            <div class="grid mb-4">
+                <div class="card-ui p-3" style="grid-column: 1 / -1;">
+                    <div class="grid">
+                        <div class="metric shadow-hover">
+                            <div class="label">Otros ingresos</div>
+                            <div id="otrosIngresos" class="value">S/ 0.00</div>
+                        </div>
+
+                        <div class="metric shadow-hover">
+                            <div class="label">Total gastos</div>
+                            <div id="totalGastos" class="value">S/ 0.00</div>
+                        </div>
+
+                        <div class="metric shadow-hover">
+                            <div class="label">Gastos compartidos</div>
+                            <div id="gastosCompartidos" class="value">S/ 0.00</div>
+                        </div>
+
+                        <div class="metric shadow-hover">
+                            <div class="label">Mis gastos compartidos (importados)</div>
+                            <div id="misGastosCompartidos" class="value">S/ 0.00</div>
+                        </div>
+
+                        <div class="metric shadow-hover text-bg-primary">
+                            <div class="label text-white">Gastos a devolver</div>
+                            <div id="gastosADevolver" class="value">S/ 0.00</div>
+                        </div>
+
+                        <div class="metric shadow-hover">
+                            <div class="label">Gasto neto</div>
+                            <div class="value">S/ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dinero prestado -->
+            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="pill warning"><i class="bi bi-arrow-up-right-circle"></i> Dinero prestado (pendiente de pago)</span>
+                </div>
+                <div id="lentSection" class="grid"></div>
+            </div>
+
+            <!-- Dinero recibido -->
+            <div class="card-ui p-4" style="grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="pill info"><i class="bi bi-arrow-down-circle"></i> Dinero recibido (por devolver)</span>
+                </div>
+                <div id="borrowedSection" class="grid"></div>
+            </div>
+
+        </div>
+    </main>
 </div>
 
-<!-- MDB & Bootstrap JS -->
+<!-- JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Resume Page Script -->
 <script>
+    // Sidebar submenu toggle
+    function toggleSubmenu(id){
+        document.getElementById(id).classList.toggle('open');
+    }
 
+    // Mock for lists (keep your backend summary call as-is)
     const mockData = {
-        summary: {
-            "periodo": "2025-10",
-            "otrosIngresos": 1250.00,
-            "totalGastos": 9820.45,
-            "gastosCompartidos": 1520.35,
-            "misGastosCompartidosImportados": 1160.00,
-            "gastosADevolver": 360.35
-        },
-        lent: [
-            { "id": 101, "periodo": "2025-10", "lentTo": "Amor", "montoAcumulado": 48.00, "estado": "PENDING" },
-            { "id": 102, "periodo": "2025-10", "lentTo": "Fader", "montoAcumulado": 70.04, "estado": "PENDING" }
+        summary:{ periodo:"2025-10", otrosIngresos:1250.00, totalGastos:9820.45, gastosCompartidos:1520.35, misGastosCompartidosImportados:1160.00, gastosADevolver:360.35 },
+        lent:[
+            {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Amor", "montoAcumulado": 72.3},
+            {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Fader", "montoAcumulado": 73.02},
+            {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Amor", "montoAcumulado": 100.8},
+            {"periodo": "2025-05", "loanState": "PENDING", "lentTo": "Rodrigo", "montoAcumulado": 100.8}
         ],
-        borrowed: [
-            { "id": 203, "periodo": "2025-07", "borrowedFrom": "Amor", "montoAcumulado": 1287.50, "estado": "PENDING" },
-            { "id": 204, "periodo": "2025-08", "borrowedFrom": "Amor", "montoAcumulado": 643.26, "estado": "PENDING" }
+        borrowed:[
+            {id:203, periodo:"2025-07", borrowedFrom:"Amor", montoAcumulado:1287.50, borrowedState:"PENDING"},
+            {id:204, periodo:"2025-08", borrowedFrom:"Fader", montoAcumulado:643.26, borrowedState:"PAID"},
+            {id:203, periodo:"2025-07", borrowedFrom:"Hermano", montoAcumulado:1287.50, borrowedState:"PENDING"},
+            {id:204, periodo:"2025-08", borrowedFrom:"Amor", montoAcumulado:643.26, borrowedState:"PAID"}
         ]
     };
-
-    // Keep your mock only for the endpoints you want to simulate
-    const realFetch = window.fetch; // save original fetch
+    const realFetch = window.fetch;
 
     window.fetch = async (url, options = {}) => {
-        if (url.includes('/api/resume/lent')) {
-            return { json: async () => mockData.lent };
-        }
-        if (url.includes('/api/resume/borrowed')) {
-            return { json: async () => mockData.borrowed };
-        }
-        if (url.includes('/pay')) {
-            console.log("Mock pay:", url);
-            return { ok: true };
-        }
+        // const method = (options.method || 'GET').toUpperCase(); // default to GET if not specified
 
-        // For everything else, use the real fetch (including summary)
+        // // Example: mock /api/resume/lent GET
+        // if (url.includes('/api/resume/lent') && method === 'GET') {
+        //     console.log('Mocking GET /api/resume/lent');
+        //     return { json: async () => mockData.lent };
+        // }
+
+        // // Example: mock /api/resume/borrowed GET
+        // if (url.includes('/api/resume/borrowed') && method === 'GET') {
+        //     console.log('Mocking GET /api/resume/borrowed');
+        //     return { json: async () => mockData.borrowed };
+        // }
+
+        // // Example: mock PUT for pay endpoints
+        // if (url.includes('/pay') && method === 'PUT') {
+        //     console.log('Mocking PUT /pay');
+        //     return { ok: true };
+        // }
+
+        // fallback to real fetch
         return realFetch(url, options);
     };
 
-    document.addEventListener("DOMContentLoaded", async () => {
-        const periodSelect = document.getElementById("periodSelect");
+    const PEN = new Intl.NumberFormat('es-PE', { style:'currency', currency:'PEN', minimumFractionDigits:2 });
+
+    document.addEventListener('DOMContentLoaded', async ()=>{
+        const periodSelect = document.getElementById('periodSelect');
         const periods = [];
         const today = new Date();
-
-        for (let i = 5; i >= 0; i--) { // last 6 months including current
-            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            periods.push(`${yyyy}-${mm}`);
+        for(let i=5;i>=0;i--){
+            const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+            const y = d.getFullYear();
+            const m = String(d.getMonth()+1).padStart(2,'0');
+            periods.push(`${y}-${m}`);
         }
-
         periods.reverse();
-
-        periods.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p;
-            opt.textContent = p;
-            periodSelect.appendChild(opt);
+        periods.forEach(p=>{
+            const opt=document.createElement('option'); opt.value=p; opt.textContent=p; periodSelect.appendChild(opt);
         });
-
-        periodSelect.value = periods[0]; // latest month
+        periodSelect.value = periods[0];
         await loadPeriodData(periodSelect.value);
-
-        periodSelect.addEventListener("change", async (e) => {
-            await loadPeriodData(e.target.value);
-        });
+        periodSelect.addEventListener('change', async e => { await loadPeriodData(e.target.value); });
     });
 
-    async function loadPeriodData(period) {
-        await Promise.all([
-            loadSummary(period),
-            loadLent(period),
-            loadBorrowed(period)
-        ]);
+    async function loadPeriodData(period){
+        await Promise.all([ loadSummary(period), loadLent(period), loadBorrowed(period) ]);
     }
 
-    async function loadSummary(period) {
-        // Compute startDate and endDate from period (YYYY-MM)
+    async function loadSummary(period){
         const [year, month] = period.split('-').map(Number);
-        const startDate = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-01`;
-        let nextYear = year;
-        let nextMonth = month + 1;
-        if (nextMonth > 12) {
-            nextMonth = 1;
-            nextYear += 1;
-        }
-        const endDate = `${nextYear.toString().padStart(4, '0')}-${nextMonth.toString().padStart(2, '0')}-01`;
+        const startDate = `${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-01`;
+        let ny = year, nm = month+1; if(nm>12){ nm=1; ny+=1; }
+        const endDate = `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}-01`;
 
-        // Example API call (replace with backend endpoint)
-        const data = await fetch(`/api/resume/summary?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
-        const row = data[0];
-        console.log(row);
-        document.getElementById("otrosIngresos").value = `S/ ${row.otrosIngresos}`;
-        document.getElementById("totalGastos").value = `S/ ${row.finalTotalGastos}`;
-        document.getElementById("gastosCompartidos").value = `S/ ${row.gastosCompartidos}`;
-        document.getElementById("misGastosCompartidos").value = `S/ ${row.misGastosCompartidosImportados}`;
-        document.getElementById("gastosADevolver").value = `S/ ${row.gastosADevolver}`;
+        const data = await fetch(`/api/resume/summary?startDate=${startDate}&endDate=${endDate}`).then(r=>r.json());
+        const row = data?.[0] ?? mockData.summary;
+
+        document.getElementById('otrosIngresos').textContent        = PEN.format(row.otrosIngresos ?? 0);
+        document.getElementById('totalGastos').textContent          = PEN.format(row.finalTotalGastos ?? row.totalGastos ?? 0);
+        document.getElementById('gastosCompartidos').textContent    = PEN.format(row.gastosCompartidos ?? 0);
+        document.getElementById('misGastosCompartidos').textContent = PEN.format(row.misGastosCompartidosImportados ?? 0);
+        document.getElementById('gastosADevolver').textContent      = PEN.format(row.gastosADevolver ?? 0);
     }
 
     async function loadLent(period) {
-        const lentData = await fetch(`/api/resume/lent?period=${period}`).then(r => r.json());
-        const container = document.getElementById("lentSection");
-        container.innerHTML = lentData.length ? lentData.map(l => `
-        <div class="col-md-4">
-          <div class="card border-warning-subtle">
-            <div class="card-body">
-              <h6 class="text-warning fw-bold mb-1">${l.lentTo}</h6>
-              <p class="mb-1">Monto pendiente:</p>
-              <input type="text" class="form-control summary-input mb-2" value="S/ ${l.montoAcumulado}" readonly>
-              <button class="btn btn-sm btn-success action-btn" onclick="markLentAsPaid(${l.id})">Liquidar</button>
-            </div>
-          </div>
-        </div>
-      `).join('') : `<p class="text-muted">No hay préstamos pendientes</p>`;
+        const [year, month] = period.split('-').map(Number);
+        const startDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
+        let ny = year, nm = month + 1;
+        if (nm > 12) { nm = 1; ny += 1; }
+        const endDate = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-01`;
+
+        const list = await fetch(`/api/resume/lent?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
+        const c = document.getElementById('lentSection');
+        if (!list.length) {
+            c.innerHTML = `<div class="text-muted">No hay préstamos pendientes</div>`;
+            return;
+        }
+
+        // Group by lentTo and calculate totals for PENDING / PAID
+        const grouped = {};
+        for (const item of list) {
+            const name = item.lentTo;
+            if (!grouped[name]) {
+                grouped[name] = { lentTo: name, pending: 0, paid: 0 };
+            }
+            if (item.loanState === 'PENDING') grouped[name].pending += item.montoAcumulado ?? 0;
+            else if (item.loanState === 'PAID') grouped[name].paid += item.montoAcumulado ?? 0;
+        }
+
+        const cards = Object.values(grouped).map(l => {
+            const hasPending = l.pending > 0;
+            const paidIcon = !hasPending
+                ? `<i class="bi bi-check-circle-fill text-success" title="Deuda pagada"></i>`
+                : '';
+
+            return `
+                  <div class="loan-card shadow-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-up-right-circle text-warning"></i>
+                        <span class="fw-semibold">${l.lentTo}</span>
+                      </div>
+                      ${paidIcon}
+                    </div>
+                    <div class="small text-muted">Monto pendiente</div>
+                    <div class="amount my-1">${PEN.format(l.pending)}</div>
+
+                    <div class="small text-muted mt-2">Monto pagado</div>
+                    <div class="amount text-success my-1">${PEN.format(l.paid)}</div>
+
+                    <button class="btn btn-primary btn-sm w-100 mt-3"
+                            ${hasPending ? '' : 'disabled'}
+                            onclick="${hasPending ? `markLentAsPaid('${l.lentTo}')` : ''}">
+                      ${hasPending ? 'Liquidar' : 'Pagado'}
+                    </button>
+                  </div>`;
+        });
+        c.innerHTML = cards.join('');
     }
 
     async function loadBorrowed(period) {
-        const borrowedData = await fetch(`/api/resume/borrowed?period=${period}`).then(r => r.json());
-        const container = document.getElementById("borrowedSection");
-        container.innerHTML = borrowedData.length ? borrowedData.map(b => `
-        <div class="col-md-4">
-          <div class="card border-info-subtle">
-            <div class="card-body">
-              <h6 class="text-info fw-bold mb-1">${b.borrowedFrom}</h6>
-              <p class="mb-1">Por devolver:</p>
-              <input type="text" class="form-control summary-input mb-2" value="S/ ${b.montoAcumulado}" readonly>
-              <button class="btn btn-sm btn-success action-btn" onclick="markBorrowedAsPaid(${b.id})">Liquidar</button>
-            </div>
-          </div>
-        </div>
-      `).join('') : `<p class="text-muted">No hay deudas pendientes</p>`;
+        const [year, month] = period.split('-').map(Number);
+        const startDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
+        let ny = year, nm = month + 1;
+        if (nm > 12) { nm = 1; ny += 1; }
+        const endDate = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-01`;
+
+        const list = await fetch(`/api/resume/borrowed?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
+        const c = document.getElementById('borrowedSection');
+        if (!list.length) {
+            c.innerHTML = `<div class="text-muted">No hay deudas pendientes</div>`;
+            return;
+        }
+
+        // Group by borrowedFrom and calculate totals for PENDING / PAID
+        const grouped = {};
+        for (const item of list) {
+            const name = item.borrowedFrom;
+            if (!grouped[name]) {
+                grouped[name] = { borrowedFrom: name, pending: 0, paid: 0 };
+            }
+            if (item.borrowedState === 'PENDING') grouped[name].pending += item.montoAcumulado ?? 0;
+            else if (item.borrowedState === 'PAID') grouped[name].paid += item.montoAcumulado ?? 0;
+        }
+
+        console.log(grouped);
+
+        const cards = Object.values(grouped).map(b => {
+            const hasPending = b.pending > 0;
+            const paidIcon = !hasPending
+                ? `<i class="bi bi-check-circle-fill text-success" title="Deuda liquidada"></i>`
+                : '';
+
+            return `
+                  <div class="loan-card shadow-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-down-circle text-info"></i>
+                        <span class="fw-semibold">${b.borrowedFrom}</span>
+                      </div>
+                      ${paidIcon}
+                    </div>
+
+                    <div class="small text-muted">Monto pendiente</div>
+                    <div class="amount my-1">${PEN.format(b.pending)}</div>
+
+                    <div class="small text-muted mt-2">Monto pagado</div>
+                    <div class="amount text-success my-1">${PEN.format(b.paid)}</div>
+
+                    <button class="btn btn-primary btn-sm w-100 mt-3"
+                            ${hasPending ? '' : 'disabled'}
+                            onclick="${hasPending ? `markBorrowedAsPaid('${b.borrowedFrom}')` : ''}">
+                      ${hasPending ? 'Liquidar' : 'Pagado'}
+                    </button>
+                  </div>`;
+        });
+
+        c.innerHTML = cards.join('');
     }
 
-    async function markLentAsPaid(id) {
-        await fetch(`/api/resume/lent/${id}/pay`, { method: "PUT" });
-        await loadLent(document.getElementById("periodSelect").value);
+    async function markLentAsPaid(lentTo) {
+        // Compute startDate and endDate as in loadSummary
+        console.log('....')
+        const period = document.getElementById('periodSelect').value;
+        const [year, month] = period.split('-').map(Number);
+        const startDate = `${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-01`;
+        let ny = year, nm = month+1;
+        if(nm>12){ nm=1; ny+=1; }
+        const endDate = `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}-01`;
+        console.log(startDate, endDate, lentTo);
+        await fetch(`/api/resume/lent/${lentTo}/pay?startDate=${startDate}&endDate=${endDate}`, { method:'PUT' });
+        await loadLent(period);
+    }
+    async function markBorrowedAsPaid(borrowedFrom) {
+        // Compute startDate and endDate as in loadSummary
+        const period = document.getElementById('periodSelect').value;
+        const [year, month] = period.split('-').map(Number);
+        const startDate = `${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-01`;
+        let ny = year, nm = month+1;
+        if(nm>12){ nm=1; ny+=1; }
+        const endDate = `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}-01`;
+        console.log(startDate, endDate, borrowedFrom);
+        await fetch(`/api/resume/borrowed/${borrowedFrom}/pay?startDate=${startDate}&endDate=${endDate}`, { method:'PUT' });
+        await loadBorrowed(period);
     }
 
-    async function markBorrowedAsPaid(id) {
-        await fetch(`/api/resume/borrowed/${id}/pay`, { method: "PUT" });
-        await loadBorrowed(document.getElementById("periodSelect").value);
+    function toggleSidebar(){
+        const app = document.querySelector('.app');
+        const btn = document.getElementById('sbToggle');
+        app.classList.toggle('is-collapsed');
+        btn.setAttribute('aria-expanded', !app.classList.contains('is-collapsed'));
     }
+
 </script>
 </body>
 </html>

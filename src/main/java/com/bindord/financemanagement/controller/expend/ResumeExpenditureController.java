@@ -1,11 +1,14 @@
 package com.bindord.financemanagement.controller.expend;
 
-// src/main/java/com/example/finance/controller/ResumeExpenditureController.java
-
+import com.bindord.financemanagement.model.resume.BorrowedPendingProjection;
+import com.bindord.financemanagement.model.resume.LentPendingProjection;
 import com.bindord.financemanagement.model.resume.ResumeSummaryProjection;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,15 +37,38 @@ public class ResumeExpenditureController {
 
   // 2️⃣ Money lent (pending)
   @GetMapping("/lent")
-  public String getLentPending() {
-    // placeholder for actual lent query
-    return "Pending lent records here";
+  public List<LentPendingProjection> getLentPending(
+      @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+    return expenditureRepository.getLentPending(startDate, endDate);
   }
 
   // 3️⃣ Money borrowed (pending)
   @GetMapping("/borrowed")
-  public String getBorrowedPending() {
-    // placeholder for actual borrowed query
-    return "Pending borrowed records here";
+  public List<BorrowedPendingProjection> getBorrowedPending(
+      @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    return expenditureRepository.getBorrowedPending(startDate, endDate);
+  }
+
+  @PutMapping("/lent/{lentTo}/pay")
+  public ResponseEntity<Void> markLentAsPaid(
+      @PathVariable String lentTo,
+      @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    expenditureRepository.markLentAsPaid(lentTo, startDate, endDate);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/borrowed/{borrowedFrom}/pay")
+  public ResponseEntity<Void> markBorrowedAsPaid(
+      @PathVariable String borrowedFrom,
+      @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+    expenditureRepository.markBorrowedAsPaid(borrowedFrom, startDate, endDate);
+    return ResponseEntity.noContent().build();
   }
 }

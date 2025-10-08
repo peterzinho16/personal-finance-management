@@ -85,16 +85,28 @@ order by to_char(transaction_date, 'YYYY-MM') desc, lent_to;
 
 
 --Total loans amount effectuated from me by person (Detailed) WHERE loan is still not paid - Grouped
-select to_char(transaction_date, 'YYYY-MM') periodo,
-       lent_to,
-       sum(round(case when currency = 'PEN' then amount else conversion_to_pen end::numeric, 2)) monto_aculumado
-FROM expenditures
-where lent = true
-  AND loan_state != 'PAID'
-group by to_char(transaction_date, 'YYYY-MM'), lent_to
-order by to_char(transaction_date, 'YYYY-MM') desc, lent_to;
-
-
+SELECT
+    to_char(periodo, 'YYYY-MM'),
+    loan_state,
+    lent_to,
+    ROUND(SUM(
+                  CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+          )::numeric, 2) AS monto_acumulado
+FROM (
+         SELECT
+             date_trunc('month', transaction_date)::date AS periodo,
+             loan_state,
+             lent_to,
+             currency,
+             amount,
+             conversion_to_pen
+         FROM expenditures
+         WHERE transaction_date >= :start_date
+           AND transaction_date < :end_date
+           AND lent = TRUE
+     ) t
+GROUP BY periodo, loan_state, lent_to
+ORDER BY periodo DESC, lent_to;
 
 --Recover the total borrowed amount, grouped by individual. (Pending to be paid from me)
 --1. List
@@ -107,20 +119,45 @@ group by to_char(transaction_date, 'YYYY-MM'), borrowed_from;
 --2. Update (after payment made)
 update expenditures set borrowed_state = 'PAID'
 where transaction_date between '01-07-2025' and '01-09-2025'
+  and borrowed_from = :borrowedFrom
   and borrowed_from is not null
   and borrowed_state = 'PENDING';
+
+SELECT
+    TO_CHAR(periodo, 'YYYY-MM') AS periodo,
+    borrowed_state,
+    borrowed_from,
+    COALESCE(ROUND(SUM(
+                           CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+                   )::NUMERIC, 2), 0.0) AS monto_acumulado
+FROM (
+         SELECT
+             DATE_TRUNC('month', transaction_date)::date AS periodo,
+             borrowed_state,
+             borrowed_from,
+             currency,
+             amount,
+             conversion_to_pen
+         FROM expenditures
+         WHERE transaction_date >= :start_date
+           AND transaction_date < :end_date
+           AND was_borrowed = TRUE
+     ) t
+GROUP BY periodo, borrowed_state, borrowed_from
+ORDER BY periodo DESC, borrowed_from;
 
 --Update loan state after being paid
 --1. List
 select id, lent_to, round(case when currency = 'PEN' then amount else conversion_to_pen end::numeric, 2) monto, payee, description
 from public.expenditures
-where transaction_date between '01-07-2025' and '01-09-2025'
+where transaction_date between '01-10-2025' and '01-11-2025'
   AND loan_state = 'PENDING'
 order by transaction_date desc;
 --2. Update
 update expenditures
 set loan_state='PAID'
 where transaction_date between '01-07-2025' and '01-09-2025'
+  AND lent_to = :lentTo
   AND loan_state = 'PENDING';
 
 --Auditing shared expenditures

@@ -3,6 +3,8 @@ package com.bindord.financemanagement.repository;
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
 import com.bindord.financemanagement.model.dashboard.MonthlyExpenseSummaryDTO;
 import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.model.resume.BorrowedPendingProjection;
+import com.bindord.financemanagement.model.resume.LentPendingProjection;
 import com.bindord.financemanagement.model.resume.ResumeSummaryProjection;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -206,4 +208,96 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
       @Param("start_date") LocalDate startDate,
       @Param("end_date") LocalDate endDate
   );
+
+  @Query(value = """
+    SELECT
+        TO_CHAR(periodo, 'YYYY-MM') AS periodo,
+        loan_state AS loanState,
+        lent_to AS lentTo,
+        COALESCE(ROUND(SUM(
+            CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+        )::NUMERIC, 2), 0.0) AS montoAcumulado
+    FROM (
+        SELECT
+            DATE_TRUNC('month', transaction_date)::date AS periodo,
+            loan_state,
+            lent_to,
+            currency,
+            amount,
+            conversion_to_pen
+        FROM expenditures
+        WHERE transaction_date >= :start_date
+          AND transaction_date < :end_date
+          AND lent = TRUE
+    ) t
+    GROUP BY periodo, loan_state, lent_to
+    ORDER BY periodo DESC, lent_to;
+    """, nativeQuery = true)
+  List<LentPendingProjection> getLentPending(
+      @Param("start_date") LocalDate startDate,
+      @Param("end_date") LocalDate endDate
+  );
+
+  @Query(value = """
+      SELECT
+          TO_CHAR(periodo, 'YYYY-MM') AS periodo,
+          borrowed_state AS borrowedState,
+          borrowed_from AS borrowedFrom,
+          COALESCE(ROUND(SUM(
+              CASE WHEN currency = 'PEN' THEN amount ELSE conversion_to_pen END
+          )::NUMERIC, 2), 0.0) AS montoAcumulado
+      FROM (
+          SELECT
+              DATE_TRUNC('month', transaction_date)::date AS periodo,
+              borrowed_state,
+              borrowed_from,
+              currency,
+              amount,
+              conversion_to_pen
+          FROM expenditures
+          WHERE transaction_date >= :start_date
+            AND transaction_date < :end_date
+            AND was_borrowed = TRUE
+      ) t
+      GROUP BY periodo, borrowed_state, borrowed_from
+      ORDER BY periodo DESC, borrowed_from;
+      """, nativeQuery = true)
+  List<BorrowedPendingProjection> getBorrowedPending(
+      @Param("start_date") LocalDate startDate,
+      @Param("end_date") LocalDate endDate
+  );
+
+  @Transactional
+  @Modifying
+  @Query(value = """
+      UPDATE expenditures
+      SET borrowed_state = 'PAID'
+      WHERE transaction_date >= :startDate
+        AND transaction_date < :endDate
+        AND borrowed_from = :borrowedFrom
+        AND borrowed_from IS NOT NULL
+        AND borrowed_state = 'PENDING'
+      """, nativeQuery = true)
+  void markBorrowedAsPaid(
+      @Param("borrowedFrom") String borrowedFrom,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate
+  );
+
+  @Transactional
+  @Modifying
+  @Query(value = """
+      UPDATE expenditures
+      SET loan_state = 'PAID'
+      WHERE transaction_date >= :startDate
+        AND transaction_date < :endDate
+        AND lent_to = :lentTo
+        AND loan_state = 'PENDING'
+      """, nativeQuery = true)
+  void markLentAsPaid(
+      @Param("lentTo") String lentTo,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate
+  );
+
 }

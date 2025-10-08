@@ -1,5 +1,7 @@
 # Backlog project
 
+
+
 ### Chart view
 - Update the chart queries considering the new column conversionToPen ✅ - 11/05/25
 
@@ -11,3 +13,7 @@
 
 ### News
 - Implement a **consolidation page** to have a statement view-like
+
+### Reference
+
+[Admin Web Page: https://keenthemes.com/metronic/concepts/vite/store-inventory/category-details]
