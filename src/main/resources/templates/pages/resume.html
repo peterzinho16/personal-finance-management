@@ -175,12 +175,98 @@
         .col-3{ grid-column: span 3 } .col-4{ grid-column: span 6 }
     }
     @media (max-width: 640px){
-        .app{ grid-template-columns: 1fr }
-        .sidebar{ position:relative; height:auto; border-radius:0 0 16px 16px }
-        .grid{ grid-template-columns: repeat(4, minmax(0,1fr)) }
+        .app {
+            display: block; /* 👈 stop using grid for layout */
+            position: relative;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 240px;
+            height: 100%;
+            z-index: 1000;
+            background: #fff;
+            border-right: 1px solid #eef0f5;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            border-radius: 0;
+        }
+        .app.sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+        main {
+            margin-left: 0; /* 👈 ensures main content takes full width */
+            width: 100%;
+        }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+        .grid{ grid-template-columns: 1fr; }
+        .grid > * {
+            width: 100%;
+        }
         .col-3,.col-4,.col-6{ grid-column: span 4 }
         .page-header{ align-items:start; gap:12px; flex-direction:column }
         .header-actions{ width:100%; justify-content:space-between }
+
+        /* Mobile adjustments for metrics and loan cards */
+        .metric {
+            padding: 12px;
+        }
+        .metric .value {
+            font-size: 18px;
+        }
+        .metric .label {
+            font-size: 13px;
+        }
+        .loan-card {
+            padding: 10px;
+        }
+        .loan-card .amount {
+            font-size: 18px;
+        }
+        .loan-card .small {
+            font-size: 12px;
+        }
+    }
+
+    /* --- Responsive grid transitions for tablet and phone --- */
+    @media (max-width: 768px) and (min-width: 641px) {
+        .grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .metric .value {
+            font-size: 20px;
+        }
+        .metric {
+            padding: 14px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .metric .value {
+            font-size: 16px;
+        }
+        .metric {
+            padding: 10px;
+        }
+        .loan-card {
+            padding: 8px;
+        }
+        .loan-card .amount {
+            font-size: 16px;
+        }
+    }
+
+    .span-force-display {
+        display: block !important;
     }
 </style>
 
@@ -227,7 +313,7 @@
                 <!-- Search -->
                 <div class="searchbar d-none d-md-block">
                     <i class="bi bi-search search-icon"></i>
-                    <input class="search-input" type="text" placeholder="Search shop" />
+                    <input class="search-input" type="text" placeholder="Search expenditures" />
                     <span class="kbd-badge">⌘ K</span>
                 </div>
 
@@ -301,8 +387,14 @@
                         </div>
 
                         <div class="metric shadow-hover">
-                            <div class="label">Gasto neto</div>
-                            <div class="value">S/ 0.00</div>
+                            <div class="label d-flex align-items-center gap-1">
+                                Gasto neto
+                                <i class="bi bi-info-circle text-muted"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Gasto neto = Total gastos - Otros ingresos"></i>
+                            </div>
+                            <div id="gastoNeto" class="value">S/ 0.00</div>
                         </div>
                     </div>
                 </div>
@@ -333,6 +425,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el, {
+            delay: { show: 0, hide: 0 } // 👈 removes the delay
+        }));
+    });
+
     // Sidebar submenu toggle
     function toggleSubmenu(id){
         document.getElementById(id).classList.toggle('open');
@@ -340,7 +439,7 @@
 
     // Mock for lists (keep your backend summary call as-is)
     const mockData = {
-        summary:{ periodo:"2025-10", otrosIngresos:1250.00, totalGastos:9820.45, gastosCompartidos:1520.35, misGastosCompartidosImportados:1160.00, gastosADevolver:360.35 },
+        summary:{ periodo:"2025-10", otrosIngresos:999.99, totalGastos:999.99, gastosCompartidos:999.99, misGastosCompartidosImportados:999.99, gastosADevolver:999.99 },
         lent:[
             {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Amor", "montoAcumulado": 72.3},
             {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Fader", "montoAcumulado": 73.02},
@@ -406,12 +505,18 @@
         await Promise.all([ loadSummary(period), loadLent(period), loadBorrowed(period) ]);
     }
 
-    async function loadSummary(period){
+    // Helper to get startDate and endDate from period string
+    function getPeriodRange(period) {
         const [year, month] = period.split('-').map(Number);
-        const startDate = `${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-01`;
-        let ny = year, nm = month+1; if(nm>12){ nm=1; ny+=1; }
-        const endDate = `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}-01`;
+        const startDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
+        let ny = year, nm = month + 1;
+        if (nm > 12) { nm = 1; ny += 1; }
+        const endDate = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-01`;
+        return { startDate, endDate };
+    }
 
+    async function loadSummary(period) {
+        const { startDate, endDate } = getPeriodRange(period);
         const data = await fetch(`/api/resume/summary?startDate=${startDate}&endDate=${endDate}`).then(r=>r.json());
         const row = data?.[0] ?? mockData.summary;
 
@@ -420,15 +525,11 @@
         document.getElementById('gastosCompartidos').textContent    = PEN.format(row.gastosCompartidos ?? 0);
         document.getElementById('misGastosCompartidos').textContent = PEN.format(row.misGastosCompartidosImportados ?? 0);
         document.getElementById('gastosADevolver').textContent      = PEN.format(row.gastosADevolver ?? 0);
+        document.getElementById('gastoNeto').textContent            = PEN.format(row.finalTotalGastos - (row.otrosIngresos ?? 0));
     }
 
     async function loadLent(period) {
-        const [year, month] = period.split('-').map(Number);
-        const startDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
-        let ny = year, nm = month + 1;
-        if (nm > 12) { nm = 1; ny += 1; }
-        const endDate = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-01`;
-
+        const { startDate, endDate } = getPeriodRange(period);
         const list = await fetch(`/api/resume/lent?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
         const c = document.getElementById('lentSection');
         if (!list.length) {
@@ -479,12 +580,7 @@
     }
 
     async function loadBorrowed(period) {
-        const [year, month] = period.split('-').map(Number);
-        const startDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
-        let ny = year, nm = month + 1;
-        if (nm > 12) { nm = 1; ny += 1; }
-        const endDate = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-01`;
-
+        const { startDate, endDate } = getPeriodRange(period);
         const list = await fetch(`/api/resume/borrowed?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
         const c = document.getElementById('borrowedSection');
         if (!list.length) {
@@ -539,37 +635,42 @@
     }
 
     async function markLentAsPaid(lentTo) {
-        // Compute startDate and endDate as in loadSummary
-        console.log('....')
+        // Compute startDate and endDate using helper
         const period = document.getElementById('periodSelect').value;
-        const [year, month] = period.split('-').map(Number);
-        const startDate = `${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-01`;
-        let ny = year, nm = month+1;
-        if(nm>12){ nm=1; ny+=1; }
-        const endDate = `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}-01`;
+        const { startDate, endDate } = getPeriodRange(period);
         console.log(startDate, endDate, lentTo);
         await fetch(`/api/resume/lent/${lentTo}/pay?startDate=${startDate}&endDate=${endDate}`, { method:'PUT' });
         await loadLent(period);
     }
     async function markBorrowedAsPaid(borrowedFrom) {
-        // Compute startDate and endDate as in loadSummary
+        // Compute startDate and endDate using helper
         const period = document.getElementById('periodSelect').value;
-        const [year, month] = period.split('-').map(Number);
-        const startDate = `${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-01`;
-        let ny = year, nm = month+1;
-        if(nm>12){ nm=1; ny+=1; }
-        const endDate = `${String(ny).padStart(4,'0')}-${String(nm).padStart(2,'0')}-01`;
+        const { startDate, endDate } = getPeriodRange(period);
         console.log(startDate, endDate, borrowedFrom);
         await fetch(`/api/resume/borrowed/${borrowedFrom}/pay?startDate=${startDate}&endDate=${endDate}`, { method:'PUT' });
         await loadBorrowed(period);
     }
 
-    function toggleSidebar(){
-        const app = document.querySelector('.app');
-        const btn = document.getElementById('sbToggle');
-        app.classList.toggle('is-collapsed');
-        btn.setAttribute('aria-expanded', !app.classList.contains('is-collapsed'));
+function toggleSidebar() {
+    const app = document.querySelector('.app');
+    const btn = document.getElementById('sbToggle');
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+
+    const spans = document.querySelectorAll('.sidebar .sb-item>a span');
+
+    if (isMobile) {
+        const isOpen = app.classList.toggle('sidebar-open');
+        btn.setAttribute('aria-expanded', isOpen);
+        spans.forEach(ele => {
+            console.log(ele);
+            ele.classList.add('span-force-display');
+        });
+    } else {
+        const isCollapsed = app.classList.toggle('is-collapsed');
+        btn.setAttribute('aria-expanded', !isCollapsed);
+        spans.forEach(ele => ele.classList.remove('span-force-display'));
     }
+}
 
 </script>
 </body>
