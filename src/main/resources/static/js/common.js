@@ -1,18 +1,26 @@
 // Initialize Bootstrap tooltips with custom delay
-document.addEventListener('DOMContentLoaded', function () {
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"], thead > tr > th[title]');
-    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl, {
-            delay: {"show": 100, "hide": 100}
-        });
-    });
-    const arrayAelement = document.querySelectorAll('table > a');
-    arrayAelement.forEach(function (tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl, {
-            delay: {"show": 100, "hide": 100}
-        });
-    });
-});
+// document.addEventListener('DOMContentLoaded', function () {
+//     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"], thead > tr > th[title]');
+//     tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+//         new bootstrap.Tooltip(tooltipTriggerEl, {
+//             delay: {"show": 100, "hide": 100}
+//         });
+//     });
+//     const arrayAelement = document.querySelectorAll('table > a');
+//     arrayAelement.forEach(function (tooltipTriggerEl) {
+//         new bootstrap.Tooltip(tooltipTriggerEl, {
+//             delay: {"show": 100, "hide": 100}
+//         });
+//     });
+// });
+//
+//
+// document.addEventListener('DOMContentLoaded', () => {
+//     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+//     tooltipTriggerList.map(el => new bootstrap.Tooltip(el, {
+//         delay: { show: 0, hide: 0 } // 👈 removes the delay
+//     }));
+// });
 
 function enableToolTipForDescriptionOnTableElements() {
     const arrayTdSpanelement = document.querySelectorAll('table > tbody > tr > td > span[title]');
@@ -72,27 +80,6 @@ function showSuccessToast(response) {
     toast.show();
 }
 
-// Toggle sidebar
-$(document).ready(function () {
-    $("#toggle-sidebar").on("click", function () {
-        $("#sidebar").toggleClass("expanded");
-        $(".content").toggleClass("expanded");
-    });
-
-    // Close slide form and hide save changes button
-    $("#closeSlideForm").on("click", function () {
-        $("#slideForm").removeClass("active");
-        $("#save-changes").addClass("hidden");
-    });
-
-    // Close slide form with Escape key
-    $(document).on("keydown", function (event) {
-        if (event.key === "Escape") {
-            $("#slideForm").removeClass("active");
-            $("#save-changes").addClass("hidden");
-        }
-    });
-});
 
 function getCategoryNameWithEmoji(categoryName) {
     const categoryEmojiMap = {
@@ -188,3 +175,35 @@ function generateDateTimeNowFormatted() {
         })
     }
 })();
+
+function toggleSidebar() {
+    const app = document.querySelector('.app');
+    const btn = document.getElementById('sbToggle');
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    const spans = document.querySelectorAll('.sidebar .sb-item>a span');
+
+    if (isMobile) {
+        const isOpen = app.classList.toggle('sidebar-open');
+        btn.setAttribute('aria-expanded', isOpen);
+        spans.forEach(ele => {
+            console.log(ele);
+            ele.classList.add('span-force-display');
+        });
+    } else {
+        const isCollapsed = app.classList.toggle('is-collapsed');
+        btn.setAttribute('aria-expanded', !isCollapsed);
+        spans.forEach(ele => ele.classList.remove('span-force-display'));
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sbToggleBtn = document.getElementById('sbToggle');
+    if (sbToggleBtn) {
+        sbToggleBtn.addEventListener('click', toggleSidebar);
+    }
+});
+
+// Sidebar submenu toggle
+function toggleSubmenu(id){
+    document.getElementById(id).classList.toggle('open');
+}

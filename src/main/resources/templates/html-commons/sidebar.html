@@ -1,12 +1,32 @@
 <th:block th:fragment="fg-sidebar">
-    <div class="sidebar compressed" id="sidebar">
-        <h2 class="text-center text-white"><a href="/home">🏦</a></h2>
-        <a href="/home"><i class="bi bi-wallet2"></i><span>Expenditures</span></a>
-        <a href="/expenditure/new"><i class="bi bi-cash-coin"></i><span>New Expenditure</span></a>
-        <a href="/payee-categorization"><i class="bi bi-clipboard2-check-fill"></i><span>Payee Categorizations</span></a>
-        <a href="/"><i class="bi bi-play-circle"></i><span>Init flow</span></a>
-        <a href="/charts/bar-chart-categories"><i class="bi bi-bar-chart"></i><span>Charts</span></a>
-        <a href="/home/others"><i class="bi bi-wallet2"></i><span>Expenditures Others</span></a>
-        <a href="/resume"><i class="bi bi-journal-text"></i><span>Resume</span></a>
-    </div>
+    <!-- Sidebar (new style) -->
+    <aside class="sidebar" id="sidebar">
+        <button class="sb-toggle" id="sbToggle" type="button"
+                aria-label="Toggle sidebar" aria-expanded="true">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <div class="sb-title">Admin Dashboard</div>
+        <ul class="sb-list">
+            <li class="sb-item"><a href="/home"><i class="bi bi-grid-3x3-gap"></i><span>Dashboard</span></a></li>
+
+            <li class="sb-item" id="expItem">
+                <a href="javascript:void(0)" onclick="toggleSubmenu('expItem')">
+                    <i class="bi bi-wallet2"></i><span>Expenses</span>
+                    <i class="bi bi-chevron-right sb-caret"></i>
+                </a>
+                <div class="submenu">
+                    <a href="/expenditure/new">New expense</a>
+                    <a href="/expenditure/list">List</a>
+                    <a href="/expenditure/reports">Reports</a>
+                </div>
+            </li>
+
+            <li class="sb-item"><a href="/income"><i class="bi bi-coin"></i><span>Income</span></a></li>
+            <li class="sb-item"><a href="/categories"><i class="bi bi-folder2"></i><span>Categories</span></a></li>
+            <li class="sb-item"><a href="/home/others"><i
+                    class="bi bi-card-text"></i><span>Expenditure Others</span></a></li>
+            <li class="sb-item"><a href="/resume"><i class="bi bi-journal-text"></i><span>Resume</span></a></li>
+        </ul>
+    </aside>
 </th:block>
