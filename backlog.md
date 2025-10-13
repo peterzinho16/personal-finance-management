@@ -1,6 +1,9 @@
 # Backlog project
 
 
+### Styles and script importation
+
+Download CSS/JS files to be consumed as local assets from resources
 
 ### Chart view
 - Update the chart queries considering the new column conversionToPen ✅ - 11/05/25
