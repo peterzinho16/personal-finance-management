@@ -9,6 +9,8 @@
         <link th:href="@{/css/vendor/bootstrap-icons.min.css}" rel="stylesheet">
         <!-- Override to ensure Bootstrap Icons fonts resolve even if local fonts are missing -->
         <link th:href="@{/css/vendor/bootstrap-icons-fix.css}" rel="stylesheet">
+        <link th:href="@{/css/vendor/dt-responsive-bootstrap5.min.css}" rel="stylesheet">
+
         <!-- Only include app CSS when includeAppCss != false (defaults to true) -->
         <link th:if="${includeAppCss} ?: true" th:href="@{/css/styles.css}" rel="stylesheet">
     </head>

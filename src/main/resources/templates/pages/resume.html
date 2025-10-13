@@ -157,6 +157,18 @@
         periodSelect.value = periods[0];
         await loadPeriodData(periodSelect.value);
         periodSelect.addEventListener('change', async e => { await loadPeriodData(e.target.value); });
+
+
+        const tooltipSelectors = [
+            '[data-bs-toggle="tooltip"]'
+        ];
+
+        const tooltipElements = document.querySelectorAll(tooltipSelectors.join(','));
+        tooltipElements.forEach(function (el) {
+            new bootstrap.Tooltip(el, {
+                delay: { show: 100, hide: 100 }
+            });
+        });
     });
 
     async function loadPeriodData(period){
