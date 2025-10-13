@@ -1,0 +1,11 @@
+/* Override @font-face for Bootstrap Icons when local fonts are missing.
+   Reason: The minified bootstrap-icons.css refers to relative "fonts/" path
+   which may not exist in this project structure. This override points to
+   the official CDN-hosted font files. If you later host fonts locally,
+   remove this file and place fonts at a path that matches the CSS. */
+@font-face {
+  font-family: "bootstrap-icons";
+  src: url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff2") format("woff2"),
+       url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/fonts/bootstrap-icons.woff") format("woff");
+  font-display: block;
+}
