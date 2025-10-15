@@ -86,7 +86,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
             lastSyncDateTime.toLocalDateTime().plusMinutes(300).plusSeconds(1));
 
     if (beforeFilterMessages.isEmpty()) {
-      var msg = "There is no record to register. <a href='/home'>Go to home</a>";
+      var msg = "There is no record to register. <a href='/expenditure/list'>Go to Expenditure " +
+          "List</a>";
       log.info(msg);
       return msg;
     }
@@ -95,7 +96,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         exclusions);
 
     if (postFilterMessages.isEmpty()) {
-      var msg = "After filtering... no record to register was found. <a href='/home'>Go to home</a>";
+      var msg = "After filtering... no record to register was found. <a " +
+          "href='/expenditure/list'>Go to Expenditure List</a>";
       log.info(msg);
       return msg;
     }
@@ -203,7 +205,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
       }
     }
 
-    if(Objects.isNull(payee)) {
+    if (Objects.isNull(payee)) {
       payee = "Payee not found";
     }
     Expenditure expenditure = expenditureMapper(msg, subCategory, referenceId, subject, payee,
@@ -214,13 +216,14 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   }
 
   public Expenditure expenditureMapper(MessageDto msg, SubCategory subCategory,
-                                              String referenceId, String subject, String payee,
-                                              String bodyTextContent) {
+                                       String referenceId, String subject, String payee,
+                                       String bodyTextContent) {
     var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
     var amount = extractExpenditureAmount(bodyTextContent);
     Double conversionToPen = null;
-    if(currency == Expenditure.Currency.USD) {
-      var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+    if (currency == Expenditure.Currency.USD) {
+      var usdExchangeRate =
+          appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
       conversionToPen = usdExchangeRate.doubleValue() * amount;
     }
     return Expenditure.builder().referenceId(referenceId).description(subject)

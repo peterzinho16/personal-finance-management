@@ -2,48 +2,51 @@
 <html lang="en-us" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{html-commons/head :: fg-head(title='Welcome')}"></head>
 <body>
-
-<!-- Sidebar fragment -->
-<div th:replace="~{html-commons/sidebar :: fg-sidebar}"></div>
-<div class="content text-center pt-5">
-    <h2>🚀 Start your session</h2>
-    <div><a href="/eureka/finance-app/api-graph/start-flow">Init Flow</a></div>
-    <br>
-    <div><a href="/eureka/finance-app/api-google/start-flow">📮 Go init flow Others (Gmail)</a></div>
-    <br>
-    <div><a href="/home">🏠 Go to Expenditure Page</a></div>
-
-    <hr>
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow-sm border border-primary">
-                    <div class="card-body">
-                        <h5 class="card-title text-center mb-3">
-                            💱 Current Exchange Rate
-                        </h5>
-                        <ul class="list-group list-group-flush text-start">
-                            <li class="list-group-item px-0">
-                                <strong>USD:</strong>
-                                <span th:text="${usdExchangeRate.usdExchangeRate}">--</span>
-                            </li>
-                            <li class="list-group-item px-0">
-                                <strong>Source:</strong>
-                                <span th:text="${usdExchangeRate.rateSource}">--</span>
-                            </li>
-                            <li class="list-group-item px-0">
-                                <strong>Date:</strong>
-                                <span th:text="${#temporals.format(usdExchangeRate.date, 'dd/MM/yyyy')}">--</span>
-                            </li>
-                        </ul>
+<div class="app">
+    <!-- Sidebar -->
+    <aside th:replace="~{html-commons/sidebar :: fg-sidebar}"></aside>
+    <!-- Main -->
+    <main>
+        <!-- Topbar -->
+        <div th:replace="~{html-commons/topbar :: fg-topbar}"></div>
+        <div class="content text-center pt-5">
+            <h2>🚀 Start your session</h2>
+            <div><a href="/eureka/finance-app/api-graph/start-flow">Init Flow</a></div>
+            <br>
+            <div><a href="/eureka/finance-app/api-google/start-flow">📮 Go init flow Others (Gmail)</a></div>
+            <br>
+            <div><a href="/home">🏠 Go to Expenditure Page</a></div>
+            <hr>
+            <div class="container mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm border border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title text-center mb-3">
+                                    💱 Current Exchange Rate
+                                </h5>
+                                <ul class="list-group list-group-flush text-start">
+                                    <li class="list-group-item px-0">
+                                        <strong>USD:</strong>
+                                        <span th:text="${usdExchangeRate.usdExchangeRate}">--</span>
+                                    </li>
+                                    <li class="list-group-item px-0">
+                                        <strong>Source:</strong>
+                                        <span th:text="${usdExchangeRate.rateSource}">--</span>
+                                    </li>
+                                    <li class="list-group-item px-0">
+                                        <strong>Date:</strong>
+                                        <span th:text="${#temporals.format(usdExchangeRate.date, 'dd/MM/yyyy')}">--</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 </div>
-
-<!-- Scripts -->
 <div th:replace="~{html-commons/scripts :: fg-js}"></div>
 </body>
 </html>

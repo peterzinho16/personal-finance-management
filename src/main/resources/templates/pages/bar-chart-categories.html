@@ -1,18 +1,14 @@
 <!DOCTYPE html>
-<html lang="en-us"
-      xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{html-commons/head :: fg-head(title='Expenditure Bar and Line Graph')}">
-</head>
+<html lang="en-us" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{html-commons/head :: fg-head(title='Expenditure Bar and Line Graph')}"></head>
 
 <style>
-    body {
-        padding: 1rem;
-    }
 
     #chart-wrapper {
         position: relative;
         width: 100%;
-        height: 60vh;
+        height: 50vh;
     }
 
     canvas {
@@ -20,66 +16,78 @@
         height: 100% !important;
     }
 </style>
-<body class="container py-4">
-<h1>Expenditure Bar Graph</h1>
 
-<label for="month-filter">Select Month:</label>
-<select id="month-filter" class="form-select mb-4" style="max-width: 300px;"></select>
+<body>
+<div class="app">
+    <!-- Sidebar -->
+    <aside th:replace="~{html-commons/sidebar :: fg-sidebar}"></aside>
 
-<div class="mb-5">
-    <canvas id="expenditure-chart"></canvas>
-</div>
+    <!-- Main -->
+    <main>
+        <!-- Topbar -->
+        <div th:replace="~{html-commons/topbar :: fg-topbar}"></div>
 
-<h2>Last 3 Months Trend by Category</h2>
-<div>
-    <canvas id="trend-chart"></canvas>
-</div>
+        <!-- Page Content -->
+        <div class="content container py-4">
+            <h1>Expenditure Bar Graph</h1>
 
-<h2>Monthly Summary Trends (Last 12 months) </h2>
-<div>
-    <canvas id="monthly-summary-chart"></canvas>
-</div>
+            <label for="month-filter">Select Month:</label>
+            <select id="month-filter" class="form-select mb-4" style="max-width: 300px;"></select>
 
-
-<!-- Modal Structure -->
-<!-- Modal Structure -->
-<!-- Modal Structure -->
-<div class="modal fade" id="expenditureModal" tabindex="-1" aria-labelledby="expenditureModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="expenditureModalLabel"></h5>
+            <div class="mb-5">
+                <canvas id="expenditure-chart"></canvas>
             </div>
-            <div class="modal-body">
-                <!-- Total Sum Display Below Title -->
-                <div id="totalSum" class="total-sum text-center" style="font-weight: bold; margin-bottom: 15px;">Total:
-                    4161.50 PEN
-                </div>
 
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-striped">
-                        <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th>Payee</th>
-                            <th>Currency</th>
-                            <th>Amount</th>
-                            <th>S. Amount</th>
-                            <th>Transaction Date</th>
-                            <th>Category</th>
-                        </tr>
-                        </thead>
-                        <tbody id="expenditureTableBody">
-                        <!-- Data rows will be inserted here -->
-                        </tbody>
-                    </table>
+            <h2>Last 3 Months Trend by Category</h2>
+            <div>
+                <canvas id="trend-chart"></canvas>
+            </div>
+
+            <h2>Monthly Summary Trends (Last 12 months)</h2>
+            <div>
+                <canvas id="monthly-summary-chart"></canvas>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="expenditureModal" tabindex="-1" aria-labelledby="expenditureModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="expenditureModalLabel"></h5>
+                        </div>
+                        <div class="modal-body">
+                            <div id="totalSum" class="total-sum text-center fw-bold mb-3">
+                                Total: 4161.50 PEN
+                            </div>
+
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Payee</th>
+                                        <th>Currency</th>
+                                        <th>Amount</th>
+                                        <th>S. Amount</th>
+                                        <th>Transaction Date</th>
+                                        <th>Category</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="expenditureTableBody">
+                                    <!-- Data rows inserted dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </div> <!-- End content -->
+    </main>
 </div>
 
-
+<!-- Scripts -->
 <div th:replace="~{html-commons/scripts :: fg-js}"></div>
 <script>
     const barSharedName = 'Shared Expenses (PEN)';

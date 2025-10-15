@@ -21,7 +21,7 @@ public class Constants {
 
   public static final String MSG_ERROR_EXP_IMPORTED_ALREADY = "The expenditure was already imported";
 
-  public static final String MSG_ERROR_EXP_NOT_SHARED_CANT_BE_IMPORTED = "Expenditures not shared, can't be imported";
+  public static final String MSG_ERROR_EXP_NOT_SHARED_CANT_BE_IMPORTED = "Expenditures not shared, can't be imported!!";
 
 
 

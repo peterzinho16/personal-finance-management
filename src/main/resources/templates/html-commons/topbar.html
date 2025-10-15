@@ -2,6 +2,11 @@
 <th:block th:fragment="fg-topbar">
 
     <div class="topbar">
+        <div class="d-flex align-items-center gap-2">
+            <a href="/" class="btn btn-link text-muted p-2" title="New Expense">
+                <i class="bi bi-house-door text-white"></i>
+            </a>
+        </div>
         <div class="d-flex align-items-center gap-3 ms-auto">
             <!-- Search -->
             <div class="searchbar d-none d-md-block">
@@ -12,10 +17,10 @@
 
             <!-- Optional icons -->
             <button type="button" class="btn btn-link text-muted p-2" title="Notifications">
-                <i class="bi bi-bell"></i>
+                <i class="bi bi-bell text-white"></i>
             </button>
             <button type="button" class="btn btn-link text-muted p-2" title="Apps">
-                <i class="bi bi-grid-3x3-gap"></i>
+                <i class="bi bi-grid-3x3-gap text-white"></i>
             </button>
 
             <div class="dropdown">

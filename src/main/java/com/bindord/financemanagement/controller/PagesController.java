@@ -6,13 +6,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class PagesController {
 
-  @RequestMapping({"/home"})
-  public String showAdminPage() {
+  @RequestMapping({"/expenditure/list"})
+  public String showExpenditureListPage() {
     return "pages/expenditure";
   }
 
-  @RequestMapping({"/home/others"})
-  public String showOthersExpenditurePage() {
+  @RequestMapping({"/expenditure/list/others"})
+  public String showExpenditureOthersListPage() {
     return "pages/expenditure-others";
   }
 
