@@ -1,8 +1,12 @@
-<th:block th:fragment="fg-sidebar">
-    <!-- Sidebar (new style) -->
-    <aside class="sidebar" id="sidebar">
-        <button class="sb-toggle" id="sbToggle" type="button"
-                aria-label="Toggle sidebar" aria-expanded="true">
+<th:block th:fragment="fg-sidebar (sidebarClose)">
+    <aside class="sidebar"
+           id="sidebar"
+           th:classappend="${sidebarClose} ? '' : 'collapsed'">
+        <button class="sb-toggle"
+                id="sbToggle"
+                type="button"
+                aria-label="Toggle sidebar"
+                th:attr="aria-expanded=${sidebarClose}">
             <i class="bi bi-chevron-left"></i>
         </button>
 

@@ -10,7 +10,7 @@
 <div class="app">
 
     <!-- Sidebar -->
-    <aside th:replace="~{html-commons/sidebar :: fg-sidebar}"></aside>
+    <aside th:replace="~{html-commons/sidebar :: fg-sidebar(true)}"></aside>
 
     <!-- Main -->
     <main>
@@ -44,11 +44,11 @@
                             <th title="Transaction Date">T. Date</th>
                             <th>Category</th>
                             <th title="Sub Category">Sub Category</th>
-                            <th title="Shared Amount">S. Amount</th>
+<!--                            <th title="Shared Amount">S. Amount</th>-->
                             <th title="Indicate if the expense is shared">Shared</th>
                             <th title="Indicate if the expense was made for another person">Lent</th>
-                            <th title="Indicate for who was the loan">Lent To</th>
-                            <th title="Indicate if this expense was borrowed by somebody">Borrowed</th>
+<!--                            <th title="Indicate for who was the loan">Lent To</th>-->
+                            <th title="Indicate if this expense was borrowed by somebody else">Borrowed</th>
                             <th>Options Menu</th>
                         </tr>
                         </thead>
@@ -257,10 +257,15 @@
             ajax: function (data, callback) {
                 const page = data.start / data.length;
                 const size = data.length;
+                const expenseDescription = data.search.value;
+                console.log(data);
                 const subCategoryName = $("#subCategorySelect").val();
                 let url = `${apiEndpoint}?page=${page}&size=${size}`;
                 if (subCategoryName !== "0") {
                     url += `&subCategoryName=${subCategoryName}`;
+                }
+                if(expenseDescription) {
+                    url += `&expenseDescription=${expenseDescription}`;
                 }
 
                 $.ajax({
@@ -274,10 +279,10 @@
                             formatDateWithMonthText(exp.transactionDate),
                             exp.subCategory.category.name,
                             exp.subCategory.name,
-                            exp.sharedAmount ? exp.currency === 'PEN' ? 'S/ ' + exp.sharedAmount.toFixed(2) : '$ ' + exp.sharedAmount.toFixed(2) : '-',
+                            // exp.sharedAmount ? exp.currency === 'PEN' ? 'S/ ' + exp.sharedAmount.toFixed(2) : '$ ' + exp.sharedAmount.toFixed(2) : '-',
                             `<input type="checkbox" class="form-check-input" ${exp.shared ? 'checked' : ''} onchange="toggleShared(${exp.id}, this.checked)">`,
                             `<input disabled type="checkbox" class="form-check-input" ${exp.lent ? 'checked' : ''}>`,
-                            exp.lentTo ? exp.lentTo : '-',
+                            //exp.lentTo ? exp.lentTo : '-',
                             `<input disabled type="checkbox" class="form-check-input" ${exp.wasBorrowed ? 'checked' : ''}>`,
                             `<a href="#" class="btn btn-sm btn-primary ${!exp.attachment ? 'disabled no-pointer-events-fix' : ''}"
                                     title="Show Attachment"
@@ -316,25 +321,17 @@
                 { title: "T. Date" },
                 { title: "Category" },
                 { title: "Sub Category" },
-                { title: "S. Amount" },
+                // { title: "S. Amount" },
                 { title: "Shared" },
                 { title: "Lent" },
-                { title: "Lent To" },
-                { title: "Borrowed" },
+                // { title: "Lent To" },
+                { title: "BRW" },
                 { title: "Options Menu" }
             ],
             order: [ [1, 'asc'] ],
             pageLength: 15,
             lengthMenu: [15, 20, 30, 50],
-            responsive: {
-                details: {
-                    type: 'column',
-                    target: 0 // use the first real column (ID)
-                }
-            },
-            columnDefs: [
-                { className: 'dtr-control', targets: 0 } // add control behavior to ID column
-            ],
+            responsive: true
         });
 
         // Event listener for subCategorySelect
@@ -470,6 +467,7 @@
                     console.log("Update successful:", response);
                     $("#slideForm").removeClass("active");
                     $("#save-changes").addClass("hidden");
+                    showSuccessToast(response);
                     table.ajax.reload(function () {
                         setTimeout(function () {
                             // Highlight the updated row

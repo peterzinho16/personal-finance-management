@@ -51,7 +51,8 @@ public class ExpenditureController {
 
   @GetMapping
   Page<Expenditure> findAll(Pageable pageable,
-                            @RequestParam(required = false) String subCategoryName) {
+                            @RequestParam(required = false) String subCategoryName,
+                            @RequestParam(required = false) String expenseDescription) {
     Integer subCatId;
     if (subCategoryName == null) {
       subCatId = null;
@@ -59,7 +60,11 @@ public class ExpenditureController {
       SubCategory subCategory = subCategoryRepository.findByName(subCategoryName);
       subCatId = subCategory.getId();
     }
-    return repository.findAllWithSubCategory(subCatId, pageable);
+    String filter = (expenseDescription == null || expenseDescription.isBlank())
+        ? null
+        : "%" + expenseDescription.toLowerCase() + "%";
+
+    return repository.findAllWithSubCategory(subCatId, filter, pageable);
   }
 
   @GetMapping("/{id}")

@@ -257,7 +257,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
   private SubCategory updateSubCategoryIfFindCoincidence(String payee, SubCategory subCategory) {
     var optCoincidence =
-        payeeCoincidenceRepository.findAllWithSubCategory().stream().filter(pc -> payee.toLowerCase().contains(pc.getPartialPayeeName().toLowerCase())).findFirst();
+        payeeCoincidenceRepository.findAllWithSubCategory().stream().filter(pc -> payee.toLowerCase().contains(pc.getPartialPayeeName().trim().toLowerCase())).findFirst();
     if (optCoincidence.isPresent()) {
       return optCoincidence.get().getSubCategory();
     }

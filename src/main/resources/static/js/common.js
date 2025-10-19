@@ -153,20 +153,26 @@ function generateCatAndSubCat(subCategories, colNum) {
 
 function formatDateWithMonthText(dateString) {
     const date = new Date(dateString);
+    const now = new Date();
 
     const day = String(date.getDate()).padStart(2, "0");
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const month = months[date.getMonth()]; // Retrieve the 3-character month abbreviation
+    const month = months[date.getMonth()];
     const year = date.getFullYear();
 
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const period = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12; // Convert to 12-hour format
 
-    // Convert to 12-hour format
-    hours = hours % 12 || 12;
+    const isCurrentYear = year === now.getFullYear();
+    console.log(isCurrentYear);
 
-    return `${day}/${month}/${year} ${String(hours).padStart(2, "0")}:${minutes} ${period}`;
+    const datePart = isCurrentYear
+        ? `${day}/${month}`
+        : `${day}/${month}/${year}`;
+
+    return `${datePart} ${String(hours).padStart(2, "0")}:${minutes} ${period}`;
 }
 
 function generateDateTimeNowFormatted() {
@@ -186,12 +192,15 @@ function generateDateTimeNowFormatted() {
     }
 })();
 
+function isMobileView() {
+    return window.matchMedia('(max-width: 640px)').matches;
+}
+
 function toggleSidebar() {
     const app = document.querySelector('.app');
     const btn = document.getElementById('sbToggle');
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
     const spans = document.querySelectorAll('.sidebar .sb-item>a span');
-
     if (isMobile) {
         const isOpen = app.classList.toggle('sidebar-open');
         btn.setAttribute('aria-expanded', isOpen);

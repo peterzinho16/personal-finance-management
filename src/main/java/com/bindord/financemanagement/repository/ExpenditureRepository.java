@@ -30,12 +30,14 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
   @Query(value = "SELECT E.referenceId FROM Expenditure E WHERE E.referenceId IN (?1)")
   Set<String> findByReferenceIdIn(Set<String> refIds);
 
-  @Query(value = "SELECT EX from Expenditure EX " +
+  @Query(value = "SELECT EX FROM Expenditure EX " +
       "JOIN FETCH EX.subCategory SC " +
       "JOIN FETCH SC.category " +
       "WHERE (:subCategoryId IS NULL OR SC.id = :subCategoryId) " +
+      "AND (:description IS NULL OR LOWER(EX.description) LIKE :description) " +
       "ORDER BY EX.transactionDate DESC")
   Page<Expenditure> findAllWithSubCategory(@Param("subCategoryId") Integer subCategoryId,
+                                           @Param("description") String description,
                                            Pageable pageable);
 
   @Query(value = "SELECT EX from Expenditure EX JOIN FETCH EX.subCategory SC JOIN FETCH " +

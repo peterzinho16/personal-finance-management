@@ -3,9 +3,7 @@ package com.bindord.financemanagement;
 import com.bindord.financemanagement.utils.Utilities;
 import lombok.SneakyThrows;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
@@ -13,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -88,9 +87,23 @@ public class ThatsWhyWePlay {
       System.out.println(arrayList2.get(i));
     });
 
-    InputStreamReader inputStreamReader = new InputStreamReader(System.in);
-    FileReader fileReader = new FileReader(new File("/home/bin/bin.txt"));
+//    InputStreamReader inputStreamReader = new InputStreamReader(System.in);
+//    FileReader fileReader = new FileReader(new File("/home/bin/bin.txt"));
 
+    UUID uuid = UUID.randomUUID();
+    System.out.printf("UUID: %s", uuid);
+    System.out.println("****");
 
+    ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+    bb.putLong(uuid.getMostSignificantBits());
+    bb.putLong(uuid.getLeastSignificantBits());
+    byte[] binaryId = bb.array();
+    StringBuilder hexString = new StringBuilder();
+    for (byte b : binaryId) {
+      // "%02x" formats the byte as a two-digit hex value, zero-padded
+      hexString.append(String.format("%02x", b));
+    }
+    String hexValue = hexString.toString();
+    System.out.printf("UUID as HEX: %s", hexValue);
   }
 }
