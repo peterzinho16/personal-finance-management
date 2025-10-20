@@ -172,7 +172,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         expenditureInstallmentRepository.save(expenditureInstallment);
       }
     }
-    return "The sync was successful. <a href='/home'>Go to home</a>";
+    return "The sync was successful. <a href='/'>Go to home</a>";
   }
 
   /**

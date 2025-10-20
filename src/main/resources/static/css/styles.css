@@ -154,6 +154,96 @@ body{
 .app.is-collapsed .submenu{ display:none }        /* hide open submenus */
 .app.is-collapsed .sb-toggle .bi{ transform:rotate(180deg) } /* flip chevron */
 
+/* Floating submenus when sidebar is collapsed */
+.app.is-collapsed .sidebar {
+    overflow: visible;
+    position: relative;
+}
+
+/* Each item becomes the anchor for its submenu */
+.app.is-collapsed .sb-item {
+    position: relative;
+}
+
+/* Extend hover area for items with submenus */
+.app.is-collapsed .sb-item:has(.submenu)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: -12px; /* Extends into the gap */
+    bottom: 0;
+    z-index: 1;
+}
+
+/* Hide submenu by default */
+.app.is-collapsed .sb-item .submenu {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    padding: 8px 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 60;
+    margin-left: 8px;
+}
+
+/* Show submenu when hovering */
+.app.is-collapsed .sb-item:hover > .submenu {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Submenu links inside floating card */
+.app.is-collapsed .sb-item .submenu a {
+    display: block;
+    padding: 8px 14px;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.92rem;
+    white-space: nowrap;
+}
+
+.app.is-collapsed .sb-item .submenu a:hover,
+.app.is-collapsed .sb-item > a:hover {
+    background: #f3f6ff;
+}
+
+/* Tooltip for sidebar item - only show if NO submenu exists */
+.app.is-collapsed .sb-item:not(:has(.submenu)) > a::after {
+    content: attr(data-title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    padding: 6px 10px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    font-size: 0.9rem;
+    color: #333;
+    z-index: 50;
+}
+
+.app.is-collapsed .sb-item:not(:has(.submenu)) > a:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(6px);
+}
 
 
 @media (max-width: 1100px){

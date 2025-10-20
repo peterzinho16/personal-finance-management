@@ -12,10 +12,10 @@
 
         <div class="sb-title">Admin Dashboard</div>
         <ul class="sb-list">
-            <li class="sb-item"><a href="/charts/bar-chart-categories"><i class="bi bi-grid-3x3-gap"></i><span>Dashboard</span></a></li>
+            <li class="sb-item"><a href="/charts/bar-chart-categories" data-title="Dashboard"><i class="bi bi-grid-3x3-gap"></i><span>Dashboard</span></a></li>
 
             <li class="sb-item open" id="expItem">
-                <a href="javascript:void(0)" onclick="toggleSubmenu('expItem')">
+                <a href="javascript:void(0)" onclick="toggleSubmenu('expItem')" data-title="Expenses">
                     <i class="bi bi-wallet2"></i><span>Expenses</span>
                     <i class="bi bi-chevron-right sb-caret"></i>
                 </a>
@@ -31,11 +31,11 @@
                     </a>
                 </div>
             </li>
-            <li class="sb-item"><a href="/resume"><i class="bi bi-journal-text"></i><span>Resume</span></a></li>
+            <li class="sb-item"><a href="/resume" data-title="Resume"><i class="bi bi-journal-text"></i><span>Resume</span></a></li>
 
-            <li class="sb-item"><a href="/income"><i class="bi bi-coin"></i><span>Income</span></a></li>
-            <li class="sb-item d-none"><a href="/categories"><i class="bi bi-folder2"></i><span>Categories</span></a></li>
-            <li class="sb-item"><a href="/expenditure/list/others"><i
+            <li class="sb-item"><a href="/income" data-title="Income"><i class="bi bi-coin"></i><span>Income</span></a></li>
+            <li class="sb-item d-none"><a href="/categories" data-title="Categories"><i class="bi bi-folder2"></i><span>Categories</span></a></li>
+            <li class="sb-item"><a href="/expenditure/list/others" data-title="Expenditure Others"><i
                     class="bi bi-card-text"></i><span>Expenditure Others</span></a></li>
         </ul>
     </aside>
