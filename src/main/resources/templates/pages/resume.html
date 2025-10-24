@@ -80,11 +80,20 @@
             </div>
 
             <!-- Dinero recibido -->
-            <div class="card-ui p-4" style="grid-column: 1 / -1;">
+            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="pill info"><i class="bi bi-arrow-down-circle"></i> Dinero recibido (por devolver)</span>
+                    <span class="pill info"><i
+                            class="bi bi-arrow-down-circle"></i> Dinero recibido (por devolver)</span>
                 </div>
                 <div id="borrowedSection" class="grid"></div>
+            </div>
+
+            <!-- Expenditures in Installments -->
+            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="pill info"><i class="bi bi-credit-card"></i> Compras en cuotas</span>
+                </div>
+                <div id="installmentsSection" class="grid"></div>
             </div>
 
         </div>
@@ -97,24 +106,86 @@
 
     // Mock for lists (keep your backend summary call as-is)
     const mockData = {
-        summary:{ periodo:"2025-10", otrosIngresos:999.99, totalGastos:999.99, gastosCompartidos:999.99, misGastosCompartidosImportados:999.99, gastosADevolver:999.99 },
-        lent:[
+        summary: {
+            periodo: "2025-10",
+            otrosIngresos: 999.99,
+            totalGastos: 999.99,
+            gastosCompartidos: 999.99,
+            misGastosCompartidosImportados: 999.99,
+            gastosADevolver: 999.99
+        },
+        lent: [
             {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Amor", "montoAcumulado": 72.3},
             {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Fader", "montoAcumulado": 73.02},
             {"periodo": "2025-05", "loanState": "PAID", "lentTo": "Amor", "montoAcumulado": 100.8},
             {"periodo": "2025-05", "loanState": "PENDING", "lentTo": "Rodrigo", "montoAcumulado": 100.8}
         ],
-        borrowed:[
-            {id:203, periodo:"2025-07", borrowedFrom:"Amor", montoAcumulado:1287.50, borrowedState:"PENDING"},
-            {id:204, periodo:"2025-08", borrowedFrom:"Fader", montoAcumulado:643.26, borrowedState:"PAID"},
-            {id:203, periodo:"2025-07", borrowedFrom:"Hermano", montoAcumulado:1287.50, borrowedState:"PENDING"},
-            {id:204, periodo:"2025-08", borrowedFrom:"Amor", montoAcumulado:643.26, borrowedState:"PAID"}
+        borrowed: [
+            {id: 203, periodo: "2025-07", borrowedFrom: "Amor", montoAcumulado: 1287.50, borrowedState: "PENDING"},
+            {id: 204, periodo: "2025-08", borrowedFrom: "Fader", montoAcumulado: 643.26, borrowedState: "PAID"},
+            {id: 203, periodo: "2025-07", borrowedFrom: "Hermano", montoAcumulado: 1287.50, borrowedState: "PENDING"},
+            {id: 204, periodo: "2025-08", borrowedFrom: "Amor", montoAcumulado: 643.26, borrowedState: "PAID"}
         ]
     };
+
+    // --- Mock data for installments ---
+    const mockInstallments = [
+        {
+            "id": 17,
+            "description": "Logitech Master Series Mx Keys Mini",
+            "payee": "MP *KOBYINVERSIONES",
+            "transactionDate": "2025-06-12T16:59:33",
+            "finishDebtDate": "2026-06-12T16:59:33",
+            "amount": 348,
+            "installmentAmount": 29,
+            "installments": 12,
+            "pendingAmount": 203,
+            "referenceId": "34a377927331a93f2fb5a682cc99f397",
+            "currency": "PEN",
+            "fullPaid": false,
+            "subCategory": null
+        },
+        {
+            "id": 6,
+            "description": "Nintendo Switch (Regalo)",
+            "payee": "Mercado Libre",
+            "transactionDate": "2025-01-21T17:52:00",
+            "finishDebtDate": "2025-06-21T17:52:00",
+            "amount": 1060,
+            "installmentAmount": 212,
+            "installments": 5,
+            "pendingAmount": 0,
+            "referenceId": "e827de13453ee361a5e5161569dcd4b5",
+            "currency": "PEN",
+            "fullPaid": true,
+            "subCategory": null
+        },
+        {
+            "id": 5,
+            "description": "iPad 10th gen",
+            "payee": "MP *TECREPSAC",
+            "transactionDate": "2025-01-16T07:05:24",
+            "finishDebtDate": "2025-07-16T07:05:24",
+            "amount": 1479,
+            "installmentAmount": 246.5,
+            "installments": 6,
+            "pendingAmount": 0,
+            "referenceId": "b02c0a3d431ad28d62f93a104d54d7f0",
+            "currency": "PEN",
+            "fullPaid": true,
+            "subCategory": null
+        }
+    ]
     const realFetch = window.fetch;
 
     window.fetch = async (url, options = {}) => {
         // const method = (options.method || 'GET').toUpperCase(); // default to GET if not specified
+
+        //Example: Mock /api/resume/installments/all GET
+        // if (url.includes('/api/resume/installments/all') && method === 'GET') {
+        //     console.log('Mocking GET /api/resume/installments/all');
+        //     return { json: async () => mockInstallments };
+        // }
 
         // // Example: mock /api/resume/lent GET
         // if (url.includes('/api/resume/lent') && method === 'GET') {
@@ -138,25 +209,30 @@
         return realFetch(url, options);
     };
 
-    const PEN = new Intl.NumberFormat('es-PE', { style:'currency', currency:'PEN', minimumFractionDigits:2 });
+    const PEN = new Intl.NumberFormat('es-PE', {style: 'currency', currency: 'PEN', minimumFractionDigits: 2});
 
-    document.addEventListener('DOMContentLoaded', async ()=>{
+    document.addEventListener('DOMContentLoaded', async () => {
         const periodSelect = document.getElementById('periodSelect');
         const periods = [];
         const today = new Date();
-        for(let i=5;i>=0;i--){
-            const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
             const y = d.getFullYear();
-            const m = String(d.getMonth()+1).padStart(2,'0');
+            const m = String(d.getMonth() + 1).padStart(2, '0');
             periods.push(`${y}-${m}`);
         }
         periods.reverse();
-        periods.forEach(p=>{
-            const opt=document.createElement('option'); opt.value=p; opt.textContent=p; periodSelect.appendChild(opt);
+        periods.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            periodSelect.appendChild(opt);
         });
         periodSelect.value = periods[0];
         await loadPeriodData(periodSelect.value);
-        periodSelect.addEventListener('change', async e => { await loadPeriodData(e.target.value); });
+        periodSelect.addEventListener('change', async e => {
+            await loadPeriodData(e.target.value);
+        });
 
 
         const tooltipSelectors = [
@@ -166,13 +242,14 @@
         const tooltipElements = document.querySelectorAll(tooltipSelectors.join(','));
         tooltipElements.forEach(function (el) {
             new bootstrap.Tooltip(el, {
-                delay: { show: 100, hide: 100 }
+                delay: {show: 100, hide: 100}
             });
         });
     });
 
-    async function loadPeriodData(period){
-        await Promise.all([ loadSummary(period), loadLent(period), loadBorrowed(period) ]);
+    async function loadPeriodData(period) {
+        await Promise.all([loadSummary(period), loadLent(period), loadBorrowed(period)]);
+        await loadInstallments();
     }
 
     // Helper to get startDate and endDate from period string
@@ -180,26 +257,29 @@
         const [year, month] = period.split('-').map(Number);
         const startDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
         let ny = year, nm = month + 1;
-        if (nm > 12) { nm = 1; ny += 1; }
+        if (nm > 12) {
+            nm = 1;
+            ny += 1;
+        }
         const endDate = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-01`;
-        return { startDate, endDate };
+        return {startDate, endDate};
     }
 
     async function loadSummary(period) {
-        const { startDate, endDate } = getPeriodRange(period);
-        const data = await fetch(`/api/resume/summary?startDate=${startDate}&endDate=${endDate}`).then(r=>r.json());
+        const {startDate, endDate} = getPeriodRange(period);
+        const data = await fetch(`/api/resume/summary?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
         const row = data?.[0] ?? mockData.summary;
 
-        document.getElementById('otrosIngresos').textContent        = PEN.format(row.otrosIngresos ?? 0);
-        document.getElementById('totalGastos').textContent          = PEN.format(row.finalTotalGastos ?? row.totalGastos ?? 0);
-        document.getElementById('gastosCompartidos').textContent    = PEN.format(row.gastosCompartidos ?? 0);
+        document.getElementById('otrosIngresos').textContent = PEN.format(row.otrosIngresos ?? 0);
+        document.getElementById('totalGastos').textContent = PEN.format(row.finalTotalGastos ?? row.totalGastos ?? 0);
+        document.getElementById('gastosCompartidos').textContent = PEN.format(row.gastosCompartidos ?? 0);
         document.getElementById('misGastosCompartidos').textContent = PEN.format(row.misGastosCompartidosImportados ?? 0);
-        document.getElementById('gastosADevolver').textContent      = PEN.format(row.gastosADevolver ?? 0);
-        document.getElementById('gastoNeto').textContent            = PEN.format(row.finalTotalGastos - (row.otrosIngresos ?? 0));
+        document.getElementById('gastosADevolver').textContent = PEN.format(row.gastosADevolver ?? 0);
+        document.getElementById('gastoNeto').textContent = PEN.format(row.finalTotalGastos - (row.otrosIngresos ?? 0));
     }
 
     async function loadLent(period) {
-        const { startDate, endDate } = getPeriodRange(period);
+        const {startDate, endDate} = getPeriodRange(period);
         const list = await fetch(`/api/resume/lent?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
         const c = document.getElementById('lentSection');
         if (!list.length) {
@@ -212,7 +292,7 @@
         for (const item of list) {
             const name = item.lentTo;
             if (!grouped[name]) {
-                grouped[name] = { lentTo: name, pending: 0, paid: 0 };
+                grouped[name] = {lentTo: name, pending: 0, paid: 0};
             }
             if (item.loanState === 'PENDING') grouped[name].pending += item.montoAcumulado ?? 0;
             else if (item.loanState === 'PAID') grouped[name].paid += item.montoAcumulado ?? 0;
@@ -250,7 +330,7 @@
     }
 
     async function loadBorrowed(period) {
-        const { startDate, endDate } = getPeriodRange(period);
+        const {startDate, endDate} = getPeriodRange(period);
         const list = await fetch(`/api/resume/borrowed?startDate=${startDate}&endDate=${endDate}`).then(r => r.json());
         const c = document.getElementById('borrowedSection');
         if (!list.length) {
@@ -263,7 +343,7 @@
         for (const item of list) {
             const name = item.borrowedFrom;
             if (!grouped[name]) {
-                grouped[name] = { borrowedFrom: name, pending: 0, paid: 0 };
+                grouped[name] = {borrowedFrom: name, pending: 0, paid: 0};
             }
             if (item.borrowedState === 'PENDING') grouped[name].pending += item.montoAcumulado ?? 0;
             else if (item.borrowedState === 'PAID') grouped[name].paid += item.montoAcumulado ?? 0;
@@ -307,18 +387,88 @@
     async function markLentAsPaid(lentTo) {
         // Compute startDate and endDate using helper
         const period = document.getElementById('periodSelect').value;
-        const { startDate, endDate } = getPeriodRange(period);
+        const {startDate, endDate} = getPeriodRange(period);
         console.log(startDate, endDate, lentTo);
-        await fetch(`/api/resume/lent/${lentTo}/pay?startDate=${startDate}&endDate=${endDate}`, { method:'PUT' });
+        await fetch(`/api/resume/lent/${lentTo}/pay?startDate=${startDate}&endDate=${endDate}`, {method: 'PUT'});
         await loadLent(period);
     }
+
     async function markBorrowedAsPaid(borrowedFrom) {
         // Compute startDate and endDate using helper
         const period = document.getElementById('periodSelect').value;
-        const { startDate, endDate } = getPeriodRange(period);
+        const {startDate, endDate} = getPeriodRange(period);
         console.log(startDate, endDate, borrowedFrom);
-        await fetch(`/api/resume/borrowed/${borrowedFrom}/pay?startDate=${startDate}&endDate=${endDate}`, { method:'PUT' });
+        await fetch(`/api/resume/borrowed/${borrowedFrom}/pay?startDate=${startDate}&endDate=${endDate}`, {method: 'PUT'});
         await loadBorrowed(period);
+    }
+
+    // --- Load Installments function ---
+    async function loadInstallments() {
+        const list = await fetch(`/api/resume/installments/all`).then(r => r.json());
+        const c = document.getElementById('installmentsSection');
+
+        if (!list.length) {
+            c.innerHTML = `<div class="text-muted">No hay compras en cuotas</div>`;
+            return;
+        }
+
+        const cards = list.map(item => {
+            const done = item.fullPaid;
+            const paidIcon = done
+                ? `<i class="bi bi-check-circle-fill text-success" title="Pagado completamente"></i>`
+                : `<i class="bi bi-hourglass-split text-warning" title="Aún pendiente"></i>`;
+
+            // Calculate pending installments
+            const pendingInstallments =
+                item.pendingAmount > 0
+                    ? Math.round(item.pendingAmount / item.installmentAmount)
+                    : 0;
+
+            // Conditional display for pending vs full-paid
+            const amountRow = done
+                ? `<div class="d-flex justify-content-between mt-3">
+         <div>
+           <div class="small text-muted">Monto total</div>
+           <div class="amount">${PEN.format(item.amount)}</div>
+         </div></div><div class="badge bg-success-subtle text-success mt-3 py-2 px-3 w-100 text-center">
+         <i class="bi bi-check2-circle"></i> Pagado completamente
+       </div>`
+                : `<div class="d-flex justify-content-between mt-3">
+         <div>
+           <div class="small text-muted">Monto total</div>
+           <div class="amount">${PEN.format(item.amount)}</div>
+         </div>
+         <div>
+           <div class="small text-muted">Monto pendiente</div>
+           <div class="amount text-warning">${PEN.format(item.pendingAmount)}</div>
+         </div>
+       </div>`;
+
+            return `
+    <div class="loan-card shadow-hover h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-semibold truncate-one-line">${item.description}</span>
+        ${paidIcon}
+      </div>
+      <div class="small text-muted">${item.payee}</div>
+
+            <div class="d-flex justify-content-between mt-3">
+            <div>
+            <div class="small text-muted">Cuotas</div>
+            <div class="amount">${item.installments}</div>
+            </div>
+            <div>
+            <div class="small text-muted">Pendientes</div>
+            <div class="amount text-warning">${pendingInstallments}</div>
+            </div>
+            </div>
+
+            ${amountRow}
+            </div>`;
+});
+
+document.getElementById('installmentsSection').innerHTML = cards.join('');
+        c.innerHTML = cards.join('');
     }
 
 </script>

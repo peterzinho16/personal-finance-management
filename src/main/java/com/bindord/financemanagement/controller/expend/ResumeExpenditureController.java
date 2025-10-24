@@ -1,9 +1,12 @@
 package com.bindord.financemanagement.controller.expend;
 
+import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
 import com.bindord.financemanagement.model.resume.BorrowedPendingProjection;
 import com.bindord.financemanagement.model.resume.LentPendingProjection;
 import com.bindord.financemanagement.model.resume.ResumeSummaryProjection;
+import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +21,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/resume")
+@AllArgsConstructor
 public class ResumeExpenditureController {
 
   private final ExpenditureRepository expenditureRepository;
-
-  public ResumeExpenditureController(ExpenditureRepository expenditureRepository) {
-    this.expenditureRepository = expenditureRepository;
-  }
+  private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
 
   // 1️⃣ Summary endpoint (main resume data)
   @GetMapping("/summary")
@@ -70,5 +71,10 @@ public class ResumeExpenditureController {
 
     expenditureRepository.markBorrowedAsPaid(borrowedFrom, startDate, endDate);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/installments/all")
+  public List<ExpenditureInstallment> getAllInstallments() {
+    return expenditureInstallmentRepository.findAllByOrderByTransactionDateDesc();
   }
 }

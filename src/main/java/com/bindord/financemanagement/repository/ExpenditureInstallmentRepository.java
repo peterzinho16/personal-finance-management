@@ -14,4 +14,6 @@ public interface ExpenditureInstallmentRepository extends JpaRepository<Expendit
   @Query(value = "SELECT EI from ExpenditureInstallment EI JOIN FETCH EI.subCategory SC JOIN FETCH " +
       "SC.category WHERE EI.fullPaid is False")
   List<ExpenditureInstallment> findAllByFullPaidIsFalse();
+
+  List<ExpenditureInstallment> findAllByOrderByTransactionDateDesc();
 }

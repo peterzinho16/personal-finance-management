@@ -10,11 +10,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebInputException;
 
 import java.util.ArrayList;
@@ -42,22 +42,6 @@ public class ExceptionControllerAdvice {
       "ha sido registrado por otro vendedor.";
 
   public static final String BINDING_ERROR = "Validation has failed";
-
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  @ExceptionHandler(WebExchangeBindException.class)
-  public ApiError handleBindException(WebExchangeBindException ex) {
-    log.warn("method {}", "handleBindException");
-    ex.getModel().entrySet().forEach(e -> {
-      log.warn(e.getKey() + ": " + e.getValue());
-    });
-    List<ApiSubError> errors = new ArrayList<>();
-
-    for (FieldError x : ex.getBindingResult().getFieldErrors()) {
-      errors.add(new ApiSubError(x.getObjectName(), x.getField(), x.getRejectedValue(),
-          x.getDefaultMessage()));
-    }
-    return new ApiError(BINDING_ERROR, errors);
-  }
 
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ExceptionHandler(IllegalArgumentException.class)
@@ -142,6 +126,25 @@ public class ExceptionControllerAdvice {
       log.warn(ex.getStackTrace()[i].toString());
     }
     return new ErrorResponse(ex.getMessage(), ex.getInternalCode());
+  }
+
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    log.warn("method {}", "handleMethodArgumentNotValidException");
+
+    List<ApiSubError> errors = new ArrayList<>();
+
+    for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+      errors.add(new ApiSubError(
+          fieldError.getObjectName(),
+          fieldError.getField(),
+          fieldError.getRejectedValue(),
+          fieldError.getDefaultMessage()
+      ));
+    }
+
+    return new ApiError("Validation failed", errors);
   }
 }
 

@@ -458,3 +458,13 @@ input:disabled {
     border: 1px solid #d0d0d0;
 }
 
+.truncate-one-line {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 1;        /* ensures it stays above background layers */
+    pointer-events: auto;
+}
