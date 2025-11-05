@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Tooltip(el, {
             delay: { show: 100, hide: 100 }
         });
-    });
+    });;
 });
 
 // Enable tooltips for description elements on table elements when the page is loaded or moving between pages
@@ -100,6 +100,7 @@ function getCategoryNameWithEmoji(categoryName) {
         'Obsequios': '🎁',
         'Servicio': '🛠️',
         'Educacion': '🎓',
+        'Eventos': '🎉',
         'Viaje': '✈️',
         'Salud': '🩺',
         'Hogar': '🏠',

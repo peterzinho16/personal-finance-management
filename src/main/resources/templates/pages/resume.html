@@ -91,9 +91,15 @@
             <!-- Expenditures in Installments -->
             <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="pill info"><i class="bi bi-credit-card"></i> Compras en cuotas</span>
+                    <span class="pill info"><i class="bi bi-credit-card"></i> Compras en cuotas <i class="bi bi-hourglass-split text-warning" title="Aún pendientes"></i></span>
                 </div>
                 <div id="installmentsSection" class="grid"></div>
+            </div>
+            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="pill bg-success text-white"><i class="bi bi-credit-card"></i> Compras en cuotas <i class="bi bi-check-circle-fill text-white" title="Pagadas completamente"></i></span>
+                </div>
+                <div id="installmentsSectionPaid" class="grid"></div>
             </div>
 
         </div>
@@ -405,70 +411,81 @@
     // --- Load Installments function ---
     async function loadInstallments() {
         const list = await fetch(`/api/resume/installments/all`).then(r => r.json());
-        const c = document.getElementById('installmentsSection');
+        const installmentsSection = document.getElementById('installmentsSection');
+        const installmentsSectionPaid = document.getElementById('installmentsSectionPaid');
 
-        if (!list.length) {
-            c.innerHTML = `<div class="text-muted">No hay compras en cuotas</div>`;
+        const listPending = list.filter(i => !i.fullPaid);
+        const listPaid = list.filter(i => i.fullPaid);
+        if (!listPending.length) {
+            installmentsSection.innerHTML = `<div class="text-muted">No hay compras en cuotas pendientes</div>`;
+            return;
+        }
+        if (!listPaid.length) {
+            installmentsSectionPaid.innerHTML = `<div class="text-muted">No hay compras en cuotas realizadas</div>`;
             return;
         }
 
-        const cards = list.map(item => {
-            const done = item.fullPaid;
-            const paidIcon = done
-                ? `<i class="bi bi-check-circle-fill text-success" title="Pagado completamente"></i>`
-                : `<i class="bi bi-hourglass-split text-warning" title="Aún pendiente"></i>`;
+        const cardsInstallments = listPending.map(item => {
+            return resolveInstallmentCard(item);
+        });
 
-            // Calculate pending installments
-            const pendingInstallments =
-                item.pendingAmount > 0
-                    ? Math.round(item.pendingAmount / item.installmentAmount)
-                    : 0;
+        const cardsInstallmentsPaid = listPaid.map(item => {
+            return resolveInstallmentCard(item);
+        });
 
-            // Conditional display for pending vs full-paid
-            const amountRow = done
-                ? `<div class="d-flex justify-content-between mt-3">
-         <div>
-           <div class="small text-muted">Monto total</div>
-           <div class="amount">${PEN.format(item.amount)}</div>
-         </div></div><div class="badge bg-success-subtle text-success mt-3 py-2 px-3 w-100 text-center">
-         <i class="bi bi-check2-circle"></i> Pagado completamente
-       </div>`
-                : `<div class="d-flex justify-content-between mt-3">
-         <div>
-           <div class="small text-muted">Monto total</div>
-           <div class="amount">${PEN.format(item.amount)}</div>
-         </div>
-         <div>
-           <div class="small text-muted">Monto pendiente</div>
-           <div class="amount text-warning">${PEN.format(item.pendingAmount)}</div>
-         </div>
-       </div>`;
+        installmentsSection.innerHTML = cardsInstallments.join('');
+        installmentsSectionPaid.innerHTML = cardsInstallmentsPaid.join('');
+    }
 
-            return `
-    <div class="loan-card shadow-hover h-100">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="fw-semibold truncate-one-line">${item.description}</span>
-        ${paidIcon}
-      </div>
-      <div class="small text-muted">${item.payee}</div>
+    function resolveInstallmentCard(item) {
+        const done = item.fullPaid;
 
-            <div class="d-flex justify-content-between mt-3">
-            <div>
-            <div class="small text-muted">Cuotas</div>
-            <div class="amount">${item.installments}</div>
-            </div>
-            <div>
-            <div class="small text-muted">Pendientes</div>
-            <div class="amount text-warning">${pendingInstallments}</div>
-            </div>
-            </div>
+        // Calculate pending installments
+        const pendingInstallments =
+            item.pendingAmount > 0
+                ? Math.round(item.pendingAmount / item.installmentAmount)
+                : 0;
 
-            ${amountRow}
-            </div>`;
-});
+        // Conditional display for pending vs full-paid
+        const amountRow = done
+            ? `<div class="d-flex justify-content-between mt-3">
+                     <div>
+                       <div class="small text-muted">Monto total</div>
+                       <div class="amount">${PEN.format(item.amount)}</div>
+                     </div></div><div class="badge bg-success-subtle text-success mt-3 py-2 px-3 w-100 text-center">
+                     <i class="bi bi-check2-circle"></i> Pagado completamente
+                   </div>`
+            : `<div class="d-flex justify-content-between mt-3">
+                     <div>
+                       <div class="small text-muted">Monto total</div>
+                       <div class="amount">${PEN.format(item.amount)}</div>
+                     </div>
+                     <div>
+                       <div class="small text-muted">Monto pendiente</div>
+                       <div class="amount text-warning">${PEN.format(item.pendingAmount)}</div>
+                     </div>
+                   </div>`;
 
-document.getElementById('installmentsSection').innerHTML = cards.join('');
-        c.innerHTML = cards.join('');
+        return `
+                    <div class="loan-card shadow-hover h-100">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold truncate-one-line">${item.description}</span>
+                      </div>
+                      <div class="small text-muted">${item.payee}</div>
+
+                            <div class="d-flex justify-content-between mt-3">
+                            <div>
+                            <div class="small text-muted">Cuotas</div>
+                            <div class="amount">${item.installments}</div>
+                            </div>
+                            <div>
+                            <div class="small text-muted">Pendientes</div>
+                            <div class="amount text-warning">${pendingInstallments}</div>
+                            </div>
+                            </div>
+
+                            ${amountRow}
+                            </div>`;
     }
 
 </script>

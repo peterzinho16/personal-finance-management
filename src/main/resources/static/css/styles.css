@@ -157,7 +157,7 @@ body{
 /* Floating submenus when sidebar is collapsed */
 .app.is-collapsed .sidebar {
     overflow: visible;
-    position: relative;
+    /* position: relative; */
 }
 
 /* Each item becomes the anchor for its submenu */
@@ -460,11 +460,24 @@ input:disabled {
 
 .truncate-one-line {
     display: block;
+    width: 100%;
     max-width: 100%;
-    white-space: nowrap;
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
+    min-width: 0; /* ✅ critical for flex/grid truncation */
+    flex-shrink: 1; /* ✅ allows text to shrink inside flex containers */
+    box-sizing: border-box;
     position: relative;
-    z-index: 1;        /* ensures it stays above background layers */
+    z-index: 1;
     pointer-events: auto;
+}
+
+/* ✅ ensures flex/grid parents allow children to truncate */
+.grid > *,
+.metric,
+.loan-card,
+.d-flex > * {
+    min-width: 0;
+    overflow: hidden;
 }

@@ -1,9 +1,14 @@
 # Backlog project
 
+### Refactor resume > installments
+
+Divide the installments into two different views:
+- **Installments pending** - List of installments that are pending to be full paid
+- **Installments full-paid** - List of installments that are full paid
 
 ### Styles and script importation
 
-Download CSS/JS files to be consumed as local assets from resources
+Download CSS/JS files to be consumed as local assets from resources ✅ - 17/10/25
 
 ### Chart view
 - Update the chart queries considering the new column conversionToPen ✅ - 11/05/25
