@@ -92,7 +92,12 @@ body{
 .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px;
     font-weight:700; font-size:13px; border:1px solid #e5e7eb; background:#fff }
 .pill.warning{ color:#a16207; background:#fffbeb; border-color:#fde68a }
-.pill.info{ color:#075985; background:#ecfeff; border-color:#a5f3fc }
+.pill.info { color:#075985; background:#ecfeff; border-color:#a5f3fc }
+.pill.danger {
+    color: #dc2626;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
 
 .loan-card{ border:1px solid #eef0f5; border-radius:16px; padding:16px; background:#fff; height:100% }
 .amount{ font-weight:800; font-size:22px }

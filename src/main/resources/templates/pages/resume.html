@@ -92,6 +92,7 @@
             <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="pill info"><i class="bi bi-credit-card"></i> Compras en cuotas <i class="bi bi-hourglass-split text-warning" title="Aún pendientes"></i></span>
+                    <span id="installmentsPendingTotal" class="pill danger fw-semibold d-none d-md-inline"></span>
                 </div>
                 <div id="installmentsSection" class="grid"></div>
             </div>
@@ -415,6 +416,10 @@
         const installmentsSectionPaid = document.getElementById('installmentsSectionPaid');
 
         const listPending = list.filter(i => !i.fullPaid);
+        // Calculate and display total pending amount
+        const totalPendingAmount = listPending.map(item => item.pendingAmount).reduce((a, b) => a + b, 0);
+        document.getElementById('installmentsPendingTotal').textContent = "Total pendiente: " + PEN.format(totalPendingAmount);
+
         const listPaid = list.filter(i => i.fullPaid);
         if (!listPending.length) {
             installmentsSection.innerHTML = `<div class="text-muted">No hay compras en cuotas pendientes</div>`;
