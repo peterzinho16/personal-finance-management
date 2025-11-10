@@ -3,7 +3,7 @@
       xmlns:th="http://www.thymeleaf.org">
 
 <!-- Include the head fragment -->
-<head th:replace="~{html-commons/head :: fg-head(title='Expenditures Others')}"></head>
+<head th:replace="~{html-commons/head :: fg-head(title='👩‍🦳 Others')}"></head>
 <style>
     .no-pointer-events-fix.disabled {
         pointer-events: auto !important;
@@ -297,8 +297,8 @@
                     }
                 });
             },
-            pageLength: 30,
-            lengthMenu: [8, 15, 30, 50],
+            pageLength: 20,
+            lengthMenu: [8, 20, 30, 50],
             responsive: true,
         });
 
@@ -406,6 +406,7 @@
                         success: function (response) {
                             showSuccessToast(response);
                             resetFormAndInitWithParams();
+                            table.ajax.reload(null, false);
                         },
                         error: function (error) {
                             console.error("Error importing expenditure:", error);
@@ -459,6 +460,7 @@
                     console.log("Update successful:", response);
                     $("#slideForm").removeClass("active");
                     $("#save-changes").addClass("hidden");
+                    showSuccessToast(response);
                     table.ajax.reload(function () {
                         // Highlight the updated row
                         const row = $(`#expenditure-table tbody tr`).filter(function () {
@@ -468,7 +470,7 @@
                         setTimeout(function () {
                             row.removeClass("highlight");
                         }, 3000);
-                    });
+                    }, false);
                 },
                 error: function (error) {
                     console.error("Error updating expenditure:", error);
@@ -486,7 +488,7 @@
                 contentType: 'application/json',
                 success: function (response) {
                     console.log("Shared status updated:", response);
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                 },
                 error: function (error) {
                     console.error("Error updating shared status:", error);
