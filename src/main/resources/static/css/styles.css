@@ -486,3 +486,13 @@ input:disabled {
     min-width: 0;
     overflow: hidden;
 }
+
+#attachmentWrapper {
+    overflow: hidden;
+    width: 100%;
+    height: auto;
+}
+
+#attachmentImage {
+    cursor: grab;
+}
