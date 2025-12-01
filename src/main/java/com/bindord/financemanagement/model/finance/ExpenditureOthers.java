@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.model.finance;
 
+import com.bindord.financemanagement.utils.enums.Currency;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -62,7 +63,7 @@ public class ExpenditureOthers {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Expenditure.Currency currency;
+    private Currency currency;
 
     @NotNull
     @PositiveOrZero

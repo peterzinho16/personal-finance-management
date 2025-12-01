@@ -13,6 +13,7 @@ import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.PayeeCategorizationRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.utils.Utilities;
+import com.bindord.financemanagement.utils.enums.LoanState;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +22,12 @@ import org.springframework.stereotype.Service;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
-import static com.bindord.financemanagement.model.finance.Expenditure.Currency.PEN;
-import static com.bindord.financemanagement.model.finance.Expenditure.Currency.USD;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
 import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
 import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyTwoDecimals;
 import static com.bindord.financemanagement.utils.Utilities.getLocalDateTimeNowWithFormat;
+import static com.bindord.financemanagement.utils.enums.Currency.PEN;
+import static com.bindord.financemanagement.utils.enums.Currency.USD;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -250,7 +251,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     expenditure.setLent(nwLentValue);
     expenditure.setLentTo(nwLentValue ? expenditureUpdateDto.getLentTo() : null);
     expenditure.setLoanAmount(nwLentValue ? expenditure.getAmount() : null);
-    expenditure.setLoanState(nwLentValue ? Expenditure.LoanState.PENDING : null);
+    expenditure.setLoanState(nwLentValue ? LoanState.PENDING : null);
   }
 
   private Expenditure expenditureMapperForInsertOrImportManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
@@ -295,11 +296,11 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .expenditureInstallmentId(null)
         .lent(lentVal)
         .lentTo(lentVal ? expenditureDto.getLentTo() : null)
-        .loanState(lentVal ? Expenditure.LoanState.PENDING : null)
+        .loanState(lentVal ? LoanState.PENDING : null)
         .loanAmount(lentVal ? amount : null)
         .wasBorrowed(wasBorrowVal)
         .borrowedFrom(wasBorrowVal ? expenditureDto.getBorrowedFrom() : null)
-        .borrowedState(wasBorrowVal ? Expenditure.LoanState.PENDING : null)
+        .borrowedState(wasBorrowVal ? LoanState.PENDING : null)
         .recurrent(false)
         .manualRegister(true)
         .expImported(expenditureDto.getExpImported() != null && expenditureDto.getExpImported())

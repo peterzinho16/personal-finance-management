@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.model.finance;
 
 
+import com.bindord.financemanagement.utils.enums.Currency;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -65,7 +66,7 @@ public class ExpenditureInstallment {
 
   @Column(nullable = false, length = 255)
   @Enumerated(EnumType.STRING)
-  private Expenditure.Currency currency;
+  private Currency currency;
 
   @Column(name = "full_paid", columnDefinition = "boolean default false")
   private Boolean fullPaid = false;

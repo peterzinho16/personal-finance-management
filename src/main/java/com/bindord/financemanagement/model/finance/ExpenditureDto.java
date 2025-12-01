@@ -1,5 +1,7 @@
 package com.bindord.financemanagement.model.finance;
 
+import com.bindord.financemanagement.utils.enums.Currency;
+import com.bindord.financemanagement.utils.enums.LoanState;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -106,16 +108,6 @@ public class ExpenditureDto {
     @PositiveOrZero
     @Column
     private Double loanAmount;
-
-    public enum LoanState {
-        PENDING,
-        PAID
-    }
-
-    public enum Currency {
-        PEN,
-        USD
-    }
 
     @Column
     private Boolean manualRegister = false;

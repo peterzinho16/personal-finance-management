@@ -2,7 +2,6 @@ package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.Category;
-import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureOthers;
 import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.GmailMessageDto;
@@ -19,6 +18,7 @@ import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
+import com.bindord.financemanagement.utils.enums.Currency;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -154,7 +154,7 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
     var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
     var amount = extractExpenditureAmount(bodyTextContent);
     Double conversionToPen = null;
-    if(currency == Expenditure.Currency.USD) {
+    if(currency == Currency.USD) {
       var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
       conversionToPen = usdExchangeRate.doubleValue() * amount;
     }

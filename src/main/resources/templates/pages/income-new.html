@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include the head fragment -->
+<head th:replace="~{html-commons/head :: fg-head(title='Add Income')}"></head>
+
+<body>
+<div class="app">
+
+    <!-- Sidebar -->
+    <aside th:replace="~{html-commons/sidebar :: fg-sidebar(false)}"></aside>
+
+    <!-- Main -->
+    <main>
+
+        <!-- Topbar -->
+        <div th:replace="~{html-commons/topbar :: fg-topbar}"></div>
+
+        <div class="content">
+            <div class="container mt-4">
+
+                <div class="card-ui p-4">
+                    <div class="page-header">
+                        <div class="title">New Income</div>
+                    </div>
+                    <hr>
+
+                    <form id="new-income-form">
+
+                        <div class="row">
+                            <!-- Amount -->
+                            <div class="col-md-6 mb-3">
+                                <label for="new-amount" class="form-label">Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="new-amount" required>
+                            </div>
+
+                            <!-- Currency -->
+                            <div class="col-md-6 mb-3">
+                                <label for="new-currency" class="form-label">Currency</label>
+                                <select id="new-currency" class="form-select">
+                                    <option value="PEN" selected>PEN</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Source -->
+                            <div class="col-md-6 mb-3">
+                                <label for="new-source" class="form-label">Source</label>
+                                <select id="new-source" class="form-select">
+                                    <!-- to be populated via API (income_source enum) -->
+                                </select>
+                            </div>
+
+                            <!-- Received Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="new-receivedDate" class="form-label">Received Date</label>
+                                <input type="datetime-local" class="form-control" id="new-receivedDate" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Description -->
+                            <div class="col-md-12 mb-3">
+                                <label for="new-description" class="form-label">Description</label>
+                                <textarea class="form-control" id="new-description" maxlength="200" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Was received? -->
+                            <div class="col-md-3 mb-3">
+                                <label for="wasReceivedCheckbox" class="form-label">Already received?</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="wasReceivedCheckbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <!-- Conversion to PEN (visible only if currency != PEN) -->
+                            <div class="col-md-4 mb-3" id="conversionContainer" style="display:none;">
+                                <label for="new-conversionPen" class="form-label">Conversion to PEN</label>
+                                <input type="number" step="0.01" class="form-control" id="new-conversionPen" value="0">
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Save button -->
+                        <div class="row pt-3 pb-2 justify-content-center">
+                            <div class="col col-lg-4 col-md-4 col-sm-6 text-center">
+                                <button type="button"
+                                        class="btn btn-lg btn-primary w-100 py-3 rounded-pill"
+                                        id="save-income">
+                                    Save Income
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1100;">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="errorToastTitle"></strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="errorToastBody"></div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<div th:replace="~{html-commons/scripts :: fg-js}"></div>
+
+<script>
+    function resetIncomeForm() {
+        $('#new-income-form')[0].reset();
+        document.getElementById('new-receivedDate').value = generateDateTimeNowFormatted();
+        $("#conversionContainer").hide();
+    }
+
+    resetIncomeForm();
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        const apiEndpoint = "/eureka/finance-app/income";
+        const sourceEndpoint = "/eureka/finance-app/income-source";
+
+        // Show conversion to PEN only for USD
+        $("#new-currency").on("change", function () {
+            if ($(this).val() !== "PEN") {
+                $("#conversionContainer").show();
+            } else {
+                $("#conversionContainer").hide();
+                $("#new-conversionPen").val(0);
+            }
+        });
+
+        // Load income sources (enum)
+        $.ajax({
+            url: sourceEndpoint,
+            method: 'GET',
+            success: function (sources) {
+                sources.forEach(s => {
+                    $("#new-source").append(
+                        `<option value="${s}">${s}</option>`
+                    );
+                });
+            },
+            error: function (error) {
+                console.error("Error loading income sources:", error);
+                showErrorToast(error.status, error.responseJSON.message);
+            }
+        });
+
+        // Save income
+        $("#save-income").on("click", function () {
+
+            const data = {
+                amount: $("#new-amount").val(),
+                currency: $("#new-currency").val(),
+                source: $("#new-source").val(),
+                description: $("#new-description").val(),
+                receivedDate: $("#new-receivedDate").val(),
+                wasReceived: $("#wasReceivedCheckbox").is(":checked"),
+                conversionToPen: $("#new-conversionPen").val()
+            };
+
+            $.ajax({
+                url: apiEndpoint,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    showSuccessToast(response);
+                    resetIncomeForm();
+                },
+                error: function (error) {
+                    console.error("Error adding income:", error);
+                    showErrorToast(error.status, error.responseJSON.message);
+                }
+            });
+        });
+
+    });
+</script>
+
+</body>
+</html>

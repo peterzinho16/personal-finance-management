@@ -1,6 +1,6 @@
 package com.bindord.financemanagement.utils;
 
-import com.bindord.financemanagement.model.finance.Expenditure;
+import com.bindord.financemanagement.utils.enums.Currency;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,14 +20,14 @@ public class MailRegex {
     return Double.parseDouble(matcher.group(2));
   }
 
-  public static Expenditure.Currency extractExpenditureCurrency(String content) {
+  public static Currency extractExpenditureCurrency(String content) {
     Matcher matcher = VALIDATE_EXPENDITURE_CURRENCY.matcher(content);
     if (!matcher.find()) {
       return null;
     }
     return switch (matcher.group()) {
-      case "S/", "S/." -> Expenditure.Currency.PEN;
-      default -> Expenditure.Currency.USD;
+      case "S/", "S/." -> Currency.PEN;
+      default -> Currency.USD;
     };
   }
 }

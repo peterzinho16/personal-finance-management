@@ -22,6 +22,7 @@ import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
+import com.bindord.financemanagement.utils.enums.Currency;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -221,7 +222,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
     var amount = extractExpenditureAmount(bodyTextContent);
     Double conversionToPen = null;
-    if (currency == Expenditure.Currency.USD) {
+    if (currency == Currency.USD) {
       var usdExchangeRate =
           appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
       conversionToPen = usdExchangeRate.doubleValue() * amount;

@@ -31,6 +31,11 @@ public class PagesController {
     return "pages/expenditure-new";
   }
 
+  @RequestMapping({"/income/new"})
+  public String addNewIncomeManually() {
+    return "pages/income-new";
+  }
+
   @RequestMapping("/resume")
   public String resumePage() {
     return "pages/resume";

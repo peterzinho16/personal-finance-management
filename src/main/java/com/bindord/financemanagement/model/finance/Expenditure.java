@@ -1,5 +1,7 @@
 package com.bindord.financemanagement.model.finance;
 
+import com.bindord.financemanagement.utils.enums.Currency;
+import com.bindord.financemanagement.utils.enums.LoanState;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -127,16 +129,6 @@ public class Expenditure {
     @PositiveOrZero
     @Column
     private Double loanAmount;
-
-    public enum LoanState {
-        PENDING,
-        PAID
-    }
-
-    public enum Currency {
-        PEN,
-        USD
-    }
 
     @Column
     private Boolean manualRegister = false;
