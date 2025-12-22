@@ -21,6 +21,9 @@ Download CSS/JS files to be consumed as local assets from resources ✅ - 17/10/
 
 ### News
 - Implement a **consolidation page** to have a statement view-like
+- Implement a feature in expenditure form to capture voice and complete all the details of the expenditure
+- Implement a feature in expenditure form to OCR the receipt and pre-load the details of the expenditure
+- Implement a list to show those incomes that are pending to be received
 
 ### Reference
 

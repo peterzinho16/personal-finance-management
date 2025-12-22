@@ -372,8 +372,6 @@
             console.log(expenditureOther);
             const subCategoryId = expenditureOther.subCategory.id;
             const shared = expenditureOther.shared;
-            const wasBorrowed = true;
-            const borrowedFrom = WAS_BORROWED_FROM;
             const forDaughter = expenditureOther.forDaughter;
 
             const data = {
@@ -390,7 +388,8 @@
                 wasBorrowed: false,
                 borrowedFrom: null,
                 forDaughter: forDaughter,
-                expImported: true
+                expImported: true,
+                installments: 1
             };
 
             $.ajax({
