@@ -11,6 +11,11 @@ public class PagesController {
     return "pages/expenditure";
   }
 
+  @RequestMapping({"/income/list"})
+  public String showIncomeListPage() {
+    return "pages/income";
+  }
+
   @RequestMapping({"/expenditure/list/others"})
   public String showExpenditureOthersListPage() {
     return "pages/expenditure-others";

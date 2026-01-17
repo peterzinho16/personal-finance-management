@@ -21,7 +21,6 @@ public class IncomeRequestDto {
   @Size(min = 1, max = 128)
   private String source;   // must match Spanish labels
 
-  @NotNull
   private LocalDateTime receivedDate;
 
   @Size(max = 512)

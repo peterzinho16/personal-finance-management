@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{html-commons/head :: fg-head(title='Income')}"></head>
+
+<body>
+<div class="app">
+
+    <!-- Sidebar -->
+    <aside th:replace="~{html-commons/sidebar :: fg-sidebar(true)}"></aside>
+
+    <!-- Main -->
+    <main>
+        <div th:replace="~{html-commons/topbar :: fg-topbar}"></div>
+
+        <div class="content">
+
+            <div class="page-header">
+                <div class="title">Income</div>
+            </div>
+
+            <div class="card-ui p-3">
+                <div class="table-responsive">
+                    <table id="income-table" class="table table-striped nowrap">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Description</th>
+                            <th>Source</th>
+                            <th>Amount</th>
+                            <th>Received Date</th>
+                            <th class="text-center">Received</th>
+                            <th>Options</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Include scripts -->
+<div th:replace="~{html-commons/scripts :: fg-js}"></div>
+
+<script>
+    $(document).ready(function () {
+
+        if (!isMobileView()) {
+            toggleSidebar();
+        }
+
+        const apiEndpoint = "/eureka/finance-app/income";
+
+        const table = $("#income-table").DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: function (data, callback) {
+
+                const page = data.start / data.length;
+                const size = data.length;
+                const search = data.search.value;
+
+                let url = `${apiEndpoint}?page=${page}&size=${size}`;
+                if (search) {
+                    url += `&description=${search}`;
+                }
+
+                $.ajax({
+                    url: url,
+                    success: function (response) {
+
+                        const rows = response.content.map(inc => [
+                            inc.id,
+                            `<span title="${inc.description}">${inc.description}</span>`,
+                            inc.source,
+                            inc.currency === 'PEN'
+                                ? 'S/ ' + inc.amount.toFixed(2)
+                                : '$ ' + inc.amount.toFixed(2),
+                            inc.receivedDate ? formatDateWithMonthText(inc.receivedDate) : '-',
+                            `<div class="d-flex justify-content-center align-items-center">
+    <div class="form-check form-switch">
+        <input class="form-check-input"
+               type="checkbox"
+               role="switch"
+               ${inc.wasReceived ? 'checked disabled' : ''}
+               onclick="confirmToggleReceived(event, ${inc.id}, this.checked)">
+    </div>
+</div>`,
+                            `<a href="#"
+                                class="btn btn-sm btn-primary"
+                                title="Edit"
+                                onclick="editIncome(${inc.id})">
+                                <i class="bi bi-pencil"></i>
+                            </a>`
+                        ]);
+
+                        callback({
+                            draw: data.draw,
+                            recordsTotal: response.totalElements,
+                            recordsFiltered: response.totalElements,
+                            data: rows
+                        });
+                    },
+                    error: function (error) {
+                        console.error("Error fetching incomes:", error);
+                        showErrorToast(error.status, error.responseJSON?.message);
+                    }
+                });
+            },
+            columns: [
+                { title: "ID" },
+                { title: "Description" },
+                { title: "Source" },
+                { title: "Amount" },
+                { title: "Received Date" },
+                { title: "Received" },
+                { title: "Options" }
+            ],
+            pageLength: 30,
+            lengthMenu: [30, 40, 50],
+            responsive: true
+        });
+
+        // Confirmation toggle logic for received status
+        let pendingIncomeId = null;
+        let pendingReceivedValue = null;
+
+        window.confirmToggleReceived = function (event, id, received) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            pendingIncomeId = id;
+            pendingReceivedValue = received;
+
+            const modal = new bootstrap.Modal(document.getElementById('confirmReceivedModal'));
+            modal.show();
+        };
+
+        window.toggleReceived = function () {
+            if (pendingIncomeId === null) return;
+
+            $.ajax({
+                url: `${apiEndpoint}/${pendingIncomeId}/update/received`,
+                method: 'PUT',
+                contentType: 'application/json',
+                success: function () {
+                    table.ajax.reload(null, false);
+                },
+                error: function (error) {
+                    console.error("Error updating received status:", error);
+                    showErrorToast(error.status, error.responseJSON?.message);
+                },
+                complete: function () {
+                    pendingIncomeId = null;
+                    pendingReceivedValue = null;
+                }
+            });
+        };
+
+        // Edit Income (placeholder)
+        window.editIncome = function (id) {
+            console.log("Edit income:", id);
+            // TODO: open slide-form similar to expenditure
+        };
+
+    });
+</script>
+
+</body>
+<div class="modal fade" id="confirmReceivedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Operation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to update the received status of this income?
+            </div>
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="toggleReceived()"
+                        data-bs-dismiss="modal">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

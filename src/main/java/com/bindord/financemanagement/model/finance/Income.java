@@ -1,7 +1,6 @@
 package com.bindord.financemanagement.model.finance;
 
 import com.bindord.financemanagement.utils.enums.Currency;
-import com.bindord.financemanagement.utils.enums.IncomeSource;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,7 +20,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,8 +46,7 @@ public class Income {
   @Column(nullable = false)
   private String source;
 
-  @NotNull
-  @Column(nullable = false)
+  @Column(nullable = true)
   private LocalDateTime receivedDate;
 
   @Size(max = 512)

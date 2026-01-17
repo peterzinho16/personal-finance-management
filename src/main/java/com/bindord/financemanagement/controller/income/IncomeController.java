@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.controller.income;
 
+import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.Income;
 import com.bindord.financemanagement.model.finance.IncomeRequestDto;
@@ -8,14 +9,17 @@ import com.bindord.financemanagement.utils.enums.Currency;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -27,19 +31,23 @@ public class IncomeController {
   private final AppDataConfiguration appDataConfiguration;
 
   @GetMapping("")
-  public List<Income> getIncomeSources() {
-    return incomeRepository.findAll();
+  public Page<Income> getIncomeSources(Pageable pageable) {
+    return incomeRepository.findAllPageable(pageable);
   }
 
   @PostMapping("")
   public Income save(@Valid @RequestBody IncomeRequestDto incomeRequestDto) {
-    if(incomeRequestDto.getCurrency() == Currency.USD) {
+    if (incomeRequestDto.getCurrency() == Currency.USD) {
       var usdExchangeRate =
           appDataConfiguration.getExchangeRateData()
               .get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
       incomeRequestDto.setConversionToPen(
           incomeRequestDto.getAmount() * usdExchangeRate.doubleValue()
       );
+    }
+
+    if(!incomeRequestDto.getWasReceived()) {
+      incomeRequestDto.setReceivedDate(null);
     }
 
     Income income = mapToEntity(incomeRequestDto);
@@ -60,5 +68,15 @@ public class IncomeController {
     income.setConversionToPen(dto.getConversionToPen() != null ? dto.getConversionToPen() : 0.0);
     income.setCreatedAt(LocalDateTime.now());
     return income;
+  }
+
+
+  @PutMapping("/{id}/update/received")
+  public Income updateSharedStateById(@PathVariable Integer id) throws Exception {
+    Boolean wasReceived = true;
+    incomeRepository.updateWasReceivedStatus(wasReceived, id);
+    return incomeRepository.findById(id).orElseThrow(
+        () ->
+            new CustomValidationException("Error, income with id: " + id + " was not found"));
   }
 }
