@@ -29,7 +29,7 @@
                             <th>Description</th>
                             <th>Source</th>
                             <th>Amount</th>
-                            <th>Received Date</th>
+                            <th>Created Date</th>
                             <th class="text-center">Received</th>
                             <th>Options</th>
                         </tr>
@@ -80,7 +80,7 @@
                             inc.currency === 'PEN'
                                 ? 'S/ ' + inc.amount.toFixed(2)
                                 : '$ ' + inc.amount.toFixed(2),
-                            inc.receivedDate ? formatDateWithMonthText(inc.receivedDate) : '-',
+                            inc.createdAt ? formatDateWithMonthText(inc.createdAt) : '-',
                             `<div class="d-flex justify-content-center align-items-center">
     <div class="form-check form-switch">
         <input class="form-check-input"
@@ -116,7 +116,7 @@
                 { title: "Description" },
                 { title: "Source" },
                 { title: "Amount" },
-                { title: "Received Date" },
+                { title: "Created Date" },
                 { title: "Received" },
                 { title: "Options" }
             ],
