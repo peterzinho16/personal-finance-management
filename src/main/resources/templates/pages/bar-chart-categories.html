@@ -271,11 +271,39 @@
                     options: {
                         responsive: true,
                         plugins: {
-                            legend: {position: 'bottom'},
-                            tooltip: {mode: 'index', intersect: false}
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    labelColor: function (context) {
+                                        const values = context.chart.data.datasets.map(ds =>
+                                            ds.data[context.dataIndex] ?? 0
+                                        );
+
+                                        const max = Math.max(...values);
+                                        const min = Math.min(...values);
+                                        const value = context.parsed.y;
+
+                                        if (value === max && max !== min) {
+                                            return { borderColor: 'green', backgroundColor: 'green' };
+                                        }
+
+                                        if (value === min && max !== min) {
+                                            return { borderColor: 'red', backgroundColor: 'red' };
+                                        }
+
+                                        return { borderColor: '#aaa', backgroundColor: '#aaa' };
+                                    },
+
+                                    label: function (context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
                         },
                         scales: {
-                            y: {beginAtZero: true}
+                            y: { beginAtZero: true }
                         }
                     }
                 });
