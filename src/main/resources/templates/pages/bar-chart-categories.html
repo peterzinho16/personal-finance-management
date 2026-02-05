@@ -231,25 +231,24 @@
             };
 
 
-            const colors = [33, 209, 267];
-            const renderLineChart = (last3MonthsData, last3Periods) => {
+            const colors = [30, 60, 90, 120, 150, 180];
+            const renderLineChart = (last6MonthsData, last6Periods) => {
                 const ctx = document.getElementById('trend-chart').getContext('2d');
                 if (lineChartInstance) lineChartInstance.destroy();
 
                 const categorySet = new Set();
-                last3MonthsData.forEach(item => categorySet.add(item.categoria));
+                last6MonthsData.forEach(item => categorySet.add(item.categoria));
                 const categories = Array.from(categorySet).sort();
 
                 // Group data by month
-                const datasets = last3Periods.map((periodo, ix) => {
-                    const monthData = last3MonthsData.filter(d => d.periodo === periodo);
+                const datasets = last6Periods.reverse().map((periodo, ix) => {
+                    const monthData = last6MonthsData.filter(d => d.periodo === periodo);
                     const dataPoints = categories.map(categoria => {
                         const entry = monthData.find(d => d.categoria === categoria);
                         return entry ? (entry.gastosIndividuales || 0) + (entry.gastosCompartidos || 0) : 0;
                     });
 
                     const color = `hsl(${colors[ix]}, 70%, 60%)`;
-                    //const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
                     console.log(color);
                     return {
                         label: new Date(periodo + '-01T12:00:00').toLocaleDateString('default', {
@@ -260,7 +259,7 @@
                         data: dataPoints,
                         borderColor: color,
                         backgroundColor: color,
-                        tension: 0.3
+                        tension: 0.3,
                     };
                 });
                 lineChartInstance = new Chart(ctx, {
@@ -286,7 +285,7 @@
             const currentFiltered = filteredData.filter(item => item.periodo === currentMonth);
             renderBarChart(groupByCategory(currentFiltered));
 
-            const last3Periods = months.slice(0, 3).reverse(); // reverse for chronological order
+            const last3Periods = months.slice(0, 6).reverse(); // reverse for chronological order
             const last3MonthsData = filteredData.filter(item => last3Periods.includes(item.periodo));
             renderLineChart(last3MonthsData, last3Periods);
 

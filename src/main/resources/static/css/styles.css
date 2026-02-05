@@ -20,6 +20,7 @@ body{
 
 /* Sidebar – light, rounded, like the screenshot */
 .sidebar{
+    z-index: 100; /* 👈 higher than main content */
     background:#fff; padding:20px 14px; position:sticky; top:0; height:100vh;
     border-right:1px solid #eef0f5; border-top-right-radius:16px; border-bottom-right-radius:16px;
 }
