@@ -26,4 +26,5 @@ public class ExpenditureUpdateDto {
   private Short installments;
   private Boolean forDaughter;
   private String attachment;
+  private Double amount;
 }

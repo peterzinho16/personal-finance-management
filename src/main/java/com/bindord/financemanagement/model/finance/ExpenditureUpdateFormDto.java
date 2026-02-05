@@ -25,6 +25,7 @@ public class ExpenditureUpdateFormDto {
   public static class FormBehaviour {
     private Boolean updateWithoutPayeeCategorization;
     private Boolean updateAttachment;
+    private Boolean updateAmount;
 
   }
 }
