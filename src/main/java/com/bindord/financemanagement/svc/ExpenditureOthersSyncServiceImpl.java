@@ -19,6 +19,9 @@ import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
 import com.bindord.financemanagement.utils.enums.Currency;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +57,7 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
   private final PayeeCategorizationService payeeCategorizationService;
   private final PayeeCoincidenceRepository payeeCoincidenceRepository;
   private final AppDataConfiguration appDataConfiguration;
+  private final Validator validator;
 
   /**
    * Execute synchronization from gmail to expenditure table
@@ -67,7 +71,7 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
     Parameter parameter =
         parameterRepository.findById(LAST_SYNC_DATE_FOR_GMAIL).orElseThrow(() -> new Exception(
             "Error " +
-            "while" + " trying to get the last sync date from parameters table"));
+                "while" + " trying to get the last sync date from parameters table"));
     String paramLastSyncDateTime = parameter.getValue();
     OffsetDateTime lastSyncDateTime = OffsetDateTime.parse(paramLastSyncDateTime);
     List<GmailMessageDto> beforeFilterMessages =
@@ -92,7 +96,7 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
     List<ExpenditureOthers> expenditures = new ArrayList<>();
     List<MailMessage> mailMessages = new ArrayList<>();
 
-    if(postFilterMessages.isEmpty()) {
+    if (postFilterMessages.isEmpty()) {
       return "No records were found to sync after filtering.";
     }
 
@@ -100,6 +104,17 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
       String payee = buildEntitiesAndGetPayee(msg, subCategory, expenditures, mailMessages);
       payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
     }
+
+    expenditures.forEach(expenditure -> {
+      Set<ConstraintViolation<ExpenditureOthers>> violations =
+          validator.validate(expenditure);
+      if (!violations.isEmpty()) {
+        log.error("Obj error: {}, {}, {}", expenditure.getPayee(), expenditure.getDescription(), expenditure.getTransactionDate());
+        log.error("Validate the mail's subject and review your mail exclusion rules. Add new rules if necessary");
+        throw new ConstraintViolationException(violations);
+      }
+    });
+
 
     expenditureRepository.saveAll(expenditures);
     mailMessageRepository.saveAll(mailMessages);
@@ -147,15 +162,16 @@ public class ExpenditureOthersSyncServiceImpl implements ExpenditureOthersSyncSe
   }
 
   public ExpenditureOthers expenditureMapper(GmailMessageDto msg, SubCategory subCategory,
-                                                    String referenceId, String subject,
-                                                    String payee,
-                                                    String bodyTextContent) {
+                                             String referenceId, String subject,
+                                             String payee,
+                                             String bodyTextContent) {
 
     var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
     var amount = extractExpenditureAmount(bodyTextContent);
     Double conversionToPen = null;
-    if(currency == Currency.USD) {
-      var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+    if (currency == Currency.USD) {
+      var usdExchangeRate =
+          appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
       conversionToPen = usdExchangeRate.doubleValue() * amount;
     }
 

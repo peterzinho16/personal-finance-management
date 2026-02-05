@@ -98,9 +98,15 @@ public class ExpenditureServiceImpl implements ExpenditureService {
       throw new CustomValidationException(msg);
     }
 
-    var attachmentUploadedOrUpdated = expenditureUpdateFormDto.getFormBehaviour().getUpdateAttachment();
-    if(attachmentUploadedOrUpdated && nonNull(expenditureDto.getAttachment())) {
+    var attachmentUploadedOrUpdated =
+        expenditureUpdateFormDto.getFormBehaviour().getUpdateAttachment();
+    if (attachmentUploadedOrUpdated && nonNull(expenditureDto.getAttachment())) {
       qExpenditure.setAttachment(expenditureDto.getAttachment());
+    }
+
+    var updateAmount = expenditureUpdateFormDto.getFormBehaviour().getUpdateAmount();
+    if (updateAmount && nonNull(expenditureDto.getAmount())) {
+      updateAmountAndConversionToPen(qExpenditure, expenditureDto.getAmount());
     }
 
     var subCatId = expenditureDto.getSubCategoryId();
@@ -239,19 +245,32 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .build();
   }
 
-  private static void updateSharedState(Expenditure expenditure) {
+  private void updateSharedState(Expenditure expenditure) {
     var sharedState = !expenditure.getShared();
     expenditure.setShared(sharedState);
     expenditure.setSharedAmount(sharedState ? expenditure.getAmount() / 2 : null);
   }
 
-  private static void updateLentState(Expenditure expenditure,
+  private void updateLentState(Expenditure expenditure,
                                       ExpenditureUpdateDto expenditureUpdateDto) {
     var nwLentValue = expenditureUpdateDto.getLent();
     expenditure.setLent(nwLentValue);
     expenditure.setLentTo(nwLentValue ? expenditureUpdateDto.getLentTo() : null);
     expenditure.setLoanAmount(nwLentValue ? expenditure.getAmount() : null);
     expenditure.setLoanState(nwLentValue ? LoanState.PENDING : null);
+  }
+
+  private void updateAmountAndConversionToPen(Expenditure obj, Double newAmount) {
+    double conversionToPen;
+    if (USD.name().equals(obj.getCurrency().name())) {
+      var usdExchangeRate =
+          appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+      conversionToPen = usdExchangeRate.doubleValue() * newAmount;
+      obj.setConversionToPen(convertNumberToOnlyTwoDecimals(conversionToPen));
+      obj.setAmount(newAmount);
+    } else {
+      obj.setAmount(newAmount);
+    }
   }
 
   private Expenditure expenditureMapperForInsertOrImportManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException {
@@ -271,8 +290,9 @@ public class ExpenditureServiceImpl implements ExpenditureService {
 
 
     Double conversionToPen = null;
-    if(USD.name().equals(expenditureDto.getCurrency())) {
-      var usdExchangeRate = appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
+    if (USD.name().equals(expenditureDto.getCurrency())) {
+      var usdExchangeRate =
+          appDataConfiguration.getExchangeRateData().get(AppDataConfiguration.CURRENT_USD_EXCHANGE_RATE).getUsdExchangeRate();
       conversionToPen = usdExchangeRate.doubleValue() * amount;
     }
 

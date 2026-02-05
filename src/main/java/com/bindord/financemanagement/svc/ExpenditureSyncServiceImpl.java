@@ -23,6 +23,9 @@ import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
 import com.bindord.financemanagement.utils.enums.Currency;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -65,6 +68,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final ExpenditureServiceImpl expenditureService;
   private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
   private final AppDataConfiguration appDataConfiguration;
+  private final Validator validator;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -124,6 +128,17 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
       payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
     }
+
+    expenditures.forEach(expenditure -> {
+      Set<ConstraintViolation<Expenditure>> violations =
+          validator.validate(expenditure);
+      if (!violations.isEmpty()) {
+        log.error("Obj error: {}, {}, {}", expenditure.getPayee(), expenditure.getDescription(), expenditure.getTransactionDate());
+        log.error("Validate the mail's subject and review your mail exclusion rules. Add new rules if necessary");
+        throw new ConstraintViolationException(violations);
+      }
+    });
+
     expenditureRepository.saveAll(expenditures);
     mailMessageRepository.saveAll(mailMessages);
 
