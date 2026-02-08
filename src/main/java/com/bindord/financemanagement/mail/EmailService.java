@@ -43,6 +43,7 @@ public class EmailService {
             </html>
         """.formatted(LOCAL_DOMAIN_ACTIVATION + activationLink);
 
+
     EmailMessage message = new EmailMessage()
         .setSenderAddress(sender)
         .setSubject(subject)

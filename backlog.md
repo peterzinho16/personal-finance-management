@@ -1,10 +1,15 @@
 # Backlog project
 
+### Authentication module features
+
+- Implement: **Temporary account lock** after 5 failed login attempts
+- Implement: CSRF token
+
 ### Refactor resume > installments
 
 Divide the installments into two different views:
-- **Installments pending** - List of installments that are pending to be full paid
-- **Installments full-paid** - List of installments that are full paid
+- **Installments pending** - List of installments that are pending to be full paid ✅20/11/25
+- **Installments full-paid** - List of installments that are full paid ✅ - 20/11/25
 
 ### Styles and script importation
 

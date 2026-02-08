@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.config;
 
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,7 +14,10 @@ import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
+@AllArgsConstructor
 public class SecurityConfiguration {
+
+  private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -21,11 +25,13 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/login",
+                "/eureka/**", //Temporal
                 "/register",
                 "/activate",
                 "/registration-confirmation",
                 "/activation-success",
                 "/activation-error",
+                "/expenditure/list",
                 "/activate",
                 "/css/**",
                 "/js/**",
@@ -37,6 +43,7 @@ public class SecurityConfiguration {
         .formLogin(form -> form
             .loginPage("/login")      // your custom login.html
             .defaultSuccessUrl("/", true)
+            .failureHandler(customAuthenticationFailureHandler)
             .permitAll()
         )
         .logout(logout -> logout

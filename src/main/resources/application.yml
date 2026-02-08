@@ -11,4 +11,4 @@ azure:
   communication:
     email:
       connection-string: ${AZURE_COMM_EMAIL_CONNECTION_STRING}
-      sender: donotreply@295e127a-00ea-4ae1-bdc2-9fa31e0bf737.azurecomm.net
+      sender: donotreply@jaipro.pro
