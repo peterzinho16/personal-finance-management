@@ -11,8 +11,50 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Tooltip(el, {
             delay: { show: 100, hide: 100 }
         });
-    });;
+    });
 });
+
+/* =======================
+   CSRF helpers (Spring Security)
+   ======================= */
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="_csrf"]');
+    return meta ? meta.getAttribute('content') : null;
+}
+
+function getCsrfHeader() {
+    const meta = document.querySelector('meta[name="_csrf_header"]');
+    return meta ? meta.getAttribute('content') : 'X-CSRF-TOKEN';
+}
+
+// Automatically attach CSRF token to all jQuery AJAX requests
+$(document).ajaxSend(function (event, jqxhr, settings) {
+    const token = getCsrfToken();
+    const header = getCsrfHeader();
+    if (token && header) {
+        jqxhr.setRequestHeader(header, token);
+    }
+});
+
+/* =======================
+   fetch wrapper with CSRF
+   ======================= */
+function csrfFetch(url, options = {}) {
+    const token = getCsrfToken();
+    const header = getCsrfHeader();
+
+    const headers = options.headers || {};
+
+    if (token && header) {
+        headers[header] = token;
+    }
+
+    return fetch(url, {
+        credentials: 'same-origin', // IMPORTANT for session-based auth
+        ...options,
+        headers
+    });
+}
 
 // Enable tooltips for description elements on table elements when the page is loaded or moving between pages
 function enableToolTipForDescriptionOnTableElements() {
