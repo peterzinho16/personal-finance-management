@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{html-commons/head :: fg-head(title='Activation Failed')}"></head>
+
+<body class="bg-light">
+
+<div class="container vh-100 d-flex align-items-center justify-content-center">
+    <div class="card shadow-sm p-4 text-center" style="max-width: 420px; width: 100%;">
+        <div class="mb-3 text-danger">
+            <i class="bi bi-x-circle-fill fs-1"></i>
+        </div>
+
+        <h4 class="mb-3">Activation Failed</h4>
+
+        <p class="text-muted mb-4">
+            The activation link is invalid, expired, or has already been used.
+            Please request a new activation email or contact support.
+        </p>
+
+        <div class="d-grid gap-2">
+            <a th:href="@{/register}" class="btn btn-outline-primary">
+                Register Again
+            </a>
+            <a th:href="@{/login}" class="btn btn-link">
+                Back to Login
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

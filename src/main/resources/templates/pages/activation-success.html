@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-us"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{html-commons/head :: fg-head(title='Account Activated')}"></head>
+
+<body class="bg-light">
+
+<div class="container vh-100 d-flex align-items-center justify-content-center">
+    <div class="card shadow-sm p-4 text-center" style="max-width: 420px; width: 100%;">
+        <div class="mb-3 text-success">
+            <i class="bi bi-check-circle-fill fs-1"></i>
+        </div>
+
+        <h4 class="mb-3">Account Activated</h4>
+
+        <p class="text-muted mb-4">
+            Your account has been successfully activated.
+            You can now log in and start using the application.
+        </p>
+
+        <a th:href="@{/login}" class="btn btn-primary w-100">
+            Go to Login
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
