@@ -201,29 +201,24 @@ function toggleSidebar() {
     const app = document.querySelector('.app');
     const btn = document.getElementById('sbToggle');
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
-    const spans = document.querySelectorAll('.sidebar .sb-item>a span');
+
     if (isMobile) {
         const isOpen = app.classList.toggle('sidebar-open');
         btn.setAttribute('aria-expanded', isOpen);
-        spans.forEach(ele => {
-            console.log(ele);
-            ele.classList.add('span-force-display');
-        });
     } else {
-        const isCollapsed = app.classList.toggle('is-collapsed');
+        const isCollapsed = app.classList.toggle('sidebar-collapsed');
         btn.setAttribute('aria-expanded', !isCollapsed);
-        spans.forEach(ele => ele.classList.remove('span-force-display'));
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const sbToggleBtn = document.getElementById('sbToggle');
-    if (sbToggleBtn) {
-        sbToggleBtn.addEventListener('click', toggleSidebar);
+    const btn = document.getElementById('sbToggle');
+    if (btn) {
+        btn.addEventListener('click', toggleSidebar);
     }
 });
 
 // Sidebar submenu toggle
-function toggleSubmenu(id){
-    document.getElementById(id).classList.toggle('open');
+function toggleSubmenu(id) {
+    document.getElementById(id)?.classList.toggle('open');
 }

@@ -2,7 +2,8 @@
     <aside class="sidebar"
            id="sidebar"
            th:classappend="${sidebarClose} ? '' : 'collapsed'">
-        <button class="sb-toggle"
+        <button
+                class="sb-toggle"
                 id="sbToggle"
                 type="button"
                 aria-label="Toggle sidebar"
@@ -12,8 +13,6 @@
 
         <div class="sb-title">Admin Dashboard</div>
         <ul class="sb-list">
-<!--            <li class="sb-item"><a href="/charts/bar-chart-categories" data-title="Dashboard"><i class="bi bi-grid-3x3-gap"></i><span>Dashboard</span></a></li>-->
-            <li class="sb-item invisible"><a href="/just-for-convenience-item" data-title="Resume"><i class="bi bi-journal-text"></i><span>Trick</span></a></li>
             <li class="sb-item"><a href="/resume" data-title="Resume"><i class="bi bi-journal-text"></i><span>Resume</span></a></li>
 
             <li class="sb-item open" id="expItem">

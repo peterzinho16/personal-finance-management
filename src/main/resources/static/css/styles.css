@@ -8,22 +8,93 @@
     --radius:18px;
     --sidebar-w:280px;
 }
-html,body{height:100%}
+html, body {
+    height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
 body{
     background:var(--bg);
     font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", "Noto Sans", sans-serif;
     color:var(--text);
 }
 
-/* Layout */
-.app{display:grid; grid-template-columns: var(--sidebar-w) 1fr; min-height:100%}
-
-/* Sidebar – light, rounded, like the screenshot */
-.sidebar{
-    z-index: 100; /* 👈 higher than main content */
-    background:#fff; padding:20px 14px; position:sticky; top:0; height:100vh;
-    border-right:1px solid #eef0f5; border-top-right-radius:16px; border-bottom-right-radius:16px;
+/* ================= Layout ================= */
+.app{
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    min-height: 100%;
+    max-width: 100vw;
+    overflow: hidden;
 }
+
+main {
+    flex: 1;
+    min-width: 0; /* critical to prevent horizontal overflow in flex/grid layouts */
+    overflow: hidden;
+}
+
+.sidebar{
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 20px 14px;
+    background: #fff;
+    border-right: 1px solid #eef0f5;
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+    z-index: 200;
+    overflow: visible;
+}
+
+/* Desktop collapsed sidebar */
+.app.sidebar-collapsed {
+    --sidebar-w: 64px;
+}
+
+.app.sidebar-collapsed .sb-title {
+    display: none;
+}
+
+.app.sidebar-collapsed .sb-item > a span {
+    display: none;
+}
+
+.app.sidebar-collapsed .sb-caret {
+    display: none;
+}
+
+/* ===== Collapsed sidebar icon centering ===== */
+.app.sidebar-collapsed .sb-item > a {
+    justify-content: center;     /* center icon horizontally */
+    padding: 12px 0;             /* remove side padding */
+}
+
+.app.sidebar-collapsed .sb-item > a .bi {
+    font-size: 22px;             /* slightly larger for visual balance */
+    margin: 0;
+}
+
+@media (min-width: 641px) {
+    .app.sidebar-collapsed .sb-item {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+.app.sidebar-collapsed .sb-caret {
+    display: none !important;
+}
+
+.app.sidebar-collapsed .sb-item > a {
+    width: 100%;
+    text-align: center;
+}
+
+.app.sidebar-collapsed .sb-item > a:hover {
+    background: #f3f6ff;
+}
+
 .sb-title{
     font-weight:800; font-size:26px; margin:6px 8px 18px; letter-spacing:.2px;
 }
@@ -33,6 +104,13 @@ body{
     color:#1f2937; text-decoration:none; border-radius:12px; font-weight:600;
     transition:background .15s ease, color .15s ease;
 }
+
+/* Default icon size */
+.sb-item > a .bi {
+    font-size: 20px;
+    line-height: 1;
+}
+
 .sb-item>a:hover{ background:#f3f6ff; color:#1e40af }
 .sb-item a .bi{ font-size:20px; color:#6b7280 }
 .sb-item.active>a{ background:#eef2ff; color:#1e40af }
@@ -55,7 +133,11 @@ body{
 }
 
 /* Body header row (where period + user live now) */
-.content{ padding:16px 24px 28px }
+.content{
+    padding:16px 24px 28px;
+    max-width: 100%;
+    overflow: hidden;
+}
 .page-header{
     display:flex; justify-content:space-between; align-items:center; margin-bottom:18px
 }
@@ -70,14 +152,131 @@ body{
     min-width:160px;
 }
 
-.avatar-btn{
-    width:38px; height:38px; border-radius:999px; display:grid; place-items:center;
-    background:#eef2ff; color:#4f46e5; border:none;
+/* Avatar button & dropdown */
+.avatar-btn{ width:38px; height:38px; border-radius:999px; border:0; display:grid; place-items:center;
+    background:#eef2ff; color:#4f46e5; }
+.avatar-btn.dropdown-toggle::after{ display:none; }
+
+/* Toggle button */
+.sb-toggle{
+    position: absolute;
+    top: 50%;
+    right: -14px;                 /* pulls it slightly outside so it doesn't touch the title */
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #4f46e5;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 12px rgba(16,24,40,.12);
+    z-index: 20;
+}
+.sb-toggle:hover{ background:#eef2ff }
+.sb-toggle .bi{ transition: transform .2s ease }
+.app.sidebar-collapsed .sb-toggle .bi {
+    transform: rotate(180deg);
 }
 
-/* Cards / metrics */
-.card-ui{ background:var(--card); border:0; border-radius:var(--radius); box-shadow:0 10px 24px rgba(16,24,40,.06) }
-.grid{ display:grid; gap:18px; grid-template-columns: repeat(12, minmax(0,1fr)) }
+/* ================= Sidebar Navigation ================= */
+/* Sidebar – light, rounded, like the screenshot */
+.sb-item.open .sb-caret{ transform:rotate(90deg) }
+.sb-item.open .submenu{ display:block }
+
+/* Floating submenus when sidebar is collapsed */
+.app.sidebar-collapsed .sidebar {
+    overflow: visible;
+    /* position: relative; */
+}
+
+/* Each item becomes the anchor for its submenu */
+.app.sidebar-collapsed .sb-item {
+    position: relative;
+}
+
+/* Extend hover area for items with submenus */
+.app.sidebar-collapsed .sb-item:has(.submenu)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: -12px; /* Extends into the gap */
+    bottom: 0;
+    z-index: 1;
+}
+
+/* Hide submenu by default */
+.app.sidebar-collapsed .sb-item .submenu {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    padding: 8px 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 300;
+    margin-left: 8px;
+}
+
+/* Show submenu when hovering */
+.app.sidebar-collapsed .sb-item:hover > .submenu {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Submenu links inside floating card */
+.app.sidebar-collapsed .sb-item .submenu a {
+    display: block;
+    padding: 8px 14px;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.92rem;
+    white-space: nowrap;
+}
+
+.app.sidebar-collapsed .sb-item .submenu a:hover,
+.app.sidebar-collapsed .sb-item > a:hover {
+    background: #f3f6ff;
+}
+
+/* Tooltip for sidebar item - only show if NO submenu exists */
+.app.sidebar-collapsed .sb-item:not(:has(.submenu)) > a::after {
+    content: attr(data-title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    padding: 6px 10px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    font-size: 0.9rem;
+    color: #333;
+    z-index: 50;
+}
+
+.app.sidebar-collapsed .sb-item:not(:has(.submenu)) > a:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(6px);
+}
+
+/* ================= Cards & Grid ================= */
 .grid {
     display: grid;
     gap: 18px;
@@ -109,8 +308,7 @@ body{
 .topbar .searchbar{position:relative; width:clamp(220px,28vw,340px)}
 .topbar .search-input{
     height:36px; width:100%;
-    border:1px solid #e5e7eb; border-radius:12px;
-    padding:0 44px 0 36px; background:#fff; font-weight:500;
+    border:1px solid #e5e7eb; border-radius:12px; padding:0 44px 0 36px; background:#fff; font-weight:500;
     box-shadow:0 1px 2px rgba(0,0,0,.04);
 }
 .topbar .search-input:focus{
@@ -124,237 +322,6 @@ body{
     position:absolute; right:8px; top:50%; transform:translateY(-50%);
     padding:2px 6px; border:1px solid #e5e7eb; border-radius:6px;
     font-size:12px; color:#64748b; background:#fff;
-}
-
-/* Avatar button & dropdown */
-.avatar-btn{ width:38px; height:38px; border-radius:999px; border:0; display:grid; place-items:center;
-    background:#eef2ff; color:#4f46e5; }
-.avatar-btn.dropdown-toggle::after{ display:none; }
-
-/* Toggle button */
-.sb-toggle{
-    position: absolute;
-    top: 50%;
-    right: -14px;                 /* pulls it slightly outside so it doesn't touch the title */
-    transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #f8fafc;
-    color: #4f46e5;
-    display: grid;
-    place-items: center;
-    box-shadow: 0 4px 12px rgba(16,24,40,.12);
-    z-index: 20;
-}
-.sb-toggle:hover{ background:#eef2ff }
-.sb-toggle .bi{ transition: transform .2s ease }
-.sidebar { overflow: visible; }
-
-/* Collapsed state */
-.app.is-collapsed{ --sidebar-w:84px }            /* shrinks the grid column */
-.app.is-collapsed .sidebar .sb-title{ display:none }
-.app.is-collapsed .sidebar a span{ display:none } /* hide labels */
-.app.is-collapsed .sb-caret{ display:none }       /* hide submenu caret */
-.app.is-collapsed .submenu{ display:none }        /* hide open submenus */
-.app.is-collapsed .sb-toggle .bi{ transform:rotate(180deg) } /* flip chevron */
-
-/* Floating submenus when sidebar is collapsed */
-.app.is-collapsed .sidebar {
-    overflow: visible;
-    /* position: relative; */
-}
-
-/* Each item becomes the anchor for its submenu */
-.app.is-collapsed .sb-item {
-    position: relative;
-}
-
-/* Extend hover area for items with submenus */
-.app.is-collapsed .sb-item:has(.submenu)::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: -12px; /* Extends into the gap */
-    bottom: 0;
-    z-index: 1;
-}
-
-/* Hide submenu by default */
-.app.is-collapsed .sb-item .submenu {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 100%;
-    transform: translateY(-50%);
-    min-width: 200px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    padding: 8px 0;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    z-index: 60;
-    margin-left: 8px;
-}
-
-/* Show submenu when hovering */
-.app.is-collapsed .sb-item:hover > .submenu {
-    display: block;
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* Submenu links inside floating card */
-.app.is-collapsed .sb-item .submenu a {
-    display: block;
-    padding: 8px 14px;
-    color: #374151;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.92rem;
-    white-space: nowrap;
-}
-
-.app.is-collapsed .sb-item .submenu a:hover,
-.app.is-collapsed .sb-item > a:hover {
-    background: #f3f6ff;
-}
-
-/* Tooltip for sidebar item - only show if NO submenu exists */
-.app.is-collapsed .sb-item:not(:has(.submenu)) > a::after {
-    content: attr(data-title);
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-    padding: 6px 10px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    font-size: 0.9rem;
-    color: #333;
-    z-index: 50;
-}
-
-.app.is-collapsed .sb-item:not(:has(.submenu)) > a:hover::after {
-    opacity: 1;
-    transform: translateY(-50%) translateX(6px);
-}
-
-
-@media (max-width: 1100px){
-    :root{ --sidebar-w:90px }
-    .sb-title{ display:none }
-    .sb-item>a span{ display:none }
-    .submenu{ margin-left:16px }
-}
-@media (max-width: 920px){
-    .grid{ grid-template-columns: repeat(6, minmax(0,1fr)) }
-    .col-3{ grid-column: span 3 } .col-4{ grid-column: span 6 }
-}
-@media (max-width: 640px){
-    .app {
-        display: block; /* 👈 stop using grid for layout */
-        position: relative;
-    }
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 240px;
-        height: 100%;
-        z-index: 1000;
-        background: #fff;
-        border-right: 1px solid #eef0f5;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        border-radius: 0;
-    }
-    .app.sidebar-open .sidebar {
-        transform: translateX(0);
-    }
-    main {
-        margin-left: 0; /* 👈 ensures main content takes full width */
-        width: 100%;
-    }
-    .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 900;
-    }
-    .grid{ grid-template-columns: 1fr; }
-    .grid > * {
-        width: 100%;
-    }
-    .col-3,.col-4,.col-6{ grid-column: span 4 }
-    .page-header{ align-items:start; gap:12px; flex-direction:column }
-    .header-actions{ width:100%; justify-content:space-between }
-
-    /* Mobile adjustments for metrics and loan cards */
-    .metric {
-        padding: 12px;
-    }
-    .metric .value {
-        font-size: 18px;
-    }
-    .metric .label {
-        font-size: 13px;
-    }
-    .loan-card {
-        padding: 10px;
-    }
-    .loan-card .amount {
-        font-size: 18px;
-    }
-    .loan-card .small {
-        font-size: 12px;
-    }
-}
-
-/* --- Responsive grid transitions for tablet and phone --- */
-@media (max-width: 768px) and (min-width: 641px) {
-    .grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .metric .value {
-        font-size: 20px;
-    }
-    .metric {
-        padding: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    .metric .value {
-        font-size: 16px;
-    }
-    .metric {
-        padding: 10px;
-    }
-    .loan-card {
-        padding: 8px;
-    }
-    .loan-card .amount {
-        font-size: 16px;
-    }
-}
-
-.span-force-display {
-    display: block !important;
 }
 
 /* OLD style */
@@ -383,17 +350,18 @@ body{
     z-index: 1100;
 }
 
-.hidden {
-    display: none;
-}
-
 tr.highlight {
     background-color: yellow !important;
     transition: background-color 0.5s ease;
 }
 
 .table-responsive {
+    width: 100%;
     overflow-x: auto;
+}
+.table {
+    width: 100%;
+    white-space: nowrap;
 }
 
 .switch {
@@ -469,6 +437,155 @@ input.form-control:read-only {
     border: 1px solid #d0d0d0;
 }
 
+/* ================= Responsive ================= */
+@media (max-width: 1100px){
+    :root{ --sidebar-w:90px }
+    .sb-title{ display:none }
+    .sb-item>a span{ display:none }
+    .submenu{ margin-left:16px }
+}
+@media (max-width: 920px){
+    .grid{ grid-template-columns: repeat(6, minmax(0,1fr)) }
+    .col-3{ grid-column: span 3 } .col-4{ grid-column: span 6 }
+}
+@media (max-width: 640px){
+    .app {
+        display: block; /* 👈 stop using grid for layout */
+        position: relative;
+    }
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 240px;
+        height: 100%;
+        z-index: 1000;
+        background: #fff;
+        border-right: 1px solid #eef0f5;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        border-radius: 0;
+    }
+    .app.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+    main {
+        margin-left: 0; /* 👈 ensures main content takes full width */
+        width: 100%;
+    }
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 900;
+    }
+    .grid{ grid-template-columns: 1fr; }
+    .grid > * {
+        width: 100%;
+    }
+    .col-3,.col-4,.col-6{ grid-column: span 4 }
+    .page-header{ align-items:start; gap:12px; flex-direction:column }
+    .header-actions{ width:100%; justify-content:space-between }
+
+    /* Mobile adjustments for metrics and loan cards */
+    .metric {
+        padding: 12px;
+    }
+    .metric .value {
+        font-size: 18px;
+    }
+    .metric .label {
+        font-size: 13px;
+    }
+    .loan-card {
+        padding: 10px;
+    }
+    .loan-card .amount {
+        font-size: 18px;
+    }
+    .loan-card .small {
+        font-size: 12px;
+    }
+
+    /* ===== Mobile sidebar open: restore full menu layout ===== */
+    .app.sidebar-open .sidebar .sb-title {
+        display: block;
+    }
+
+    .app.sidebar-open .sidebar .sb-item > a {
+        justify-content: flex-start;
+        padding: 12px 12px;
+        text-align: left;
+    }
+
+    .app.sidebar-open .sidebar .sb-item > a span {
+        display: inline;
+    }
+
+    .app.sidebar-open .sidebar .sb-item > a .bi {
+        font-size: 20px;
+    }
+
+    .app.sidebar-open .sidebar .sb-caret {
+        display: inline-block !important;
+    }
+
+    /* Ensure submenu positioning on mobile stays inline (not floating) */
+    .app.sidebar-open .submenu {
+        position: static;
+        transform: none;
+        margin-left: 16px;
+        opacity: 1;
+        pointer-events: auto;
+        box-shadow: none;
+        border: none;
+    }
+}
+
+/* --- Responsive grid transitions for tablet and phone --- */
+@media (max-width: 768px) and (min-width: 641px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .metric .value {
+        font-size: 20px;
+    }
+    .metric {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .metric .value {
+        font-size: 16px;
+    }
+    .metric {
+        padding: 10px;
+    }
+    .loan-card {
+        padding: 8px;
+    }
+    .loan-card .amount {
+        font-size: 16px;
+    }
+}
+
+/* ================= Responsive ================= */
+@media (max-width: 640px){
+    .app.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+}
+
+/* ================= Utilities ================= */
+
+.hidden {
+    display: none;
+}
+
 .truncate-one-line {
     display: block;
     width: 100%;
@@ -484,21 +601,29 @@ input.form-control:read-only {
     pointer-events: auto;
 }
 
-/* ✅ ensures flex/grid parents allow children to truncate */
-.grid > *,
-.metric,
-.loan-card,
-.d-flex > * {
-    min-width: 0;
-    overflow: hidden;
+.content.compressed {
+    margin-top: -20px !important;
 }
-
-#attachmentWrapper {
-    overflow: hidden;
+/* DataTables Wrapper */
+.dataTables_wrapper {
     width: 100%;
-    height: auto;
+    overflow-x: auto;
 }
+@media (max-width: 640px) {
+    .app.sidebar-collapsed {
+        --sidebar-w: 240px; /* mobile uses full sidebar width */
+    }
 
-#attachmentImage {
-    cursor: grab;
+    .app.sidebar-collapsed .sb-item > a {
+        justify-content: flex-start;
+        padding: 12px 12px;
+    }
+
+    .app.sidebar-collapsed .sb-item > a span {
+        display: inline;
+    }
+
+    .app.sidebar-collapsed .sb-caret {
+        display: inline-block;
+    }
 }
