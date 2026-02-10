@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Platy — Finanzas personales inteligentes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/landing.css}">
+</head>
+
+<body>
+
+<!-- HERO -->
+<section class="hero">
+    <nav class="hero-nav">
+        <div class="logo">Platy</div>
+        <div class="nav-actions">
+            <a th:href="@{/login}" class="btn btn-outline-light btn-sm">Ingresar</a>
+            <a th:href="@{/register}" class="btn btn-light btn-sm">Crear cuenta</a>
+        </div>
+    </nav>
+
+    <div class="hero-content">
+        <h1>
+            Entiende tu dinero.<br>
+            <span>Deja que la IA te ayude a decidir mejor.</span>
+        </h1>
+        <p>
+            Registra tus gastos, descubre patrones y recibe recomendaciones
+            inteligentes basadas en tu comportamiento financiero real.
+        </p>
+
+        <div class="hero-cta">
+            <a th:href="@{/register}" class="btn btn-primary btn-lg">
+                Empieza gratis
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features container">
+    <div class="row text-center">
+        <div class="col-md-4">
+            <img src="https://via.placeholder.com/160" alt="Registro de gastos">
+            <h5>Registro de gastos</h5>
+            <p>
+                Registra tus gastos de forma manual o automática.
+                Mantén todo organizado en un solo lugar.
+            </p>
+        </div>
+
+        <div class="col-md-4">
+            <img src="https://via.placeholder.com/160" alt="Análisis financiero">
+            <h5>Análisis claros</h5>
+            <p>
+                Entiende en qué se va tu dinero con reportes simples,
+                visuales y fáciles de interpretar.
+            </p>
+        </div>
+
+        <div class="col-md-4">
+            <img src="https://via.placeholder.com/160" alt="Recomendaciones con IA">
+            <h5>Recomendaciones con IA</h5>
+            <p>
+                Platy analiza tus patrones de gasto y te sugiere
+                decisiones financieras más inteligentes.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- AI SECTION -->
+<section class="ai-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2>Inteligencia aplicada a tus finanzas</h2>
+                <p>
+                    Platy va más allá de simples gráficos.
+                    Nuestro motor de análisis identifica hábitos,
+                    excesos y oportunidades para mejorar tu salud financiera.
+                </p>
+                <ul>
+                    <li>Detección de patrones de gasto</li>
+                    <li>Análisis por categorías</li>
+                    <li>Sugerencias personalizadas con IA</li>
+                </ul>
+            </div>
+
+            <div class="col-md-6 text-center">
+                <img src="https://via.placeholder.com/420x280"
+                     alt="Ilustración de análisis financiero"
+                     class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHY PLATY -->
+<section class="why-platy container">
+    <h2 class="text-center mb-5">¿Por qué Platy?</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Simple y elegante</h6>
+            <p>
+                Sin ruido ni complejidad innecesaria.
+                Solo la información que realmente importa.
+            </p>
+        </div>
+
+        <div class="col-md-6">
+            <h6>Privacidad primero</h6>
+            <p>
+                Tus datos financieros son tuyos.
+                Seguridad y confidencialidad desde el diseño.
+            </p>
+        </div>
+
+        <div class="col-md-6">
+            <h6>Diseñado para la vida real</h6>
+            <p>
+                Pensado para decisiones cotidianas,
+                no para contabilidad complicada.
+            </p>
+        </div>
+
+        <div class="col-md-6">
+            <h6>Aprende contigo</h6>
+            <p>
+                Las recomendaciones evolucionan a medida
+                que Platy entiende mejor tus hábitos financieros.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+    <h2>Empieza a tomar control de tu dinero hoy</h2>
+    <p>Haz que tus finanzas trabajen mejor para ti con Platy.</p>
+
+    <a th:href="@{/register}" class="btn btn-light btn-lg">
+        Crear cuenta gratuita
+    </a>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container d-flex justify-content-between">
+        <span>© 2026 Platy</span>
+        <span class="text-muted">Finanzas personales inteligentes</span>
+    </div>
+</footer>
+
+</body>
+</html>

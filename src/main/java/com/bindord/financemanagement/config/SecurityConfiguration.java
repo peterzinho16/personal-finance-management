@@ -25,7 +25,8 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/login",
-                "/eureka/**", //Temporal
+//                "/eureka/**", //Temporal
+                "/landing",
                 "/register",
                 "/activate",
                 "/registration-confirmation",

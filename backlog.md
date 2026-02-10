@@ -3,7 +3,7 @@
 ### Authentication module features
 
 - Implement: **Temporary account lock** after 5 failed login attempts
-- Implement: CSRF token
+- Implement: CSRF token ✅ - 08/02/26
 
 ### Refactor resume > installments
 

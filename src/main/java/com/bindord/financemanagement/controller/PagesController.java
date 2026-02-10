@@ -45,4 +45,9 @@ public class PagesController {
   public String resumePage() {
     return "pages/resume";
   }
+
+  @RequestMapping("/landing")
+  public String showLandingPage() {
+    return "pages/landing";
+  }
 }

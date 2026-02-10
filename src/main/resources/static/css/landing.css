@@ -1,0 +1,77 @@
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1f2937;
+}
+
+/* HERO */
+.hero {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: white;
+    padding: 2rem 2rem 5rem;
+}
+
+.hero-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.hero-content {
+    max-width: 720px;
+    margin: 4rem auto 0;
+    text-align: center;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+.hero-content h1 span {
+    color: #e0e7ff;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    margin-top: 1rem;
+}
+
+/* FEATURES */
+.features {
+    padding: 4rem 0;
+}
+
+.features img {
+    margin-bottom: 1rem;
+}
+
+/* AI SECTION */
+.ai-section {
+    background: #f9fafb;
+    padding: 4rem 0;
+}
+
+/* WHY */
+.why-platy {
+    padding: 4rem 0;
+}
+
+/* CTA */
+.final-cta {
+    background: #111827;
+    color: white;
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+/* FOOTER */
+.footer {
+    padding: 1.5rem 0;
+    background: #f3f4f6;
+    font-size: 0.9rem;
+}
