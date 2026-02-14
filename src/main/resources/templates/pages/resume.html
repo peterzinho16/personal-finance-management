@@ -30,7 +30,7 @@
 
             <!-- Summary metrics (responsive, no .col-* wrappers) -->
             <div class="grid mb-4">
-                <div class="card-ui p-3" style="grid-column: 1 / -1;">
+                <div class="metric card-ui p-3" style="grid-column: 1 / -1;">
                     <div class="grid">
                         <div class="metric shadow-hover">
                             <div class="label">Otros ingresos</div>
@@ -72,7 +72,7 @@
             </div>
 
             <!-- Dinero prestado -->
-            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+            <div class="metric card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="pill warning"><i class="bi bi-arrow-up-right-circle"></i> Dinero prestado (pendiente de pago)</span>
                 </div>
@@ -80,7 +80,7 @@
             </div>
 
             <!-- Dinero recibido -->
-            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+            <div class="metric card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="pill info"><i
                             class="bi bi-arrow-down-circle"></i> Dinero recibido (por devolver)</span>
@@ -89,14 +89,14 @@
             </div>
 
             <!-- Expenditures in Installments -->
-            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+            <div class="metric card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="pill info"><i class="bi bi-credit-card"></i> Compras en cuotas <i class="bi bi-hourglass-split text-warning" title="Aún pendientes"></i></span>
                     <span id="installmentsPendingTotal" class="pill danger fw-semibold d-none d-md-inline"></span>
                 </div>
                 <div id="installmentsSection" class="grid"></div>
             </div>
-            <div class="card-ui p-4 mb-4" style="grid-column: 1 / -1;">
+            <div class="metric card-ui p-4 mb-4" style="grid-column: 1 / -1;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="pill bg-success text-white"><i class="bi bi-credit-card"></i> Compras en cuotas <i class="bi bi-check-circle-fill text-white" title="Pagadas completamente"></i></span>
                 </div>
@@ -222,7 +222,7 @@
         const periodSelect = document.getElementById('periodSelect');
         const periods = [];
         const today = new Date();
-        for (let i = 5; i >= 0; i--) {
+        for (let i = 20; i >= 0; i--) {
             const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, '0');

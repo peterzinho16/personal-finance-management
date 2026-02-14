@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: personal-finance-management
+
+  jpa:
+    show-sql: true
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+  datasource:
+    url: jdbc:postgresql://${DEFAULT_HOST:localhost}:5432/finance
+    username: postgres
+    password: sql
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      minimum-idle: 10
+      maximum-pool-size: 40
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 3000
+      pool-name: HikariFinanceProjectPool
+
+  jta:
+    enabled: false
+
+  data:
+    jdbc:
+      dialect: postgresql
+
+  threads:
+    virtual:
+      enabled: true
+
+  web:
+    resources:
+      static-locations: file:src/main/resources/static/
+      cache:
+        period: 0   # ? disables browser caching in dev
+
+  thymeleaf:
+    prefix: file:src/main/resources/templates/
+    cache: false
+
+  devtools:
+    restart:
+      additional-exclude: static/**,templates/**
+    livereload:
+      enabled: true
+
+logging:
+  level:
+    com.zaxxer.hikari.HikariConfig: INFO
+    com.zaxxer.hikari: INFO
+
+google:
+  credentials:
+    file:
+      path: classpath:secrets/client_karsam.apps.googleusercontent.com.json
+
+gmail:
+  oauth:
+    redirect:
+      uri: http://localhost:8080/eureka/finance-app/api-google/exchange-code
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+server:
+  tomcat:
+    max-swallow-size: 7MB
+    max-http-form-post-size: 7MB
+  custom:
+    max-content-length-in-mb: 7

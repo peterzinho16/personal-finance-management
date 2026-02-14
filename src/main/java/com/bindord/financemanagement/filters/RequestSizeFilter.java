@@ -16,7 +16,7 @@ import java.io.IOException;
 @Component
 public class RequestSizeFilter extends OncePerRequestFilter {
 
-  @Value("${server.custom.max-content-length.in-mb}")
+  @Value("${server.custom.max-content-length-in-mb}")
   private Integer maxRequestSize;
   private final ObjectMapper objectMapper = new ObjectMapper();
 

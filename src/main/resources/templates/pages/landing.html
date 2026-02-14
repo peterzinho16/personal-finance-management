@@ -13,31 +13,63 @@
 
 <body>
 
-<!-- HERO -->
-<section class="hero">
-    <nav class="hero-nav">
-        <div class="logo">Platy</div>
-        <div class="nav-actions">
-            <a th:href="@{/login}" class="btn btn-outline-light btn-sm">Ingresar</a>
-            <a th:href="@{/register}" class="btn btn-light btn-sm">Crear cuenta</a>
-        </div>
-    </nav>
+<header class="site-header">
+    <div class="header-container">
 
-    <div class="hero-content">
-        <h1>
-            Entiende tu dinero.<br>
-            <span>Deja que la IA te ayude a decidir mejor.</span>
-        </h1>
-        <p>
-            Registra tus gastos, descubre patrones y recibe recomendaciones
-            inteligentes basadas en tu comportamiento financiero real.
-        </p>
-
-        <div class="hero-cta">
-            <a th:href="@{/register}" class="btn btn-primary btn-lg">
-                Empieza gratis
+        <!-- Logo -->
+        <div class="logo">
+            <a href="/">
+                <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71"
+                     alt="Platy logo">
+                <span class="logo-text">Platy</span>
             </a>
         </div>
+
+        <!-- Navigation -->
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#features">Características</a></li>
+                <li><a href="#how-it-works">Cómo funciona</a></li>
+                <li><a href="#pricing">Planes</a></li>
+                <li><a href="#contact">Soporte</a></li>
+            </ul>
+        </nav>
+
+        <!-- Actions -->
+        <div class="header-actions">
+            <a href="/login" class="link">Ingresar</a>
+            <a href="/register" class="btn-primary">Empieza gratis</a>
+        </div>
+
+    </div>
+</header>
+
+<section class="hero">
+    <div class="hero-container">
+
+        <div class="hero-text">
+            <h1>
+                Controla tus finanzas <br>
+                <span>con inteligencia artificial</span>
+            </h1>
+
+            <p>
+                Platy analiza tus gastos, detecta patrones
+                y te da recomendaciones inteligentes para ahorrar
+                y tomar mejores decisiones financieras.
+            </p>
+
+            <div class="hero-actions">
+                <a href="/register" class="btn-primary">Empieza gratis</a>
+                <a href="#demo" class="btn-secondary">Ver cómo funciona</a>
+            </div>
+        </div>
+
+        <div class="hero-image">
+            <img th:src="@{/images/hero-image.png}"
+                 alt="Dashboard financiero">
+        </div>
+
     </div>
 </section>
 
@@ -45,7 +77,9 @@
 <section class="features container">
     <div class="row text-center">
         <div class="col-md-4">
-            <img src="https://via.placeholder.com/160" alt="Registro de gastos">
+            <img th:src="@{/images/landing_container_1.jpg}"
+                 alt="Registro de gastos"
+                 class="img-fluid mx-auto d-block feature-image">
             <h5>Registro de gastos</h5>
             <p>
                 Registra tus gastos de forma manual o automática.
@@ -54,7 +88,10 @@
         </div>
 
         <div class="col-md-4">
-            <img src="https://via.placeholder.com/160" alt="Análisis financiero">
+
+            <img th:src="@{/images/landing_container_2.jpg}"
+                 alt="Análisis financiero"
+                 class="img-fluid mx-auto d-block feature-image">
             <h5>Análisis claros</h5>
             <p>
                 Entiende en qué se va tu dinero con reportes simples,
@@ -63,7 +100,9 @@
         </div>
 
         <div class="col-md-4">
-            <img src="https://via.placeholder.com/160" alt="Recomendaciones con IA">
+            <img th:src="@{/images/landing_container_2.jpg}"
+                 alt="Recomendaciones con IA"
+                 class="img-fluid mx-auto d-block feature-image">>
             <h5>Recomendaciones con IA</h5>
             <p>
                 Platy analiza tus patrones de gasto y te sugiere
