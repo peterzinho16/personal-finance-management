@@ -70,6 +70,11 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+app:
+  dev:
+    default-username: ${APP_DEV_DEFAULT_USERNAME:}
+    default-password: ${APP_DEV_DEFAULT_PASSWORD:}
+
 server:
   tomcat:
     max-swallow-size: 7MB

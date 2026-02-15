@@ -25,6 +25,7 @@
                                    type="text"
                                    name="username"
                                    class="form-control"
+                                   th:value="${#arrays.contains(@environment.activeProfiles, 'dev') ? @environment.getProperty('app.dev.default-username') : ''}"
                                    required
                                    autofocus>
                         </div>
@@ -35,6 +36,7 @@
                                    type="password"
                                    name="password"
                                    class="form-control"
+                                   th:value="${#arrays.contains(@environment.activeProfiles, 'dev') ? @environment.getProperty('app.dev.default-password') : ''}"
                                    required>
                         </div>
 

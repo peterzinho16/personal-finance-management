@@ -38,6 +38,8 @@ public class TestingLangChain {
         .timeout(Duration.ofSeconds(120))
         .build();
 
+
+
     String myTemplate = "Please explain {{topic}} to a {{student_type}} using a clear, concise paragraph";
     PromptTemplate promptTemplate = PromptTemplate.from(myTemplate);
 
