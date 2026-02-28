@@ -23,4 +23,9 @@ public interface AccountCodeConfirmationRepository extends JpaRepository<Account
       String hash,
       LocalDateTime now
   );
+
+  boolean existsByCodeHashAndUsedFalseAndExpiresAtAfter(
+      String codeHash,
+      LocalDateTime now
+  );
 }

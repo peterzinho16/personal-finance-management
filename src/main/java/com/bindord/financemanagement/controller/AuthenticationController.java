@@ -22,6 +22,11 @@ public class AuthenticationController {
     return "pages/register";
   }
 
+  @GetMapping({"/forgot-password"})
+  public String showForgotPasswordPage() {
+    return "pages/forgot-password";
+  }
+
   @GetMapping({"/registration-confirmation"})
   public String showRegistrationConfirmationPage() {
     return "pages/registration-confirmation";

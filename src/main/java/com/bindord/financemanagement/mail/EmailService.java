@@ -3,6 +3,7 @@ package com.bindord.financemanagement.mail;
 import com.azure.communication.email.EmailClient;
 import com.azure.communication.email.models.EmailMessage;
 import com.azure.communication.email.models.EmailSendResult;
+import com.bindord.financemanagement.utils.enums.MailNotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ public class EmailService {
   @Value("${azure.communication.email.sender}")
   private String sender;
   public static final String LOCAL_DOMAIN_ACTIVATION = "http://localhost:8080/activate?token=";
+  public static final String LOCAL_DOMAIN_RESET = "http://localhost:8080/reset-password?token=";
 
   public void sendActivationEmail(String to, String activationLink) {
 
@@ -60,6 +62,59 @@ public class EmailService {
 
     } catch (Exception ex) {
       log.error("Failed to send activation email to {}", to, ex);
+      throw ex;
+    }
+  }
+
+  public void sendNotificationEmail(String to, String token, MailNotificationType type) {
+    switch (type) {
+      case SIGNUP_USER_CONFIRMATION -> sendActivationEmail(to, token);
+      case RESET_PASSWORD -> sendForgotPasswordEmail(to, token);
+      default -> throw new IllegalArgumentException("Unsupported mail notification type: " + type);
+    }
+  }
+
+  public void sendForgotPasswordEmail(String to, String resetToken) {
+
+    String subject = "Reset your password";
+
+    String htmlBody = """
+            <html>
+                <body style="font-family: Arial, sans-serif;">
+                    <h2>Password reset request</h2>
+                    <p>You requested to reset your password.</p>
+                    <p>
+                        <a href="%s"
+                           style="padding:10px 15px;
+                                  background:#dc3545;
+                                  color:#fff;
+                                  text-decoration:none;
+                                  border-radius:4px;">
+                           Reset password
+                        </a>
+                    </p>
+                    <p>This link expires in 24 hours.</p>
+                    <p>If you did not request this, you can safely ignore this email.</p>
+                </body>
+            </html>
+        """.formatted(LOCAL_DOMAIN_RESET + resetToken);
+
+    EmailMessage message = new EmailMessage()
+        .setSenderAddress(sender)
+        .setSubject(subject)
+        .setBodyHtml(htmlBody)
+        .setToRecipients(to);
+
+    try {
+      EmailSendResult result =
+          emailClient.beginSend(message)
+              .getFinalResult();
+
+      log.info("Reset password email sent to {} (messageId={})",
+          to, result.getId());
+
+    } catch (Exception ex) {
+      log.error("Failed to send reset password email to {}", to, ex);
       throw ex;
     }
   }

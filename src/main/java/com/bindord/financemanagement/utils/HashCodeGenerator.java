@@ -5,7 +5,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-public final class ActivationCodeGenerator {
+public final class HashCodeGenerator {
 
   private static final SecureRandom RANDOM = new SecureRandom();
 

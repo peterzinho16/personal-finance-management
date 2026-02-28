@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.config;
 
+import com.bindord.financemanagement.svc.CustomUserDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,10 +8,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
-import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
@@ -18,6 +17,7 @@ import javax.sql.DataSource;
 public class SecurityConfiguration {
 
   private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+  private final CustomUserDetailsService customUserDetailsService;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,7 +28,10 @@ public class SecurityConfiguration {
 //                "/eureka/**", //Temporal
                 "/landing",
                 "/register",
+                "/error-page",
+                "/forgot-password",
                 "/activate",
+                "/reset-password",
                 "/registration-confirmation",
                 "/activation-success",
                 "/activation-error",
@@ -41,6 +44,7 @@ public class SecurityConfiguration {
             ).permitAll()
             .anyRequest().authenticated()
         )
+        .userDetailsService(customUserDetailsService)
         .formLogin(form -> form
             .loginPage("/login")      // your custom login.html
             .defaultSuccessUrl("/", true)
@@ -55,10 +59,6 @@ public class SecurityConfiguration {
     return http.build();
   }
 
-  @Bean
-  public JdbcUserDetailsManager userDetailsService(DataSource dataSource) {
-    return new JdbcUserDetailsManager(dataSource);
-  }
 
   @Bean
   public PasswordEncoder passwordEncoder() {

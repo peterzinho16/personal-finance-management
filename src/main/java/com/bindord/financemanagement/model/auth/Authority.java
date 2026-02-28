@@ -26,7 +26,7 @@ import lombok.Setter;
 @Table(
     name = "authorities",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"username", "authority"}, name = "authority_username_idx")
+        @UniqueConstraint(columnNames = {"user_id", "authority"}, name = "authority_userid_idx")
     }
 )
 public class Authority {
@@ -40,6 +40,6 @@ public class Authority {
 
   @JsonBackReference
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "username", nullable = false)
+  @JoinColumn(name = "user_id", nullable = false)
   private User user;
 }

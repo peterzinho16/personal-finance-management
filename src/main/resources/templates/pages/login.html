@@ -39,6 +39,9 @@
                                    th:value="${#arrays.contains(@environment.activeProfiles, 'dev') ? @environment.getProperty('app.dev.default-password') : ''}"
                                    required>
                         </div>
+                        <div class="mb-3 text-end">
+                            <a th:href="@{/forgot-password}" class="small">Forgot password?</a>
+                        </div>
 
                         <div th:if="${param.logout}" class="alert alert-success py-2">
                             You have been logged out
@@ -50,6 +53,9 @@
 
                         <div th:if="${param.notActivated}" class="alert alert-warning py-2">
                             Your account is not activated yet. Please check your email.
+                        </div>
+                        <div th:if="${param.resetSuccess}" class="alert alert-success py-2">
+                            Your password has been successfully reset. Please login.
                         </div>
 
                         <div class="d-grid">

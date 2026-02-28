@@ -4,7 +4,7 @@ import com.bindord.financemanagement.model.auth.AccountCodeConfirmation;
 import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.repository.AccountCodeConfirmationRepository;
 import com.bindord.financemanagement.repository.UserRepository;
-import com.bindord.financemanagement.utils.ActivationCodeGenerator;
+import com.bindord.financemanagement.utils.HashCodeGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,20 +17,20 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AccountActivationService {
 
-  private final AccountCodeConfirmationRepository confirmationRepository;
+  private final AccountCodeConfirmationRepository repository;
   private final UserRepository userRepository;
 
   @Transactional
   public void activateAccount(String rawToken) {
 
-    String hash = ActivationCodeGenerator.hashToken(rawToken);
+    String hash = HashCodeGenerator.hashToken(rawToken);
 
     AccountCodeConfirmation confirmation =
-        confirmationRepository.findValidToken(hash, LocalDateTime.now())
+        repository.findValidToken(hash, LocalDateTime.now())
             .orElseThrow(() ->
                 new IllegalStateException("Invalid or expired activation token"));
 
-    User user = userRepository.findById(confirmation.getUsername())
+    User user = userRepository.findByUsername(confirmation.getUsername())
         .orElseThrow(() ->
             new IllegalStateException("User not found"));
 
@@ -42,8 +42,39 @@ public class AccountActivationService {
     confirmation.setUsed(true);
 
     userRepository.save(user);
-    confirmationRepository.save(confirmation);
+    repository.save(confirmation);
 
     log.info("Account activated for user {}", user.getUsername());
+  }
+
+  @Transactional
+  public void resetPassword(String rawToken, String newEncodedPassword) {
+
+    String hash = HashCodeGenerator.hashToken(rawToken);
+
+    AccountCodeConfirmation confirmation =
+        repository.findValidToken(hash, LocalDateTime.now())
+            .orElseThrow(() ->
+                new IllegalStateException("Invalid or expired reset token"));
+
+    User user = userRepository.findByUsername(confirmation.getUsername())
+        .orElseThrow(() ->
+            new IllegalStateException("User not found"));
+
+    if (!user.isEnabled()) {
+      throw new IllegalStateException("User account is not active");
+    }
+
+    if (confirmation.isUsed()) {
+      throw new IllegalStateException("Reset token already used");
+    }
+
+    user.setPassword(newEncodedPassword);
+    confirmation.setUsed(true);
+
+    userRepository.save(user);
+    repository.save(confirmation);
+
+    log.info("Password successfully reset for user {}", user.getUsername());
   }
 }

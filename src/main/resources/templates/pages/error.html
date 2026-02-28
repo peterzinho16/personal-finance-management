@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Error</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f6f9; /* light gray */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .auth-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background-color: #fdecea;
+            color: #b71c1c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background-color: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e3c72;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="auth-container">
+    <h2>Something went wrong</h2>
+
+    <div class="error-message" th:text="${errorMessage}">
+        Error message
+    </div>
+
+    <a th:href="@{/login}" class="btn-primary">
+        Back to Login
+    </a>
+</div>
+
+</body>
+</html>
