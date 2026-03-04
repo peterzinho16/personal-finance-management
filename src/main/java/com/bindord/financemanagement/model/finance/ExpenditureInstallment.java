@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +23,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "expenditure_installments")
@@ -75,4 +77,8 @@ public class ExpenditureInstallment {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "sub_category_id", nullable = false)
   private SubCategory subCategory;
+
+  @NotNull
+  @Column(nullable = false)
+  private UUID userId;
 }

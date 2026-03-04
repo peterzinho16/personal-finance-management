@@ -6,14 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface ExpenditureInstallmentRepository extends JpaRepository<ExpenditureInstallment,
     Integer> {
 
   @Query(value = "SELECT EI from ExpenditureInstallment EI JOIN FETCH EI.subCategory SC JOIN FETCH " +
-      "SC.category WHERE EI.fullPaid is False")
-  List<ExpenditureInstallment> findAllByFullPaidIsFalse();
+      "SC.category WHERE EI.userId = :userId AND EI.fullPaid is False")
+  List<ExpenditureInstallment> findAllByUserIdAndFullPaidIsFalse(UUID userId);
 
-  List<ExpenditureInstallment> findAllByOrderByTransactionDateDesc();
+  List<ExpenditureInstallment> findAllByUserIdOrderByTransactionDateDesc(UUID userId);
 }

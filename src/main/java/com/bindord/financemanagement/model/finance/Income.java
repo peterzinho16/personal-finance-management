@@ -21,6 +21,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "incomes")
@@ -70,5 +71,9 @@ public class Income {
   @PositiveOrZero
   @Column
   private Double conversionToPen = 0.0;
+
+  @NotNull
+  @Column(nullable = false)
+  private UUID userId;
 
 }

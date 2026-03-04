@@ -2,6 +2,7 @@ package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.config.AppDataConfiguration;
+import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
@@ -17,6 +18,8 @@ import com.bindord.financemanagement.utils.enums.LoanState;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
@@ -40,6 +43,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   private final SubCategoryRepository subCategoryRepository;
   private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
   private final AppDataConfiguration appDataConfiguration;
+  private final com.bindord.financemanagement.svc.auth.CurrentUserService currentUserService;
 
   /**
    * @param id
@@ -226,6 +230,42 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     return repository.save(expenditure);
   }
 
+  /**
+   * @param filters
+   * @param subCategoryName
+   * @param expenseDescription
+   * @return
+   */
+  @Override
+  public Page<Expenditure> findAllWithFilters(Pageable filters,
+                                              String subCategoryName,
+                                              String expenseDescription) {
+
+    Integer subCatId = null;
+
+    if (subCategoryName != null && !subCategoryName.isBlank()) {
+      var subCategory = subCategoryRepository.findByName(subCategoryName);
+      if (subCategory != null) {
+        subCatId = subCategory.getId();
+      }
+    }
+
+    String filter = (expenseDescription == null || expenseDescription.isBlank())
+        ? null
+        : "%" + expenseDescription.toLowerCase() + "%";
+
+    if (currentUserService.isAdmin()) {
+      return repository.findAllWithSubCategory(subCatId, filter, filters);
+    }
+
+    return repository.findAllWithSubCategoryAndUser(
+        subCatId,
+        filter,
+        currentUserService.getCurrentUserId(),
+        filters
+    );
+  }
+
   private ExpenditureInstallment expenditureInstallmentMapper(Expenditure expenditure,
                                                               double installmentAmount,
                                                               Short totalInstallments) {
@@ -252,7 +292,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   }
 
   private void updateLentState(Expenditure expenditure,
-                                      ExpenditureUpdateDto expenditureUpdateDto) {
+                               ExpenditureUpdateDto expenditureUpdateDto) {
     var nwLentValue = expenditureUpdateDto.getLent();
     expenditure.setLent(nwLentValue);
     expenditure.setLentTo(nwLentValue ? expenditureUpdateDto.getLentTo() : null);
@@ -296,8 +336,10 @@ public class ExpenditureServiceImpl implements ExpenditureService {
       conversionToPen = usdExchangeRate.doubleValue() * amount;
     }
 
+    var userId = currentUserService.getCurrentUserId();
+
     return Expenditure.builder()
-        .referenceId(Objects.nonNull(expenditureDto.getReferenceId()) && !expenditureDto.getReferenceId().isBlank() ?
+        .referenceId(nonNull(expenditureDto.getReferenceId()) && !expenditureDto.getReferenceId().isBlank() ?
             expenditureDto.getReferenceId() : referenceId)
         .description(expenditureDto.getDescription())
         .transactionDate(
@@ -312,6 +354,12 @@ public class ExpenditureServiceImpl implements ExpenditureService {
         .sharedAmount(sharedVal ? amount / 2 : null)
         .conversionToPen(convertNumberToOnlyTwoDecimals(conversionToPen))
         .singlePayment(true)
+        .user(
+            User
+                .builder()
+                .userId(userId)
+                .build()
+        )
         .installments(expenditureDto.getInstallments())
         .expenditureInstallmentId(null)
         .lent(lentVal)

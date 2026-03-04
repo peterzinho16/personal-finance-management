@@ -31,6 +31,7 @@ public class UserService {
     User user = User.builder()
         .username(email)
         .password(passwordEncoder.encode(rawPassword))
+        .accountNonLocked(true)
         .enabled(false)
         .build();
 

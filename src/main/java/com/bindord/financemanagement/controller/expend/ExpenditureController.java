@@ -8,18 +8,16 @@ import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateFormDto;
-import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
-import com.bindord.financemanagement.repository.SubCategoryRepository;
 import com.bindord.financemanagement.svc.ExpenditureReportService;
 import com.bindord.financemanagement.svc.ExpenditureService;
+import com.bindord.financemanagement.svc.auth.CurrentUserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,27 +42,21 @@ import static org.springframework.beans.BeanUtils.copyProperties;
 public class ExpenditureController {
 
   private final ExpenditureRepository repository;
-  private final SubCategoryRepository subCategoryRepository;
   private final ExpenditureService expenditureService;
   private final ExpenditureReportService expenditureReportService;
   private final CategoryRepository categoryRepository;
+  private final CurrentUserService currentUserService;
 
   @GetMapping
   Page<Expenditure> findAll(Pageable pageable,
                             @RequestParam(required = false) String subCategoryName,
                             @RequestParam(required = false) String expenseDescription) {
-    Integer subCatId;
-    if (subCategoryName == null) {
-      subCatId = null;
-    } else {
-      SubCategory subCategory = subCategoryRepository.findByName(subCategoryName);
-      subCatId = subCategory.getId();
-    }
-    String filter = (expenseDescription == null || expenseDescription.isBlank())
-        ? null
-        : "%" + expenseDescription.toLowerCase() + "%";
 
-    return repository.findAllWithSubCategory(subCatId, filter, pageable);
+    return expenditureService.findAllWithFilters(
+        pageable,
+        subCategoryName,
+        expenseDescription
+    );
   }
 
   @GetMapping("/{id}")
@@ -114,7 +106,7 @@ public class ExpenditureController {
 
   @GetMapping("/reports/get-category-monthly-totals")
   public List<CategoryMonthlyTotalsProjection> getCategoryMonthlyTotals() {
-    return expenditureReportService.expenditureReport();
+    return expenditureReportService.expenditureReportByUserId(currentUserService.getCurrentUserId());
   }
 
   @GetMapping("/reports/list/by-period-and-category")
@@ -147,6 +139,6 @@ public class ExpenditureController {
 
   @GetMapping("/reports/list/monthly-summary")
   public List<MonthlyExpenseSummaryDTO> getMonthlySummary() {
-    return expenditureReportService.getMonthlySummaries();
+    return expenditureReportService.getMonthlySummariesByUserId(currentUserService.getCurrentUserId());
   }
 }

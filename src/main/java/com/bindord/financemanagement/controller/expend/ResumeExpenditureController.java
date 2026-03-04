@@ -6,6 +6,7 @@ import com.bindord.financemanagement.model.resume.LentPendingProjection;
 import com.bindord.financemanagement.model.resume.ResumeSummaryProjection;
 import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
+import com.bindord.financemanagement.svc.auth.CurrentUserService;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +27,14 @@ public class ResumeExpenditureController {
 
   private final ExpenditureRepository expenditureRepository;
   private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
+  private final CurrentUserService currentUserService;
 
   // 1️⃣ Summary endpoint (main resume data)
   @GetMapping("/summary")
   public List<ResumeSummaryProjection> getSummary(
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-
-    return expenditureRepository.getMonthlySummary(startDate, endDate);
+    return expenditureRepository.getMonthlySummary(startDate, endDate, currentUserService.getCurrentUserId());
   }
 
   // 2️⃣ Money lent (pending)
@@ -41,7 +42,7 @@ public class ResumeExpenditureController {
   public List<LentPendingProjection> getLentPending(
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-    return expenditureRepository.getLentPending(startDate, endDate);
+    return expenditureRepository.getLentPending(startDate, endDate, currentUserService.getCurrentUserId());
   }
 
   // 3️⃣ Money borrowed (pending)
@@ -50,7 +51,7 @@ public class ResumeExpenditureController {
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-    return expenditureRepository.getBorrowedPending(startDate, endDate);
+    return expenditureRepository.getBorrowedPending(startDate, endDate, currentUserService.getCurrentUserId());
   }
 
   @PutMapping("/lent/{lentTo}/pay")
@@ -75,6 +76,7 @@ public class ResumeExpenditureController {
 
   @GetMapping("/installments/all")
   public List<ExpenditureInstallment> getAllInstallments() {
-    return expenditureInstallmentRepository.findAllByOrderByTransactionDateDesc();
+    return expenditureInstallmentRepository
+        .findAllByUserIdOrderByTransactionDateDesc(currentUserService.getCurrentUserId());
   }
 }

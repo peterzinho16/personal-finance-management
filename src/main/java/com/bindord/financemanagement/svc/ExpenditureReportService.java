@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -16,11 +17,11 @@ public class ExpenditureReportService {
 
   private final ExpenditureRepository expenditureRepository;
 
-  public List<CategoryMonthlyTotalsProjection> expenditureReport(){
-    return expenditureRepository.getCategoryMonthlyTotals();
+  public List<CategoryMonthlyTotalsProjection> expenditureReportByUserId(UUID userId){
+    return expenditureRepository.getCategoryMonthlyTotalsByUserId(userId);
   }
 
-  public List<MonthlyExpenseSummaryDTO> getMonthlySummaries() {
-    return expenditureRepository.getMonthlySummary();
+  public List<MonthlyExpenseSummaryDTO> getMonthlySummariesByUserId(UUID userId) {
+    return expenditureRepository.getMonthlySummaryByUserId(userId);
   }
 }

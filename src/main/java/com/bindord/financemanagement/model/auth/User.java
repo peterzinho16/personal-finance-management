@@ -43,6 +43,9 @@ public class User {
   @Column(nullable = false)
   private boolean enabled;
 
+  @Column(nullable = false)
+  private boolean accountNonLocked;
+
   @JsonManagedReference
   @OneToMany(
       mappedBy = "user",

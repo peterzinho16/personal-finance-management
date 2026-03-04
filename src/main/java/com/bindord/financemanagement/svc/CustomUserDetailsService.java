@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.model.auth.Authority;
+import com.bindord.financemanagement.model.auth.CustomUserDetails;
 import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.repository.AuthorityRepository;
 import com.bindord.financemanagement.repository.UserRepository;
@@ -24,14 +25,18 @@ public class CustomUserDetailsService implements UserDetailsService {
   public UserDetails loadUserByUsername(String username)
       throws UsernameNotFoundException {
 
+    CustomUserDetails.builder();
+
     User user = userRepository.findByUsername(username)
         .orElseThrow(() ->
             new UsernameNotFoundException("User not found"));
     List<Authority> authorities = authorityRepository.findByUser(user);
-    return org.springframework.security.core.userdetails.User
-        .withUsername(user.getUsername())
+    return CustomUserDetails.builder()
+        .userId(user.getUserId())
+        .username(user.getUsername())
         .password(user.getPassword())
-        .disabled(!user.isEnabled())
+        .enabled(user.isEnabled())
+        .accountNonLocked(user.isAccountNonLocked())
         .authorities(
             authorities
                 .stream()

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface RecurrentExpenditureRepository
@@ -16,6 +17,6 @@ public interface RecurrentExpenditureRepository
   List<RecurrentExpenditure> findAllWithSubCategoryAndCat();
 
   @Query("SELECT re FROM RecurrentExpenditure re JOIN FETCH re.subCategory SC JOIN FETCH SC" +
-      ".category C WHERE re.enabled")
-  List<RecurrentExpenditure> findAllEnabledWithSubCategoryAndCat();
+      ".category C WHERE re.enabled AND re.userId = :userId")
+  List<RecurrentExpenditure> findAllEnabledWithSubCategoryAndCatByUserId(UUID userId);
 }

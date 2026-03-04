@@ -35,7 +35,7 @@ public class SecurityConfiguration {
                 "/registration-confirmation",
                 "/activation-success",
                 "/activation-error",
-                "/expenditure/list",
+                //"/expenditure/list",
                 "/activate",
                 "/css/**",
                 "/js/**",

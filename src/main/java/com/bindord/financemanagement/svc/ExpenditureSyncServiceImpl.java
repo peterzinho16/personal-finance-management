@@ -1,6 +1,7 @@
 package com.bindord.financemanagement.svc;
 
 import com.bindord.financemanagement.config.AppDataConfiguration;
+import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
@@ -19,6 +20,7 @@ import com.bindord.financemanagement.repository.ParameterRepository;
 import com.bindord.financemanagement.repository.PayeeCoincidenceRepository;
 import com.bindord.financemanagement.repository.RecurrentExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
+import com.bindord.financemanagement.svc.auth.CurrentUserService;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
@@ -69,6 +71,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final ExpenditureInstallmentRepository expenditureInstallmentRepository;
   private final AppDataConfiguration appDataConfiguration;
   private final Validator validator;
+  private final CurrentUserService currentUserService;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -77,6 +80,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
    */
   @Override
   public String executeSynchronization(String accessToken) throws Exception {
+
+    var currentUserId = currentUserService.getCurrentUserId();
 
     List<MailExclusionRule> exclusionsList = mailExclusionRuleRepository.findAll();
     Set<String> exclusions =
@@ -130,11 +135,17 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     }
 
     expenditures.forEach(expenditure -> {
+      expenditure.setUser(
+          User.builder()
+              .userId(currentUserId)
+              .build());
       Set<ConstraintViolation<Expenditure>> violations =
           validator.validate(expenditure);
       if (!violations.isEmpty()) {
-        log.error("Obj error: {}, {}, {}", expenditure.getPayee(), expenditure.getDescription(), expenditure.getTransactionDate());
-        log.error("Validate the mail's subject and review your mail exclusion rules. Add new rules if necessary");
+        log.error("Obj error: {}, {}, {}", expenditure.getPayee(), expenditure.getDescription(),
+            expenditure.getTransactionDate());
+        log.error("Validate the mail's subject and review your mail exclusion rules. Add new " +
+            "rules if necessary");
         throw new ConstraintViolationException(violations);
       }
     });
@@ -149,7 +160,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
       paramRecurrents.setValue(lastMessageDateTime);
       parameterRepository.save(paramRecurrents);
       List<RecurrentExpenditure> recurrents =
-          recurrentExpenditureRepository.findAllEnabledWithSubCategoryAndCat();
+          recurrentExpenditureRepository.findAllEnabledWithSubCategoryAndCatByUserId(currentUserId);
       List<Expenditure> recurrentExpenditureList = new ArrayList<>();
       for (RecurrentExpenditure reccExpend : recurrents) {
         recurrentExpenditureList.add(expenditureService.expenditureMapperFromRecurrentExpenditure(reccExpend));
@@ -160,7 +171,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     parameterRepository.save(parameter);
 
     List<ExpenditureInstallment> expenditureInstallments =
-        expenditureInstallmentRepository.findAllByFullPaidIsFalse();
+        expenditureInstallmentRepository.findAllByUserIdAndFullPaidIsFalse(currentUserId);
 
     var now = LocalDateTime.now(ZoneOffset.UTC).minusHours(5);
     for (ExpenditureInstallment expenditureInstallment : expenditureInstallments) {

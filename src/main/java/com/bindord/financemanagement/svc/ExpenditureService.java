@@ -4,6 +4,8 @@ import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureAddDto;
 import com.bindord.financemanagement.model.finance.ExpenditureUpdateFormDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -20,4 +22,6 @@ public interface ExpenditureService {
   void deleteById(Integer id) throws Exception;
 
   Expenditure saveNewManually(ExpenditureAddDto expenditureDto) throws CustomValidationException, NoSuchAlgorithmException;
+
+  Page<Expenditure> findAllWithFilters(Pageable filters, String subCategoryName, String expenseDescription);
 }

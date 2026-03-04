@@ -5,6 +5,7 @@ import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.finance.Income;
 import com.bindord.financemanagement.model.finance.IncomeRequestDto;
 import com.bindord.financemanagement.repository.IncomeRepository;
+import com.bindord.financemanagement.svc.auth.CurrentUserService;
 import com.bindord.financemanagement.utils.enums.Currency;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class IncomeController {
 
   private final IncomeRepository incomeRepository;
   private final AppDataConfiguration appDataConfiguration;
+  private final CurrentUserService currentUserService;
 
   @GetMapping("")
   public Page<Income> getIncomeSources(Pageable pageable) {
@@ -67,6 +69,7 @@ public class IncomeController {
     income.setWasReceived(dto.getWasReceived() != null ? dto.getWasReceived() : true);
     income.setConversionToPen(dto.getConversionToPen() != null ? dto.getConversionToPen() : 0.0);
     income.setCreatedAt(LocalDateTime.now());
+    income.setUserId(currentUserService.getCurrentUserId());
     return income;
   }
 

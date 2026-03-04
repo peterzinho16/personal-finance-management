@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.repository;
 
+import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
 import com.bindord.financemanagement.model.dashboard.MonthlyExpenseSummaryDTO;
 import com.bindord.financemanagement.model.finance.Expenditure;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Repository
 public interface ExpenditureRepository extends JpaRepository<Expenditure, Integer> {
@@ -82,11 +84,12 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
           FROM expenditures e
           JOIN sub_categories sc ON sc.id = e.sub_category_id
           JOIN categories c ON c.id = sc.category_id
+          WHERE user_id = :currentUserId
           GROUP BY to_char(e.transaction_date, 'YYYY-MM'), c.name
       )
       SELECT * FROM category_monthly_totals ORDER BY periodo DESC, categoria
       """, nativeQuery = true)
-  List<CategoryMonthlyTotalsProjection> getCategoryMonthlyTotals();
+  List<CategoryMonthlyTotalsProjection> getCategoryMonthlyTotalsByUserId(UUID currentUserId);
 
   @Query(value = "SELECT EX from Expenditure EX " +
       "JOIN FETCH EX.subCategory SC " +
@@ -126,15 +129,16 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
                                        CASE WHEN currency = 'PEN' THEN loan_amount
                                             ELSE conversion_to_pen END
                                    ELSE 0 END)::NUMERIC, 2) AS total_tus_prestamos,
-                     (SELECT sum(amount) FROM recurrent_expenditures) AS gastos_recurrentes_total
+                     (SELECT sum(amount) FROM recurrent_expenditures WHERE user_id = :currentUserId) AS gastos_recurrentes_total
               FROM expenditures
+              WHERE user_id = :currentUserId
               GROUP BY to_char(transaction_date, 'YYYY-MM')
           )
       SELECT
           (SELECT round(SUM(CASE WHEN currency = 'PEN' THEN amount
                                  ELSE conversion_to_pen END)::NUMERIC, 2)
            FROM incomes
-           WHERE was_received AND to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
+           WHERE user_id = :currentUserId AND was_received AND to_char(received_date, 'YYYY-MM') = subtot.periodo) AS otros_ingresos,
           (subtot.gastos_individuales + subtot.gastos_compartidos + subtot.mis_gastos_pagados_por_tercero + subtot.Mis_Gastos_Importados) AS final_total_gastos,
           subtot.periodo,
           subtot.gastos_individuales,
@@ -146,7 +150,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
       FROM subtot
       ORDER BY subtot.periodo DESC
       """, nativeQuery = true)
-  List<MonthlyExpenseSummaryDTO> getMonthlySummary();
+  List<MonthlyExpenseSummaryDTO> getMonthlySummaryByUserId(UUID currentUserId);
 
 
   @Query(value = """
@@ -187,6 +191,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
             FROM expenditures
             WHERE transaction_date >= :start_date
               AND transaction_date < :end_date
+              AND user_id = :user_id
             GROUP BY 1
         )
         SELECT
@@ -199,6 +204,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
                 WHERE i.was_received
                   AND i.received_date >= :start_date
                   AND i.received_date < :end_date
+                  AND i.user_id = :user_id
             ), 0.0) AS otros_ingresos,
             COALESCE(s.gastos_individuales + s.gastos_compartidos + s.mis_gastos_pagados_por_tercero, 0.0) AS final_total_gastos,
             COALESCE(s.gastos_compartidos, 0.0) AS gastos_compartidos,
@@ -208,7 +214,8 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
         """, nativeQuery = true)
   List<ResumeSummaryProjection> getMonthlySummary(
       @Param("start_date") LocalDate startDate,
-      @Param("end_date") LocalDate endDate
+      @Param("end_date") LocalDate endDate,
+      @Param("user_id") UUID userId
   );
 
   @Query(value = """
@@ -230,6 +237,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
         FROM expenditures
         WHERE transaction_date >= :start_date
           AND transaction_date < :end_date
+          AND user_id = :currentUserId
           AND lent = TRUE
     ) t
     GROUP BY periodo, loan_state, lent_to
@@ -237,7 +245,8 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
     """, nativeQuery = true)
   List<LentPendingProjection> getLentPending(
       @Param("start_date") LocalDate startDate,
-      @Param("end_date") LocalDate endDate
+      @Param("end_date") LocalDate endDate,
+      @Param("currentUserId") UUID currentUserId
   );
 
   @Query(value = """
@@ -259,6 +268,7 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
           FROM expenditures
           WHERE transaction_date >= :start_date
             AND transaction_date < :end_date
+            AND user_id = :currentUserId
             AND was_borrowed = TRUE
       ) t
       GROUP BY periodo, borrowed_state, borrowed_from
@@ -266,7 +276,8 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
       """, nativeQuery = true)
   List<BorrowedPendingProjection> getBorrowedPending(
       @Param("start_date") LocalDate startDate,
-      @Param("end_date") LocalDate endDate
+      @Param("end_date") LocalDate endDate,
+      @Param("currentUserId") UUID currentUserId
   );
 
   @Transactional
@@ -302,4 +313,18 @@ public interface ExpenditureRepository extends JpaRepository<Expenditure, Intege
       @Param("endDate") LocalDate endDate
   );
 
+  @Query(value = "SELECT EX FROM Expenditure EX " +
+      "JOIN FETCH EX.subCategory SC " +
+      "JOIN FETCH SC.category " +
+      "WHERE (:subCatId IS NULL OR SC.id = :subCatId) " +
+      "AND (:filter IS NULL OR LOWER(EX.description) LIKE :filter) " +
+      "AND EX.user.userId = :currentUserId " +
+      "ORDER BY EX.transactionDate DESC")
+  Page<Expenditure> findAllWithSubCategoryAndUser(
+      @Param("subCatId") Integer subCatId,
+      @Param("filter") String filter,
+      @Param("currentUserId") UUID currentUserId,
+      Pageable pageable);
+
+  List<Expenditure> user(User user);
 }

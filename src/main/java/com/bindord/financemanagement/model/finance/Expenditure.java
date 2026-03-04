@@ -1,7 +1,9 @@
 package com.bindord.financemanagement.model.finance;
 
+import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.utils.enums.Currency;
 import com.bindord.financemanagement.utils.enums.LoanState;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -140,4 +142,9 @@ public class Expenditure {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id", nullable = false)
     private SubCategory subCategory;
+
+    @JsonBackReference
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }
