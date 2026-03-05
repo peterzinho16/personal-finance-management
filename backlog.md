@@ -1,5 +1,11 @@
 # Backlog project
 
+### Expenditure Menu
+
+- Refactor: For CRUD operations consider made a pre-validation of ownership by session userId - 04/03/26 ✅
+- Refactor: Parameters table to make it individual instead of general as is now - 04/03/26
+- Refactor: Payee categorization logic
+
 ### Authentication module features
 
 - Implement: **Temporary account lock** after 5 failed login attempts

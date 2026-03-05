@@ -12,6 +12,7 @@ public class Constants {
       "AQMkADAwATNiZmYAZC1jNTRiLTg5N2EtMDACLTAwCgAuAAADoowy8RjcUkyj3Qv2gECIoAEAJZOEFSNNi02ZcdREwq9DeAAGx92vkwAAAA==";
   public static final String MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED = "The expenditure " +
       "was financed and <b>the installments can't be modified</b>";
+  public static final String MSG_ERROR_INCORRECT_RESOURCE_OWNER = "The operation is not allowed, we're watching you!";
   public static final String MSG_ERROR_SHARED_AND_LENT_AND_BORROWED = "The expenditure can be " +
       "submitted because two of these options, <b>shared/lent/borrowed</b>, can't be true at the" +
       " same" +

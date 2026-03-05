@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.controller.expend;
 
+import com.bindord.financemanagement.advice.CustomForbiddenException;
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.model.dashboard.CategoryMonthlyTotalsProjection;
 import com.bindord.financemanagement.model.dashboard.MonthlyExpenseSummaryDTO;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 
+import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_INCORRECT_RESOURCE_OWNER;
 import static org.springframework.beans.BeanUtils.copyProperties;
 
 @Slf4j
@@ -60,7 +62,11 @@ public class ExpenditureController {
   }
 
   @GetMapping("/{id}")
-  Expenditure findById(@PathVariable Integer id) {
+  Expenditure findById(@PathVariable Integer id) throws CustomForbiddenException {
+    var exp = repository.findByIdWithSubCategory(id);
+    if (!exp.getUser().getUserId().equals(currentUserService.getCurrentUserId())) {
+      throw new CustomForbiddenException(MSG_ERROR_INCORRECT_RESOURCE_OWNER);
+    }
     return repository.findByIdWithSubCategory(id);
   }
 

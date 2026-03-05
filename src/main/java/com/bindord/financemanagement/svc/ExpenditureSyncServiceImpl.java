@@ -53,7 +53,7 @@ import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyT
 @Service
 public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
-  private static final String LAST_SYNC_DATE = "LAST_SYNC_DATE";
+  private static final String LAST_SYNC_DATE_FOR_OUTLOOK = "LAST_SYNC_DATE_FOR_OUTLOOK";
   private static final String LAST_RECURRENTS_SYNC_DATE = "LAST_RECURRENT_SYNC_DATE";
 
 
@@ -87,7 +87,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     Set<String> exclusions =
         exclusionsList.stream().map(MailExclusionRule::getKeyword).collect(Collectors.toSet());
     Parameter parameter =
-        parameterRepository.findById(LAST_SYNC_DATE).orElseThrow(() -> new Exception("Error " +
+        parameterRepository.findById(LAST_SYNC_DATE_FOR_OUTLOOK).orElseThrow(() -> new Exception("Error " +
             "while" + " trying to get the last sync date from parameters table"));
     String paramLastSyncDateTime = parameter.getValue();
     OffsetDateTime lastSyncDateTime = OffsetDateTime.parse(paramLastSyncDateTime);

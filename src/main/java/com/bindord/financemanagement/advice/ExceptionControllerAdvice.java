@@ -122,7 +122,19 @@ public class ExceptionControllerAdvice {
   ErrorResponse handlerCustomValidationException(CustomValidationException ex) {
     log.warn("method {}", "handlerCustomValidationException");
     log.warn(ex.getMessage());
-    for (int i = 0; i < ex.getStackTrace().length; i++) {
+    for (int i = 0; i < (Math.min(ex.getStackTrace().length, 10)); i++) {
+      log.warn(ex.getStackTrace()[i].toString());
+    }
+    return new ErrorResponse(ex.getMessage(), ex.getInternalCode());
+  }
+
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  @ExceptionHandler(CustomForbiddenException.class)
+  public @ResponseBody
+  ErrorResponse handlerForbiddenException(CustomForbiddenException ex) {
+    log.warn("method {}", "handlerForbiddenException");
+    log.warn(ex.getMessage());
+    for (int i = 0; i < (Math.min(ex.getStackTrace().length, 10)); i++) {
       log.warn(ex.getStackTrace()[i].toString());
     }
     return new ErrorResponse(ex.getMessage(), ex.getInternalCode());

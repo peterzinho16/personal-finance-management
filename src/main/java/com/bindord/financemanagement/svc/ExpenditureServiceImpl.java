@@ -1,5 +1,6 @@
 package com.bindord.financemanagement.svc;
 
+import com.bindord.financemanagement.advice.CustomForbiddenException;
 import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.config.AppDataConfiguration;
 import com.bindord.financemanagement.model.auth.User;
@@ -25,8 +26,7 @@ import org.springframework.stereotype.Service;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
-import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_INSTALLMENTS_NOT_MODIFICATION_ALLOWED;
-import static com.bindord.financemanagement.utils.Constants.MSG_ERROR_SHARED_AND_LENT_AND_BORROWED;
+import static com.bindord.financemanagement.utils.Constants.*;
 import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyTwoDecimals;
 import static com.bindord.financemanagement.utils.Utilities.getLocalDateTimeNowWithFormat;
 import static com.bindord.financemanagement.utils.enums.Currency.PEN;
@@ -65,6 +65,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   public Expenditure updateById(ExpenditureUpdateFormDto expenditureUpdateFormDto, Integer id) throws Exception {
     ExpenditureUpdateDto expenditureDto = expenditureUpdateFormDto.getExpenditureUpdateDto();
     var qExpenditure = this.findById(id);
+    validateResourceOwnership(qExpenditure);
     var newInstallmentsValue = expenditureDto.getInstallments();
     var installmentsWasModified = !qExpenditure.getInstallments().equals(newInstallmentsValue);
     if (qExpenditure.getInstallments() > 1
@@ -150,8 +151,11 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    * @param payee
    * @return
    */
+  @Transactional
   @Override
   public Expenditure updateSubCategoryById(Integer subCategoryId, Integer id, String payee) throws Exception {
+    var qExpenditure = this.findById(id);
+    validateResourceOwnership(qExpenditure);
     updatePayeeCategorization(subCategoryId, payee);
     repository.updateSubCategoryById(subCategoryId, id);
     return repository.findById(id).orElseThrow(() -> new Exception("Id doesn't" +
@@ -192,6 +196,7 @@ public class ExpenditureServiceImpl implements ExpenditureService {
   @Override
   public Expenditure updateSharedById(Integer id) throws Exception {
     var expenditure = this.findById(id);
+    validateResourceOwnership(expenditure);
     updateSharedState(expenditure);
     var sharedVal = expenditure.getShared() != null ? expenditure.getShared() : false;
     var lentVal = expenditure.getLent() != null ? expenditure.getLent() : false;
@@ -211,7 +216,9 @@ public class ExpenditureServiceImpl implements ExpenditureService {
    * @throws Exception
    */
   @Override
-  public void deleteById(Integer id) {
+  public void deleteById(Integer id) throws Exception {
+    var qExpenditure = this.findById(id);
+    validateResourceOwnership(qExpenditure);
     repository.deleteById(id);
   }
 
@@ -227,6 +234,10 @@ public class ExpenditureServiceImpl implements ExpenditureService {
     if (Objects.nonNull(totalInstallments) && totalInstallments > 1) {
       updateExpenditureWithInstallments(expenditure, totalInstallments);
     }
+    expenditure.setUser(
+        User.builder()
+            .userId(currentUserService.getCurrentUserId())
+            .build());
     return repository.save(expenditure);
   }
 
@@ -400,6 +411,14 @@ public class ExpenditureServiceImpl implements ExpenditureService {
             .build());
     expenditure.setRecurrent(true);
     return expenditure;
+  }
+
+  private void validateResourceOwnership(Expenditure qExp) throws CustomForbiddenException {
+    if (!qExp.getUser().getUserId().equals(currentUserService.getCurrentUserId())) {
+      var msg = MSG_ERROR_INCORRECT_RESOURCE_OWNER;
+      log.warn(msg);
+      throw new CustomForbiddenException(msg);
+    }
   }
 
 }
