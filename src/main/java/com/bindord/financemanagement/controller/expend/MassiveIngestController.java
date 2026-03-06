@@ -7,7 +7,7 @@ import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.MailExclusionRule;
 import com.bindord.financemanagement.model.source.MailMessage;
 import com.bindord.financemanagement.model.source.MailMessagesResponse;
-import com.bindord.financemanagement.model.source.MessageDto;
+import com.bindord.financemanagement.model.source.OutlookMessageDto;
 import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
@@ -23,7 +23,6 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,7 +50,7 @@ public class MassiveIngestController {
   private final PayeeCategorizationService payeeCategorizationService;
   private final ExpenditureSyncServiceImpl expenditureSyncServiceImpl;
 
-  @Transactional
+  /*@Transactional
   @GetMapping(value = "/full", produces = MediaType.APPLICATION_JSON_VALUE)
   public String ingestToDatabaseWithAllMessages(HttpSession session,
                                                 @RequestParam(required = false) String withValidation) throws Exception {
@@ -74,15 +73,15 @@ public class MassiveIngestController {
         .collect(Collectors.toSet());
 
     //int counter = 0;
-    while (Objects.nonNull(mailMessagesResponse.getOdataNextLink()) /*&& counter != 2*/) {
+    while (Objects.nonNull(mailMessagesResponse.getOdataNextLink()) *//*&& counter != 2*//*) {
       //counter++;
       List<Expenditure> expenditures = new ArrayList<>();
       List<MailMessage> mailMessages = new ArrayList<>();
       log.info("Current skip: {}", currentSkip);
-      List<MessageDto> beforeFilterMessages = mailMessagesResponse.getValue();
+      List<OutlookMessageDto> beforeFilterMessages = mailMessagesResponse.getValue();
       var postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages, exclusions);
       Set<String> referenceIds = new HashSet<>();
-      for (MessageDto msg : postFilterMessages) {
+      for (OutlookMessageDto msg : postFilterMessages) {
         String payee = expenditureSyncServiceImpl.buildEntitiesAndGetPayee(msg, subCategory,
             expenditures, mailMessages);
 
@@ -108,5 +107,5 @@ public class MassiveIngestController {
           Constants.NOTIF_COMPRAS_SUB_FOLDER_ID, batchSize, currentSkip, token.getAccessToken());
     }
     return "Process has finished";
-  }
+  }*/
 }

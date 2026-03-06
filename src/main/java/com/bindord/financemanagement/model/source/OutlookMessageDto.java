@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 @Getter
 @ToString
-public class MessageDto {
+public class OutlookMessageDto {
 
     @JsonProperty("@odata.etag")
     private String odataEtag;

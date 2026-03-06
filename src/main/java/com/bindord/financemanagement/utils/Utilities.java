@@ -2,8 +2,9 @@ package com.bindord.financemanagement.utils;
 
 import com.bindord.financemanagement.model.finance.ExpenditureOthers;
 import com.bindord.financemanagement.model.finance.MicrosoftAccessToken;
+import com.bindord.financemanagement.model.record.ProviderMailMessage;
 import com.bindord.financemanagement.model.source.GmailMessageDto;
-import com.bindord.financemanagement.model.source.MessageDto;
+import com.bindord.financemanagement.model.source.OutlookMessageDto;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
@@ -112,14 +113,14 @@ public class Utilities {
     return null;
   }
 
-  public static List<MessageDto> getFilteredMessages(List<MessageDto> originalList,
-                                                     Set<String> exclusions) {
+  public static List<ProviderMailMessage> getFilteredMessages(List<ProviderMailMessage> originalList,
+                                                            Set<String> exclusions) {
 
-    List<MessageDto> postFilterMessages = originalList.stream().filter(
+    List<ProviderMailMessage> postFilterMessages = originalList.stream().filter(
         msg -> exclusions
             .stream()
             .noneMatch(
-                ex -> msg.getSubject().toLowerCase().contains(ex)
+                ex -> msg.subject().toLowerCase().contains(ex)
             )
     ).toList();
     return postFilterMessages;

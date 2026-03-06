@@ -9,9 +9,10 @@ import com.bindord.financemanagement.model.finance.Expenditure;
 import com.bindord.financemanagement.model.finance.ExpenditureInstallment;
 import com.bindord.financemanagement.model.finance.RecurrentExpenditure;
 import com.bindord.financemanagement.model.finance.SubCategory;
+import com.bindord.financemanagement.model.mapper.MailMessageMapper;
+import com.bindord.financemanagement.model.record.ProviderMailMessage;
 import com.bindord.financemanagement.model.source.MailExclusionRule;
 import com.bindord.financemanagement.model.source.MailMessage;
-import com.bindord.financemanagement.model.source.MessageDto;
 import com.bindord.financemanagement.model.source.ParameterUser;
 import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
@@ -22,11 +23,13 @@ import com.bindord.financemanagement.repository.ParameterUserRepository;
 import com.bindord.financemanagement.repository.PayeeCoincidenceRepository;
 import com.bindord.financemanagement.repository.RecurrentExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
+import com.bindord.financemanagement.resolver.MailProviderResolver;
 import com.bindord.financemanagement.svc.auth.CurrentUserService;
 import com.bindord.financemanagement.utils.ExpenditureExtractorUtil;
 import com.bindord.financemanagement.utils.MailRegex;
 import com.bindord.financemanagement.utils.Utilities;
 import com.bindord.financemanagement.utils.enums.Currency;
+import com.bindord.financemanagement.utils.enums.MailProvider;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -56,11 +59,13 @@ import static com.bindord.financemanagement.utils.Utilities.convertNumberToOnlyT
 public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
   private static final String LAST_SYNC_DATE_FOR_OUTLOOK = "LAST_SYNC_DATE_FOR_OUTLOOK";
+  private static final String LAST_SYNC_DATE_FOR_GMAIL = "LAST_SYNC_DATE_FOR_GMAIL";
   private static final String LAST_RECURRENTS_SYNC_DATE = "LAST_RECURRENT_SYNC_DATE";
+  private static final String MAIL_PROVIDER = "MAIL_PROVIDER";
 
 
   private final MailExclusionRuleRepository mailExclusionRuleRepository;
-  private final EmailFacade emailFacade;
+  private final MailProviderResolver mailProviderResolver;
   private final ParameterUserRepository parameterUserRepository;
   private final ExpenditureRepository expenditureRepository;
   private final CategoryRepository categoryRepository;
@@ -74,6 +79,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
   private final AppDataConfiguration appDataConfiguration;
   private final Validator validator;
   private final CurrentUserService currentUserService;
+  private final MailMessageMapper mailMessageMapper;
 
   /**
    * Execute synchronization from outlook to expenditure table
@@ -81,20 +87,27 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
    * @param accessToken token associated to Microsoft Graph API
    */
   @Override
-  public String executeSynchronization(String accessToken) throws Exception {
+  public String executeSynchronization(String accessToken, MailProvider provider) throws Exception {
 
     var currentUserId = currentUserService.getCurrentUserId();
+
+    MailProviderFacade mailProviderFacade = mailProviderResolver.resolve(provider);
 
     List<MailExclusionRule> exclusionsList = mailExclusionRuleRepository.findAll();
     Set<String> exclusions =
         exclusionsList.stream().map(MailExclusionRule::getKeyword).collect(Collectors.toSet());
+    String lastSyncKey =
+        provider == MailProvider.GMAIL
+            ? LAST_SYNC_DATE_FOR_GMAIL
+            : LAST_SYNC_DATE_FOR_OUTLOOK;
+
     ParameterUser parameter =
-        parameterUserRepository.findById(new ParameterUserId(currentUserId, LAST_SYNC_DATE_FOR_OUTLOOK))
-            .orElseThrow(() -> new Exception("Error while trying to get the last sync date from " +
-                "parameters_users table"));
+        parameterUserRepository.findById(new ParameterUserId(currentUserId, lastSyncKey))
+            .orElseThrow(() -> new Exception(
+                "Error while trying to get the last sync date from parameters_users table"));
 
     if (!parameter.isEnabled()) {
-      throw new CustomValidationException("Parameter disabled: " + LAST_SYNC_DATE_FOR_OUTLOOK);
+      throw new CustomValidationException("Parameter disabled: " + (provider == MailProvider.GMAIL ? LAST_SYNC_DATE_FOR_GMAIL : LAST_SYNC_DATE_FOR_OUTLOOK));
     }
 
     String paramLastSyncDateTime = parameter.getValue();
@@ -104,8 +117,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     }
 
     OffsetDateTime lastSyncDateTime = OffsetDateTime.parse(paramLastSyncDateTime);
-    List<MessageDto> beforeFilterMessages =
-        emailFacade.findByCreatedDateTimeGreaterThan(accessToken,
+    List<ProviderMailMessage> beforeFilterMessages =
+        mailProviderFacade.findMessagesSince(accessToken,
             lastSyncDateTime.toLocalDateTime().plusMinutes(300).plusSeconds(1));
 
     if (beforeFilterMessages.isEmpty()) {
@@ -115,7 +128,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
       return msg;
     }
 
-    List<MessageDto> postFilterMessages = Utilities.getFilteredMessages(beforeFilterMessages,
+    List<ProviderMailMessage> postFilterMessages =
+        Utilities.getFilteredMessages(beforeFilterMessages,
         exclusions);
 
     if (postFilterMessages.isEmpty()) {
@@ -136,12 +150,12 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
     // Parse the string to OffsetDateTime
     OffsetDateTime lastRecordDateTime =
-        OffsetDateTime.parse(postFilterMessages.getLast().getCreatedDateTime());
+        OffsetDateTime.parse(postFilterMessages.getLast().createdDateTime());
     // Subtract 5 hours
     OffsetDateTime updatedLastRecordDateTime = lastRecordDateTime.minusHours(5);
     String lastMessageDateTime = updatedLastRecordDateTime.toString();
 
-    for (MessageDto msg : postFilterMessages) {
+    for (ProviderMailMessage msg : postFilterMessages) {
       String payee = buildEntitiesAndGetPayee(msg, subCategory, expenditures, mailMessages);
 
       payeeCategorizationService.managePayeeCategorization(payee, subCategory.getId());
@@ -167,7 +181,8 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     mailMessageRepository.saveAll(mailMessages);
 
     ParameterUser paramRecurrents =
-        parameterUserRepository.findById(new ParameterUserId(currentUserId, LAST_RECURRENTS_SYNC_DATE))
+        parameterUserRepository.findById(new ParameterUserId(currentUserId,
+                LAST_RECURRENTS_SYNC_DATE))
             .orElseThrow(() -> new CustomValidationException(
                 "Error while trying to get the last sync date from parameters_users table"));
 
@@ -234,13 +249,13 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
    * @return payee from the mail message
    * @throws NoSuchAlgorithmException the no such algorithm exception
    */
-  public String buildEntitiesAndGetPayee(MessageDto msg, SubCategory subCategory,
+  public String buildEntitiesAndGetPayee(ProviderMailMessage msg, SubCategory subCategory,
                                          List<Expenditure> expenditures,
                                          List<MailMessage> mailMessages) throws NoSuchAlgorithmException {
-    var transactionDate = convertDatetimeToUTCMinusFive(msg.getCreatedDateTime());
-    var referenceId = Utilities.generateSha256FromMailIdOrPayee(transactionDate, msg.getId());
-    var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.getBody());
-    var subject = msg.getSubject();
+    var transactionDate = convertDatetimeToUTCMinusFive(msg.createdDateTime());
+    var referenceId = Utilities.generateSha256FromMailIdOrPayee(transactionDate, msg.id());
+    var bodyTextContent = ExpenditureExtractorUtil.convertHTMLTextToPlainText(msg.bodyHtml());
+    var subject = msg.subject();
     var payee = ExpenditureExtractorUtil.extractThePayeeTrim(subject, bodyTextContent);
     if (payee != null) {
       Integer subCategoryId = payeeCategorizationService.obtainSubCategoryByPayee(payee);
@@ -264,7 +279,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     return expenditure.getPayee();
   }
 
-  public Expenditure expenditureMapper(MessageDto msg, SubCategory subCategory,
+  public Expenditure expenditureMapper(ProviderMailMessage msg, SubCategory subCategory,
                                        String referenceId, String subject, String payee,
                                        String bodyTextContent) {
     var currency = MailRegex.extractExpenditureCurrency(bodyTextContent);
@@ -276,7 +291,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
       conversionToPen = usdExchangeRate.doubleValue() * amount;
     }
     return Expenditure.builder().referenceId(referenceId).description(subject)
-        .transactionDate(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime()))
+        .transactionDate(convertDatetimeToUTCMinusFive(msg.createdDateTime()))
         .payee(payee)
         .currency(currency)
         .amount(amount)
@@ -298,9 +313,9 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
         .build();
   }
 
-  public static MailMessage mailMessageMapper(MessageDto msg, String referenceId,
+  public static MailMessage mailMessageMapper(ProviderMailMessage msg, String referenceId,
                                               String bodyTextContent) {
-    return MailMessage.builder().id(msg.getId()).createdDateTime(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())).subject(msg.getSubject()).bodyPreview(msg.getBodyPreview()).bodyHtml(msg.getBody().getContent()).bodyTextContent(bodyTextContent).fromEmail(msg.getFrom().getEmailAddress().getName()).webLink(msg.getWebLink()).referenceId(referenceId).build();
+    return MailMessage.builder().id(msg.id()).createdDateTime(convertDatetimeToUTCMinusFive(msg.createdDateTime())).subject(msg.subject()).bodyPreview(msg.bodyPreview()).bodyHtml(msg.bodyHtml()).bodyTextContent(bodyTextContent).fromEmail(msg.from()).webLink(msg.webLink()).referenceId(referenceId).build();
   }
 
   private SubCategory updateSubCategoryIfFindCoincidence(String payee, SubCategory subCategory) {

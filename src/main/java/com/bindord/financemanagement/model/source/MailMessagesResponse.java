@@ -12,7 +12,7 @@ public class MailMessagesResponse {
 
     @JsonProperty("@odata.context")
     private String odataContext;
-    private List<MessageDto> value;
+    private List<OutlookMessageDto> value;
     @JsonProperty("@odata.nextLink")
     private String odataNextLink;
 }

@@ -1,7 +1,7 @@
 package com.bindord.financemanagement.utils;
 
 import com.bindord.financemanagement.HTMLTextExtractor;
-import com.bindord.financemanagement.model.source.MessageDto;
+import com.bindord.financemanagement.model.source.OutlookMessageDto;
 import com.bindord.financemanagement.utils.Utilities.EntitiesKeyword;
 import lombok.extern.slf4j.Slf4j;
 
@@ -117,7 +117,7 @@ public class ExpenditureExtractorUtil {
     return result != null ? result.trim() : null;
   }
 
-  public static String convertHTMLTextToPlainText(MessageDto.Body body) {
+  public static String convertHTMLTextToPlainText(OutlookMessageDto.Body body) {
     return HTMLTextExtractor.extractTextJsoup(body.getContent());
   }
 
