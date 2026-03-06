@@ -1,6 +1,8 @@
 package com.bindord.financemanagement.svc;
 
+import com.bindord.financemanagement.advice.CustomValidationException;
 import com.bindord.financemanagement.config.AppDataConfiguration;
+import com.bindord.financemanagement.model.ParameterUserId;
 import com.bindord.financemanagement.model.auth.User;
 import com.bindord.financemanagement.model.finance.Category;
 import com.bindord.financemanagement.model.finance.Expenditure;
@@ -10,13 +12,13 @@ import com.bindord.financemanagement.model.finance.SubCategory;
 import com.bindord.financemanagement.model.source.MailExclusionRule;
 import com.bindord.financemanagement.model.source.MailMessage;
 import com.bindord.financemanagement.model.source.MessageDto;
-import com.bindord.financemanagement.model.source.Parameter;
+import com.bindord.financemanagement.model.source.ParameterUser;
 import com.bindord.financemanagement.repository.CategoryRepository;
 import com.bindord.financemanagement.repository.ExpenditureInstallmentRepository;
 import com.bindord.financemanagement.repository.ExpenditureRepository;
 import com.bindord.financemanagement.repository.MailExclusionRuleRepository;
 import com.bindord.financemanagement.repository.MailMessageRepository;
-import com.bindord.financemanagement.repository.ParameterRepository;
+import com.bindord.financemanagement.repository.ParameterUserRepository;
 import com.bindord.financemanagement.repository.PayeeCoincidenceRepository;
 import com.bindord.financemanagement.repository.RecurrentExpenditureRepository;
 import com.bindord.financemanagement.repository.SubCategoryRepository;
@@ -59,7 +61,7 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
   private final MailExclusionRuleRepository mailExclusionRuleRepository;
   private final EmailFacade emailFacade;
-  private final ParameterRepository parameterRepository;
+  private final ParameterUserRepository parameterUserRepository;
   private final ExpenditureRepository expenditureRepository;
   private final CategoryRepository categoryRepository;
   private final SubCategoryRepository subCategoryRepository;
@@ -86,10 +88,21 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     List<MailExclusionRule> exclusionsList = mailExclusionRuleRepository.findAll();
     Set<String> exclusions =
         exclusionsList.stream().map(MailExclusionRule::getKeyword).collect(Collectors.toSet());
-    Parameter parameter =
-        parameterRepository.findById(LAST_SYNC_DATE_FOR_OUTLOOK).orElseThrow(() -> new Exception("Error " +
-            "while" + " trying to get the last sync date from parameters table"));
+    ParameterUser parameter =
+        parameterUserRepository.findById(new ParameterUserId(currentUserId, LAST_SYNC_DATE_FOR_OUTLOOK))
+            .orElseThrow(() -> new Exception("Error while trying to get the last sync date from " +
+                "parameters_users table"));
+
+    if (!parameter.isEnabled()) {
+      throw new CustomValidationException("Parameter disabled: " + LAST_SYNC_DATE_FOR_OUTLOOK);
+    }
+
     String paramLastSyncDateTime = parameter.getValue();
+    if (paramLastSyncDateTime == null) {
+      paramLastSyncDateTime =
+          OffsetDateTime.now(ZoneOffset.UTC).minusMonths(6).withNano(0).toString();
+    }
+
     OffsetDateTime lastSyncDateTime = OffsetDateTime.parse(paramLastSyncDateTime);
     List<MessageDto> beforeFilterMessages =
         emailFacade.findByCreatedDateTimeGreaterThan(accessToken,
@@ -153,22 +166,31 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
     expenditureRepository.saveAll(expenditures);
     mailMessageRepository.saveAll(mailMessages);
 
-    Parameter paramRecurrents =
-        parameterRepository.findById(LAST_RECURRENTS_SYNC_DATE).orElseThrow(() -> new Exception(
-            "Error while trying to get the last sync date from parameters table"));
-    if (paramRecurrents.getValue() == null || updatedLastRecordDateTime.getMonth() != OffsetDateTime.parse(paramRecurrents.getValue()).getMonth()) {
-      paramRecurrents.setValue(lastMessageDateTime);
-      parameterRepository.save(paramRecurrents);
+    ParameterUser paramRecurrents =
+        parameterUserRepository.findById(new ParameterUserId(currentUserId, LAST_RECURRENTS_SYNC_DATE))
+            .orElseThrow(() -> new CustomValidationException(
+                "Error while trying to get the last sync date from parameters_users table"));
+
+    if (paramRecurrents.isEnabled() &&
+        (paramRecurrents.getValue() == null || updatedLastRecordDateTime.getMonth() != OffsetDateTime.parse(paramRecurrents.getValue()).getMonth())) {
+
       List<RecurrentExpenditure> recurrents =
           recurrentExpenditureRepository.findAllEnabledWithSubCategoryAndCatByUserId(currentUserId);
-      List<Expenditure> recurrentExpenditureList = new ArrayList<>();
-      for (RecurrentExpenditure reccExpend : recurrents) {
-        recurrentExpenditureList.add(expenditureService.expenditureMapperFromRecurrentExpenditure(reccExpend));
+      if (recurrents.isEmpty()) {
+        log.info("There are no recurrent expenditures to sync");
+      } else {
+        paramRecurrents.setValue(lastMessageDateTime);
+        parameterUserRepository.save(paramRecurrents);
+
+        List<Expenditure> recurrentExpenditureList = new ArrayList<>();
+        for (RecurrentExpenditure reccExpend : recurrents) {
+          recurrentExpenditureList.add(expenditureService.expenditureMapperFromRecurrentExpenditure(reccExpend));
+        }
+        expenditureRepository.saveAll(recurrentExpenditureList);
       }
-      expenditureRepository.saveAll(recurrentExpenditureList);
     }
     parameter.setValue(lastMessageDateTime);
-    parameterRepository.save(parameter);
+    parameterUserRepository.save(parameter);
 
     List<ExpenditureInstallment> expenditureInstallments =
         expenditureInstallmentRepository.findAllByUserIdAndFullPaidIsFalse(currentUserId);
@@ -278,7 +300,6 @@ public class ExpenditureSyncServiceImpl implements ExpenditureSyncService {
 
   public static MailMessage mailMessageMapper(MessageDto msg, String referenceId,
                                               String bodyTextContent) {
-
     return MailMessage.builder().id(msg.getId()).createdDateTime(convertDatetimeToUTCMinusFive(msg.getCreatedDateTime())).subject(msg.getSubject()).bodyPreview(msg.getBodyPreview()).bodyHtml(msg.getBody().getContent()).bodyTextContent(bodyTextContent).fromEmail(msg.getFrom().getEmailAddress().getName()).webLink(msg.getWebLink()).referenceId(referenceId).build();
   }
 

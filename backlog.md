@@ -4,6 +4,7 @@
 
 - Refactor: For CRUD operations consider made a pre-validation of ownership by session userId - 04/03/26 ✅
 - Refactor: Parameters table to make it individual instead of general as is now - 04/03/26
+- Transform: Transform import expenses from Gmail as a general function instead of a specific one - 04/03/26
 - Refactor: Payee categorization logic
 
 ### Authentication module features
